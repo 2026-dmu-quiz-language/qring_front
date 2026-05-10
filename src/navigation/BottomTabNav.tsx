@@ -5,6 +5,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { theme } from '../constants/theme';
 import { ScreenWrapper } from '../components/layout/ScreenWrapper';
 import { Header } from '../components/layout/Header';
+import StoryHomeScreen from '../screens/StoryHomeScreen';
 
 const Tab = createBottomTabNavigator();
 
@@ -72,7 +73,7 @@ export const BottomTabNav = () => {
       })}
     >
       <Tab.Screen name="Dashboard" component={DummyDashboard} />
-      <Tab.Screen name="Content" component={DummyContent} />
+      <Tab.Screen name="Content" component={StoryHomeScreen} />
       <Tab.Screen name="MyPage" component={DummyMyPage} />
     </Tab.Navigator>
   );
