@@ -6,16 +6,9 @@ import { theme } from '../constants/theme';
 import { ScreenWrapper } from '../components/layout/ScreenWrapper';
 import { Header } from '../components/layout/Header';
 import StoryHomeScreen from '../screens/StoryHomeScreen';
+import DashboardScreen from '../screens/DashboardScreen';
 
 const Tab = createBottomTabNavigator();
-
-// 테스트용 더미 스크린들 (헤더 적용 예시)
-const DummyDashboard = () => (
-  <ScreenWrapper>
-    {/* 대시보드는 특수 헤더라 일단 비워둠 */}
-    <Text style={{ marginTop: 20 }}>메인 대시보드 화면</Text>
-  </ScreenWrapper>
-);
 const DummyContent = () => (
   <ScreenWrapper>
     <Header title="스토리 홈" leftType="none" rightType="profile" />
@@ -72,7 +65,7 @@ export const BottomTabNav = () => {
         },
       })}
     >
-      <Tab.Screen name="Dashboard" component={DummyDashboard} />
+      <Tab.Screen name="Dashboard" component={DashboardScreen} />
       <Tab.Screen name="Content" component={StoryHomeScreen} />
       <Tab.Screen name="MyPage" component={DummyMyPage} />
     </Tab.Navigator>
