@@ -8,6 +8,7 @@ import {
   TouchableOpacity,
   StyleSheet,
 } from 'react-native';
+import Svg, { Circle } from 'react-native-svg';
 import { theme } from '../constants/theme';
 import { ScreenWrapper } from '../components/layout/ScreenWrapper';
 import { Header } from '../components/layout/Header';
@@ -31,13 +32,45 @@ const WEEKDAYS = [
   { label: 'S', done: false },
 ];
 
-// ─── 성취도 게이지 컴포넌트 ───
+// ─── 반원 게이지 컴포넌트 ───
 const AchievementGauge = ({ percent }: { percent: number }) => {
+  const size = 180;
+  const strokeWidth = 14;
+  const radius = (size - strokeWidth) / 2;
+  const circumference = Math.PI * radius; // 반원 둘레
+  const strokeDashoffset = circumference - (circumference * percent) / 100;
+
   return (
     <View style={styles.gaugeWrap}>
-      <View style={styles.gaugeTrack}>
-        <View style={[styles.gaugeFill, { width: `${percent}%` }]} />
-      </View>
+      <Svg width={size} height={size / 2 + strokeWidth} viewBox={`0 0 ${size} ${size / 2 + strokeWidth}`}>
+        {/* 배경 트랙 */}
+        <Circle
+          cx={size / 2}
+          cy={size / 2}
+          r={radius}
+          stroke={C.streakInactive}
+          strokeWidth={strokeWidth}
+          fill="none"
+          strokeLinecap="round"
+          strokeDasharray={`${circumference} ${circumference}`}
+          rotation="180"
+          origin={`${size / 2}, ${size / 2}`}
+        />
+        {/* 채워지는 부분 */}
+        <Circle
+          cx={size / 2}
+          cy={size / 2}
+          r={radius}
+          stroke={theme.colors.primary}
+          strokeWidth={strokeWidth}
+          fill="none"
+          strokeLinecap="round"
+          strokeDasharray={`${circumference} ${circumference}`}
+          strokeDashoffset={strokeDashoffset}
+          rotation="180"
+          origin={`${size / 2}, ${size / 2}`}
+        />
+      </Svg>
       <Text style={styles.arcPercent}>{percent}%</Text>
     </View>
   );
@@ -55,17 +88,6 @@ const DashboardScreen = () => {
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
       >
-        {/* 인사 헤더 */}
-        <View style={styles.greeting}>
-          <View style={styles.greetingLeft}>
-            <View style={styles.avatarCircle} />
-            <View>
-              <Text style={styles.greetingText}>안녕하세요, User1님!</Text>
-              {/* 로고 이미지 넣을 자리 — <Image source={require('...')} style={styles.logoPlaceholder} /> */}
-              <View style={styles.logoPlaceholder} />
-            </View>
-          </View>
-        </View>
 
         {/* 연속 학습 달성 카드 */}
         <View style={styles.streakCard}>
@@ -132,34 +154,6 @@ const styles = StyleSheet.create({
     paddingBottom: 120,
   },
 
-  // 인사
-  greeting: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 20,
-  },
-  greetingLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-  },
-  avatarCircle: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    backgroundColor: '#ccc',
-  },
-  greetingText: {
-    fontSize: 14,
-    color: '#555',
-    fontWeight: '500',
-  },
-  logoPlaceholder: {
-    // 여기에 <Image source={require('...')} /> 넣으면 됨
-    height: 24,
-    width: 60,
-  },
-
   // 연속 학습
   streakCard: {
     backgroundColor: theme.colors.white,
@@ -223,29 +217,19 @@ const styles = StyleSheet.create({
   achievementSection: {
     alignItems: 'center',
     marginBottom: 24,
+    backgroundColor: '#EFEFE1',
+    borderRadius: 20,
   },
   gaugeWrap: {
     alignItems: 'center',
     width: '100%',
-    marginBottom: 8,
-  },
-  gaugeTrack: {
-    width: '80%',
-    height: 12,
-    borderRadius: 6,
-    backgroundColor: C.streakInactive,
-    overflow: 'hidden',
-  },
-  gaugeFill: {
-    height: '100%',
-    borderRadius: 6,
-    backgroundColor: theme.colors.primary,
+    marginBottom: -20,
   },
   arcPercent: {
-    fontSize: 28,
+    fontSize: 32,
     fontWeight: '800',
     color: C.darkGreen,
-    marginTop: 8,
+    marginTop: -50,
   },
   achievementTitle: {
     fontSize: 18,
