@@ -34,7 +34,7 @@ const WEEKDAYS = [
 
 // ─── 반원 게이지 컴포넌트 ───
 const AchievementGauge = ({ percent }: { percent: number }) => {
-  const size = 180;
+  const size = 150;
   const strokeWidth = 14;
   const radius = (size - strokeWidth) / 2;
   const circumference = Math.PI * radius; // 반원 둘레
@@ -157,9 +157,7 @@ const styles = StyleSheet.create({
   // 연속 학습
   streakCard: {
     backgroundColor: theme.colors.white,
-    borderRadius: 20,
-    borderWidth: 1.5,
-    borderColor: '#d5d5c8',
+    borderRadius: 40,
     padding: 20,
     marginBottom: 24,
   },
@@ -219,6 +217,8 @@ const styles = StyleSheet.create({
     marginBottom: 24,
     backgroundColor: '#EFEFE1',
     borderRadius: 20,
+    padding: 20,
+    paddingTop: 24,
   },
   gaugeWrap: {
     alignItems: 'center',
@@ -272,10 +272,8 @@ const styles = StyleSheet.create({
   },
   statCard: {
     flex: 1,
-    backgroundColor: theme.colors.white,
-    borderRadius: 16,
-    borderWidth: 1.5,
-    borderColor: '#d5d5c8',
+    backgroundColor: '#F5F4E6',
+    borderRadius: 45,
     padding: 16,
   },
   statIcon: {
