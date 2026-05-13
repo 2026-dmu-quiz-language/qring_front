@@ -10,12 +10,7 @@ import DashboardScreen from '../screens/DashboardScreen';
 import MyPageScreen from '../screens/MypageScreen';
 
 const Tab = createBottomTabNavigator();
-const DummyContent = () => (
-  <ScreenWrapper>
-    <Header title="스토리 홈" leftType="none" rightType="profile" />
-    <Text>콘텐츠 선택 화면</Text>
-  </ScreenWrapper>
-);
+
 export const BottomTabNav = () => {
   return (
     <Tab.Navigator
@@ -32,10 +27,10 @@ export const BottomTabNav = () => {
           let iconName: keyof typeof Ionicons.glyphMap = 'help';
           let label = '';
 
-          if (route.name === 'Dashboard') {
+          if (route.name === 'Content') {
             iconName = 'trending-up'; 
             label = '학습';
-          } else if (route.name === 'Content') {
+          } else if (route.name === 'Dashboard') {
             iconName = 'book-outline'; 
             label = '홈';
           } else if (route.name === 'MyPage') {
@@ -59,8 +54,8 @@ export const BottomTabNav = () => {
         },
       })}
     >
-      <Tab.Screen name="Dashboard" component={StoryHomeScreen} />
-      <Tab.Screen name="Content"  component={DashboardScreen}/>
+      <Tab.Screen name="Content" component={StoryHomeScreen} />
+      <Tab.Screen name="Dashboard"  component={DashboardScreen}/>
       <Tab.Screen name="MyPage" component={MyPageScreen} />
     </Tab.Navigator>
   );
