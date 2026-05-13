@@ -21,7 +21,7 @@ const C = {
   cardBorder: '#d5d5c8',
   badgeBg: '#edf7e6',
   logoutBg: '#FEF2F2',
-  logoutText: '#dc3545',
+  logoutText: '#BA1A1A',
 };
 
 // ─── 메뉴 아이템 타입 ───
@@ -80,11 +80,11 @@ const MyPageScreen = () => {
         {/* 스탯 카드 */}
         <View style={styles.statsRow}>
           <View style={styles.statCard}>
-            <Text style={styles.statValue}>2450</Text>
+            <Text style={styles.statValue1}>2450</Text>
             <Text style={styles.statLabel}>누적 점수</Text>
           </View>
           <View style={styles.statCard}>
-            <Text style={styles.statValue}>15</Text>
+            <Text style={styles.statValue2}>15</Text>
             <Text style={styles.statLabel}>연속 학습일</Text>
           </View>
         </View>
@@ -189,16 +189,20 @@ const styles = StyleSheet.create({
   statCard: {
     flex: 1,
     backgroundColor: C.cardBg,
-    borderRadius: 16,
-    borderWidth: 1.5,
+    borderRadius: 25,
     borderColor: C.cardBorder,
     alignItems: 'center',
     paddingVertical: 18,
   },
-  statValue: {
+  statValue1: {
     fontSize: 24,
     fontWeight: '800',
-    color: '#1a1a1a',
+    color: '#3C6933',
+  },
+  statValue2: {
+    fontSize: 24,
+    fontWeight: '800',
+    color: '#BA1A1A',
   },
   statLabel: {
     fontSize: 12,
@@ -213,9 +217,7 @@ const styles = StyleSheet.create({
   },
   menuRow: {
     backgroundColor: C.cardBg,
-    borderRadius: 16,
-    borderWidth: 1.5,
-    borderColor: C.cardBorder,
+    borderRadius: 25,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
