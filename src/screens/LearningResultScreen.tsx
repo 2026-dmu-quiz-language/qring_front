@@ -49,8 +49,8 @@ const LearningResultScreen = () => {
             <View style={styles.statIconWrap}>
               <Ionicons name="star-outline" size={20} color="#3C6933" />
             </View>
-            <Text style={styles.statValue}>+50</Text>
-            <Text style={styles.statUnit}>EXP</Text>
+            <Text style={styles.statValueScore}>+50</Text>
+            <Text style={styles.statUnitEXP}>EXP</Text>
             <Text style={styles.statLabel}>획득한 점수</Text>
           </View>
 
@@ -59,7 +59,7 @@ const LearningResultScreen = () => {
             <View style={[styles.statIconWrap, { backgroundColor: '#edf7e6' }]}>
               <Ionicons name="checkmark-circle" size={20} color="#3C6933" />
             </View>
-            <Text style={styles.statValue}>6/6</Text>
+            <Text style={styles.statValueCount}>6/6</Text>
             <Text style={styles.statLabel}>정답 횟수</Text>
           </View>
         </View>
@@ -174,15 +174,26 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 10,
   },
-  statValue: {
+  statValueScore: {
     fontSize: 28,
     fontWeight: '800',
-    color: '#1a1a1a',
+    color: '#BFCD8E',
+  },
+  statValueCount: {
+    fontSize: 28,
+    fontWeight: '800',
+    color: '#BFCD8E',
   },
   statUnit: {
     fontSize: 16,
     fontWeight: '700',
     color: '#1a1a1a',
+    marginTop: -2,
+  },
+  statUnitEXP: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#BFCD8E',
     marginTop: -2,
   },
   statLabel: {
