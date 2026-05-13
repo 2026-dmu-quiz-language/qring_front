@@ -3,6 +3,8 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { BottomTabNav } from './BottomTabNav';
 import { Button, Text } from 'react-native';
 import { ScreenWrapper } from '../components/layout/ScreenWrapper';
+import ChatLearnScreen from '../screens/ChatLearnScreen';
+import LearningResultScreen from '../screens/LearningResultScreen';
 
 const Stack = createNativeStackNavigator();
 
@@ -31,8 +33,8 @@ export const RootNavigator = () => {
       <Stack.Screen name="MainTab" component={BottomTabNav} />
       
       {/* Learning Flow (하단 탭이 없는 화면들) */}
-      <Stack.Screen name="Learning" component={LearningScreen} />
-      <Stack.Screen name="Result" component={ResultScreen} />
+      <Stack.Screen name="ChatLearn" component={ChatLearnScreen} />
+      <Stack.Screen name="LearningResult" component={LearningResultScreen} />
     </Stack.Navigator>
   );
 };
