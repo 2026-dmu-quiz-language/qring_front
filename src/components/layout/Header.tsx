@@ -142,7 +142,7 @@ const styles = StyleSheet.create({
     alignItems: 'flex-start',
     justifyContent: 'center',
     paddingLeft: 5,
-    paddingVertical: 5, // 상하 여백 약간 추가
+    paddingVertical: 5, 
   },
   greetingText: {
     fontSize: 14,
