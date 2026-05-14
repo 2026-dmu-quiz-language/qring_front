@@ -136,7 +136,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   
-  // 🌟 추가된 로고 섹션(인사말 + 로고) 스타일
   logoSection: {
     flex: 1,
     alignItems: 'flex-start',
