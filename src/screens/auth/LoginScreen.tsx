@@ -21,6 +21,7 @@ const LoginScreen = ({ navigation }: any) => {
           <Text style={styles.label}>PASSWORD</Text>
           <CustomInput iconName="lock-closed-outline" placeholder="비밀번호를 입력해 주세요." secureTextEntry />
           
+          {/* 🌟 중앙 정렬로 위치가 수정된 비밀번호 찾기 버튼 */}
           <TouchableOpacity style={styles.forgotBtn}>
             <Text style={styles.forgotText}>비밀번호를 잊으셨나요?</Text>
           </TouchableOpacity>
@@ -54,7 +55,10 @@ const styles = StyleSheet.create({
   subTitle: { fontSize: 14, color: '#666', marginBottom: 30 },
   inputSection: { width: '100%', marginBottom: 20 },
   label: { fontSize: 12, fontWeight: 'bold', color: '#333', marginBottom: 5, marginLeft: 5 },
-  forgotBtn: { alignSelf: 'flex-end', marginTop: 5 },
+  
+  // 🌟 이 부분 수정됨: alignSelf를 center로 변경하고 여백 조절
+  forgotBtn: { alignSelf: 'center', marginTop: 15, marginBottom: 10 }, 
+  
   forgotText: { fontSize: 13, color: '#888', textDecorationLine: 'underline' },
   dividerContainer: { flexDirection: 'row', alignItems: 'center', marginVertical: 30, width: '80%' },
   line: { flex: 1, height: 1, backgroundColor: '#DDD' },

@@ -10,10 +10,18 @@ interface HeaderProps {
   leftType?: 'back' | 'close' | 'none';
   rightType?: 'sprout' | 'menu' | 'profile' | 'none';
   onRightPress?: () => void;
-  showLogo?: boolean; // 🌟 요청하신 로고 표시 여부 프롭스 추가
+  showLogo?: boolean; // 🌟 요청하신 로고 표시 여부 프롭스
+  userName?: string;  // 🌟 사용자 이름 프롭스 (기본값: 박수현)
 }
 
-export const Header = ({ title, leftType = 'back', rightType = 'none', onRightPress, showLogo = false }: HeaderProps) => {
+export const Header = ({ 
+  title, 
+  leftType = 'back', 
+  rightType = 'none', 
+  onRightPress, 
+  showLogo = false, 
+  userName = '박수현' 
+}: HeaderProps) => {
   const navigation = useNavigation();
 
   return (
@@ -21,34 +29,46 @@ export const Header = ({ title, leftType = 'back', rightType = 'none', onRightPr
       
       {/* 🌟 1. 상단 바 영역 (시안의 <- 회원가입 🌱 부분) */}
       <View style={styles.topBar}>
-        {/* 왼쪽 영역 */}
-        <View style={styles.leftSection}>
-          {leftType === 'back' && (
-            <TouchableOpacity onPress={() => navigation.goBack()} style={styles.iconButton}>
-              {/* 시안처럼 진한 국방색 적용 */}
-              <Ionicons name="arrow-back" size={24} color={theme.colors.headerTitleText} />
-            </TouchableOpacity>
-          )}
-          {leftType === 'close' && (
-            <TouchableOpacity onPress={() => navigation.goBack()} style={styles.iconButton}>
-              <Ionicons name="close" size={24} color={theme.colors.headerTitleText} />
-            </TouchableOpacity>
-          )}
-        </View>
+        
+        {showLogo ? (
+          // 🌟 showLogo가 true일 때: 왼쪽/중앙 영역을 덮고 인사말과 로고 표시
+          <View style={styles.logoSection}>
+            <Text style={styles.greetingText}>안녕하세요, {userName}님!</Text>
+            <Image 
+              source={require('../../../assets/quring_logo.png')} 
+              style={styles.headerLogo} 
+              resizeMode="contain" 
+            />
+          </View>
+        ) : (
+          // 🌟 showLogo가 false일 때: 기존처럼 타이틀과 뒤로가기 표시
+          <>
+            {/* 왼쪽 영역 */}
+            <View style={styles.leftSection}>
+              {leftType === 'back' && (
+                <TouchableOpacity onPress={() => navigation.goBack()} style={styles.iconButton}>
+                  <Ionicons name="arrow-back" size={24} color={theme.colors.headerTitleText} />
+                </TouchableOpacity>
+              )}
+              {leftType === 'close' && (
+                <TouchableOpacity onPress={() => navigation.goBack()} style={styles.iconButton}>
+                  <Ionicons name="close" size={24} color={theme.colors.headerTitleText} />
+                </TouchableOpacity>
+              )}
+            </View>
 
-        {/* 중앙 타이틀 영역 */}
-        <View style={styles.centerSection}>
-          {title && <Text style={styles.title}>{title}</Text>}
-        </View>
+            {/* 중앙 타이틀 영역 */}
+            <View style={styles.centerSection}>
+              {title && <Text style={styles.title}>{title}</Text>}
+            </View>
+          </>
+        )}
 
         {/* 오른쪽 영역 */}
         <View style={styles.rightSection}>
           {rightType === 'sprout' && (
             <View style={styles.sproutCircle}>
-              {/* 시안처럼 나중에 이미지를 넣을 수 있게 세팅 (현재는 임시 새싹 이모지) */}
               <Text style={{ fontSize: 16 }}>🌱</Text>
-              {/* 💡 나중에 위 Text를 지우고 아래 이미지 태그 주석을 푸세요! */}
-              {/* <Image source={require('../../../assets/icon.png')} style={{width: 20, height: 20}} resizeMode="contain" /> */}
             </View>
           )}
           {rightType === 'menu' && (
@@ -76,7 +96,7 @@ const styles = StyleSheet.create({
     paddingTop: 10, // 상태바 여백 (필요시 조절)
   },
   topBar: {
-    height: 56,
+    minHeight: 56, // 🌟 높이가 텍스트+로고에 맞춰 유연하게 늘어나도록 height -> minHeight로 변경
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
@@ -115,12 +135,23 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
+  
+  // 🌟 추가된 로고 섹션(인사말 + 로고) 스타일
   logoSection: {
-    paddingHorizontal: 25, // 로고가 타이틀 라인과 예쁘게 맞도록 여백 설정
-    marginTop: 5,
+    flex: 1,
+    alignItems: 'flex-start',
+    justifyContent: 'center',
+    paddingLeft: 5,
+    paddingVertical: 5, // 상하 여백 약간 추가
   },
-  logoImage: {
-    width: 110, // 로고 크기
-    height: 35,
+  greetingText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#555',
+    marginBottom: 4,
+  },
+  headerLogo: {
+    width: 80,
+    height: 24,
   }
 });
