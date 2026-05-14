@@ -4,6 +4,9 @@ export const theme = {
     secondary: '#AAB87B',
     tertiary: '#B7A07A',
     background: '#E9E9DB', // 모든 화면의 공통 배경색
+    lightPeach: '#F6D3BF',
+    headerIconBackground: '#F0F2EE', // 왼쪽 뒤로가기 버튼 배경 (연한 회색)
+    headerTitleText: '#4E5E43',
     text: '#333333',
     white: '#FFFFFF',
   },
