@@ -6,6 +6,8 @@ import { ScreenWrapper } from '../components/layout/ScreenWrapper';
 import SplashScreen from '../screens/auth/SplashScreen'; 
 import LoginScreen from '../screens/auth/LoginScreen';
 import SignUpScreen from '../screens/auth/SignUpScreen'; 
+import ChatLearnScreen from '../screens/ChatLearnScreen';
+import LearningResultScreen from '../screens/LearningResultScreen';
 
 const Stack = createNativeStackNavigator();
 
@@ -28,8 +30,8 @@ export const RootNavigator = () => {
       <Stack.Screen name="MainTab" component={BottomTabNav} />
       
       {/* Learning Flow (하단 탭이 없는 화면들) */}
-      <Stack.Screen name="Learning" component={LearningScreen} />
-      <Stack.Screen name="Result" component={ResultScreen} />
+      <Stack.Screen name="ChatLearn" component={ChatLearnScreen} />
+      <Stack.Screen name="LearningResult" component={LearningResultScreen} />
     </Stack.Navigator>
   );
 };

@@ -5,28 +5,11 @@ import { Ionicons } from '@expo/vector-icons';
 import { theme } from '../constants/theme';
 import { ScreenWrapper } from '../components/layout/ScreenWrapper';
 import { Header } from '../components/layout/Header';
+import StoryHomeScreen from '../screens/StoryHomeScreen';
+import DashboardScreen from '../screens/DashboardScreen';
+import MyPageScreen from '../screens/MypageScreen';
 
 const Tab = createBottomTabNavigator();
-
-// 테스트용 더미 스크린들 (헤더 적용 예시)
-const DummyDashboard = () => (
-  <ScreenWrapper>
-    {/* 대시보드는 특수 헤더라 일단 비워둠 */}
-    <Text style={{ marginTop: 20 }}>메인 대시보드 화면</Text>
-  </ScreenWrapper>
-);
-const DummyContent = () => (
-  <ScreenWrapper>
-    <Header title="스토리 홈" leftType="none" rightType="profile" />
-    <Text>콘텐츠 선택 화면</Text>
-  </ScreenWrapper>
-);
-const DummyMyPage = () => (
-  <ScreenWrapper>
-    <Header title="마이페이지" leftType="none" rightType="none" />
-    <Text>마이페이지 화면</Text>
-  </ScreenWrapper>
-);
 
 export const BottomTabNav = () => {
   return (
@@ -44,10 +27,10 @@ export const BottomTabNav = () => {
           let iconName: keyof typeof Ionicons.glyphMap = 'help';
           let label = '';
 
-          if (route.name === 'Dashboard') {
+          if (route.name === 'Content') {
             iconName = 'trending-up'; 
             label = '학습';
-          } else if (route.name === 'Content') {
+          } else if (route.name === 'Dashboard') {
             iconName = 'book-outline'; 
             label = '홈';
           } else if (route.name === 'MyPage') {
@@ -71,9 +54,9 @@ export const BottomTabNav = () => {
         },
       })}
     >
-      <Tab.Screen name="Dashboard" component={DummyDashboard} />
-      <Tab.Screen name="Content" component={DummyContent} />
-      <Tab.Screen name="MyPage" component={DummyMyPage} />
+      <Tab.Screen name="Content" component={StoryHomeScreen} />
+      <Tab.Screen name="Dashboard"  component={DashboardScreen}/>
+      <Tab.Screen name="MyPage" component={MyPageScreen} />
     </Tab.Navigator>
   );
 };
@@ -88,6 +71,8 @@ const styles = StyleSheet.create({
     backgroundColor: '#FAFAF5',
     borderRadius: 35, // 좀 더 둥글게 처리
     height: 75, // 탭바 높이를 조금 더 확보
+    width: 330,
+    marginLeft: 15,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.1,
@@ -99,10 +84,10 @@ const styles = StyleSheet.create({
     // 🌟 배경(Pill)과 아이콘을 한 몸으로 묶어 중앙 정렬
     alignItems: 'center',
     justifyContent: 'center',
-    width: 85, // 활성화 배경의 가로 길이
+    width: 65, // 활성화 배경의 가로 길이
     height: 50, // 활성화 배경의 세로 길이
-    borderRadius: 25, // 알약 모양 유지
-    marginTop: 12, // 탭바 내부에서 아이콘 세트를 중앙으로 내림
+    borderRadius: 16, // 알약 모양 유지
+    marginTop: 40, // 탭바 내부에서 아이콘 세트를 중앙으로 내림
   },
   tabItemActive: {
     backgroundColor: theme.colors.secondary, // #AAB87B (연두색 배경)
