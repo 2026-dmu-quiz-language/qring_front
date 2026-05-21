@@ -22,10 +22,11 @@ const CATEGORIES: Category[] = [
   { id: 'story', label: '스토리', emoji: '🎬' },
 ];
 
+// 🌟 1. 더미 컬러를 부드러운 큐링 테마 컬러로 변경하고 부제목을 추가해 생동감을 줬습니다.
 const EPISODES: Episode[] = [
-  { id: 1, title: 'EP.1', quizCount: 6, rating: 4.9, bgColor: '#16213e' },
-  { id: 2, title: 'EP.2', quizCount: 8, rating: 4.9, bgColor: '#2d3436' },
-  { id: 3, title: 'EP.3', quizCount: 5, rating: 4.7, bgColor: '#2c3e50' },
+  { id: 1, title: 'EP.1 달콤한 첫 만남', quizCount: 6, rating: 4.9, bgColor: '#AAB87B' }, 
+  { id: 2, title: 'EP.2 엇갈린 오해', quizCount: 8, rating: 4.9, bgColor: '#B7A07A' },
+  { id: 3, title: 'EP.3 다시 만난 우연', quizCount: 5, rating: 4.7, bgColor: '#889873' },
 ];
 
 // ─── 메인 컴포넌트 ───
@@ -35,22 +36,18 @@ const StoryHomeScreen = () => {
 
   return (
     <ScreenWrapper style={{ paddingHorizontal: 0 }}>
-      {/* ── Header ── */}
       <Header title="스토리 홈" leftType="none" rightType="profile" />
 
-      {/* ── Body ── */}
       <ScrollView
         style={styles.body}
         contentContainerStyle={styles.bodyContent}
         showsVerticalScrollIndicator={false}
       >
-        {/* Title */}
         <Text style={styles.title}>어떤 컨텐츠를 풀어볼까요?</Text>
         <Text style={styles.subtitle}>
           오늘 나의 도파민을 채워줄 컨텐츠를 골라보세요.
         </Text>
 
-        {/* Category chips */}
         <View style={styles.chipRow}>
           {CATEGORIES.map((cat) => {
             const isActive = cat.id === activeCategory;
@@ -67,7 +64,7 @@ const StoryHomeScreen = () => {
                 <Text
                   style={[
                     styles.chipLabel,
-                    { color: isActive ? '#fff' : '#555' },
+                    { color: isActive ? '#fff' : '#666' },
                   ]}
                 >
                   {cat.label}
@@ -77,7 +74,6 @@ const StoryHomeScreen = () => {
           })}
         </View>
 
-        {/* Episode cards */}
         {EPISODES.map((ep) => (
           <TouchableOpacity
             key={ep.id}
@@ -88,10 +84,9 @@ const StoryHomeScreen = () => {
               episodeTitle: ep.title,
             })}
           >
-            {/* 카드 이미지 영역 */}
+            {/* 🌟 나중에 여기에 진짜 썸네일 이미지가 들어갈 자리입니다 */}
             <View style={[styles.cardImage, { backgroundColor: ep.bgColor }]} />
 
-            {/* 카드 정보 */}
             <View style={styles.cardInfo}>
               <Text style={styles.cardTitle}>{ep.title}</Text>
               <View style={styles.cardMeta}>
@@ -110,103 +105,98 @@ const StoryHomeScreen = () => {
 
 // ─── 스타일 ───
 const styles = StyleSheet.create({
-  // Body
   body: {
     flex: 1,
   },
   bodyContent: {
     padding: 20,
-    paddingBottom: 120,
+    // 🌟 3. 하단 바텀 네비게이션에 카드가 가려지지 않도록 여백을 150으로 대폭 늘렸습니다.
+    paddingBottom: 150, 
   },
-
-  // Title
   title: {
     fontSize: 22,
     fontWeight: '800',
-    color: theme.colors.text,
+    color: '#333',
     lineHeight: 30,
   },
   subtitle: {
     marginTop: 6,
-    fontSize: 13,
+    fontSize: 14,
     color: '#888',
   },
-
-  // Category chips
   chipRow: {
     flexDirection: 'row',
     gap: 8,
-    marginTop: 16,
+    marginTop: 20, // 타이틀과 칩 사이의 여백 추가
+    marginBottom: 10,
   },
   chip: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 20,
+    gap: 6,
+    paddingHorizontal: 18,
+    paddingVertical: 10,
+    borderRadius: 25,
   },
   chipActive: {
     backgroundColor: theme.colors.primary,
   },
   chipInactive: {
-    backgroundColor: '#f5f2eb',
+    backgroundColor: '#F3F4EB', // 회원가입 폼에서 썼던 예쁜 크림색으로 통일
   },
   chipEmoji: {
-    fontSize: 13,
+    fontSize: 14,
   },
   chipLabel: {
-    fontSize: 13,
+    fontSize: 14,
     fontWeight: '600',
   },
-
-  // Episode cards
   card: {
-    borderRadius: 40,
+    borderRadius: 24,
     overflow: 'hidden',
     backgroundColor: theme.colors.white,
-    borderWidth: 1.5,
-    borderColor: '#d5d5c8',
-    marginTop: 16,
+    // 🌟 2. 답답했던 테두리(border)를 과감히 삭제하고 부드러운 그림자만 남겼습니다.
+    borderWidth: 0, 
+    marginTop: 20,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.06,
-    shadowRadius: 12,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.05, // 그림자를 더 연하고 고급스럽게
+    shadowRadius: 15,
     elevation: 3,
   },
   cardImage: {
-    height: 180,
+    height: 130, // 비율을 살짝 조정
   },
   cardInfo: {
-    padding: 14,
-    paddingBottom: 16,
+    // 🌟 3. 카드 안쪽 여백을 14 -> 20으로 늘려서 숨통을 틔워줬습니다.
+    padding: 20, 
   },
   cardTitle: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: theme.colors.text,
+    fontSize: 17,
+    fontWeight: 'bold',
+    color: '#333',
   },
   cardMeta: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginTop: 8,
+    marginTop: 12, // 타이틀과 뱃지 사이 여백 확대
   },
   badge: {
     backgroundColor: '#edf7e6',
     paddingHorizontal: 10,
-    paddingVertical: 3,
-    borderRadius: 10,
+    paddingVertical: 4,
+    borderRadius: 12,
   },
   badgeText: {
     fontSize: 12,
-    fontWeight: '600',
+    fontWeight: 'bold',
     color: theme.colors.primary,
   },
   rating: {
     fontSize: 13,
     color: '#888',
-    fontWeight: '500',
+    fontWeight: 'bold',
   },
 });
 
