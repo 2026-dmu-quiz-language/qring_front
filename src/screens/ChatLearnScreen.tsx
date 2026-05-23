@@ -1,13 +1,12 @@
-// screens/ChatLearn/ChatLearnScreen.tsx
-
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
   ScrollView,
+  TextInput,
   TouchableOpacity,
   StyleSheet,
-  Modal, // 🌟 팝업창을 만들기 위해 Modal 추가!
+  Modal,
 } from 'react-native';
 import { useRoute, useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -16,110 +15,86 @@ import type { LearnStackParamList } from '../constants/navigation';
 import { theme } from '../constants/theme';
 import { ScreenWrapper } from '../components/layout/ScreenWrapper';
 import { Header } from '../components/layout/Header';
+import { getChatData } from '../api/content';
+import type { Script, Quiz } from '../api/content';
 
-// ─── 메시지 타입 ───
-interface Message {
-  id: number;
-  text: string;
-  isQuizBreak: boolean;
+// ─── 화면에 보여줄 메시지 단위 ───
+interface DisplayMessage {
+  type: 'script' | 'quiz';
+  script?: Script;
   quiz?: Quiz;
 }
 
-interface Quiz {
-  question: string;
-  options: string[];
-  correctIndex: number;
-}
-
-// ─── 더미 데이터 ───
-const DUMMY_MESSAGES: Message[] = [
-  { id: 1, text: '나 대학교 다닐 때 시험기간마다 도서관 3층 64번 자리에만 앉았음.', isQuizBreak: false },
-  { id: 2, text: '창가 자리라서 햇빛도 잘 들고 에어컨 바람도 안 와서 딱 좋았거든.', isQuizBreak: false },
-  { id: 3, text: '근데 어느 날부터 그 자리에 항상 먼저 와있는 애가 있는 거임.', isQuizBreak: false },
-  { id: 4, text: '65번 자리에 앉아서 책 읽고 있더라고.', isQuizBreak: false },
-  { id: 5, text: '처음엔 짜증났음. 내 자리 옆에 왜 앉냐고.', isQuizBreak: false },
-  { id: 6, text: '그런데 그 애가 책상에 A4 용지 하나를 올려두고 가는 거야.', isQuizBreak: false },
-  { id: 7, text: '거기에 연필로 "64번 자리 비워둘게요" 이렇게 적어둔 거임.', isQuizBreak: false },
-  { id: 8, text: '뭔가 이상하다 싶었는데 일단 고맙긴 해서 그냥 앉았음.', isQuizBreak: false },
-  { id: 9, text: '다음 날도 똑같더라고. 65번에 그 애 있고, 64번엔 쪽지.', isQuizBreak: false },
-  {
-    id: 10,
-    text: '',
-    isQuizBreak: true,
-    quiz: {
-      question: "다음 중 '짜증나다, 화나다'의 영어 표현으로 알맞은 것은?",
-      options: ["annoyed", "amused", "amazed", "ashamed"],
-      correctIndex: 0,
-    },
-  },
-];
-
-// ─── 채팅 버블 컴포넌트 ───
-const ChatBubble = ({ message }: { message: Message }) => {
-  return (
-    <View style={styles.bubbleRow}>
-      <View style={styles.avatar} />
-      <View style={styles.bubble}>
-        <Text style={styles.bubbleText}>{message.text}</Text>
-      </View>
+// ─── 채팅 버블 ───
+const ChatBubble = ({ text }: { text: string }) => (
+  <View style={styles.bubbleRow}>
+    <View style={styles.avatar} />
+    <View style={styles.bubble}>
+      <Text style={styles.bubbleText}>{text}</Text>
     </View>
-  );
-};
+  </View>
+);
 
-// ─── 퀴즈 브레이크 (바텀 시트 + 팝업 스타일) ───
-const QuizBreak = ({ quiz, onComplete }: { quiz: Quiz; onComplete: () => void }) => {
+// ─── 퀴즈 브레이크 (객관식 / 빈칸 채우기) ───
+const ChoiceQuiz = ({
+  quiz,
+  hint,
+  onComplete,
+}: {
+  quiz: Quiz;
+  hint: string;
+  onComplete: () => void;
+}) => {
   const [selected, setSelected] = useState<number | null>(null);
   const [submitted, setSubmitted] = useState(false);
-  // 🌟 팝업창(모달) 상태 관리 추가
   const [isModalVisible, setModalVisible] = useState(false);
   const [isCorrect, setIsCorrect] = useState(false);
+  const [showHint, setShowHint] = useState(false);
 
-  const handleSelect = (index: number) => {
-    if (!submitted) setSelected(index);
-  };
-
-  // 🌟 정답 확인 버튼을 눌렀을 때의 로직
   const handleSubmit = () => {
-    if (selected !== null) {
-      setSubmitted(true);
-      setIsCorrect(selected === quiz.correctIndex); // 정답 여부 판별
-      setModalVisible(true); // 팝업창 띄우기
-    }
+    if (selected === null) return;
+    const answer = quiz.options[selected];
+    const correct =
+      answer === quiz.correct_answer ||
+      quiz.acceptable_answers.includes(answer);
+    setSubmitted(true);
+    setIsCorrect(correct);
+    setModalVisible(true);
   };
 
   const getOptionStyle = (index: number) => {
     if (!submitted && selected === index) return styles.optionSelected;
-    if (submitted && index === quiz.correctIndex) return styles.optionCorrect;
-    if (submitted && selected === index && index !== quiz.correctIndex) return styles.optionWrong;
+    if (submitted && quiz.options[index] === quiz.correct_answer) return styles.optionCorrect;
+    if (submitted && selected === index && quiz.options[index] !== quiz.correct_answer) return styles.optionWrong;
     return styles.optionDefault;
   };
 
   const getRadioStyle = (index: number) => {
     if (!submitted && selected === index) return styles.radioSelected;
-    if (submitted && index === quiz.correctIndex) return styles.radioCorrect;
-    if (submitted && selected === index && index !== quiz.correctIndex) return styles.radioWrong;
+    if (submitted && quiz.options[index] === quiz.correct_answer) return styles.radioCorrect;
+    if (submitted && selected === index && quiz.options[index] !== quiz.correct_answer) return styles.radioWrong;
     return styles.radioDefault;
   };
 
   const showCheck = (index: number) => {
     if (!submitted && selected === index) return true;
-    if (submitted && index === quiz.correctIndex) return true;
+    if (submitted && quiz.options[index] === quiz.correct_answer) return true;
     return false;
   };
 
   return (
     <View style={styles.quizCard}>
       <View style={styles.dragHandle} />
-      
-      <Text style={styles.quizTitle}>✨ 정답을 선택하세요</Text>
+      <Text style={styles.quizLabel}>
+        {quiz.quiz_type === 'fill_in_blank' ? '빈칸 채우기' : '객관식'}
+      </Text>
       <Text style={styles.quizQuestion}>{quiz.question}</Text>
 
-      {/* 선택지 */}
       <View style={styles.optionsWrap}>
         {quiz.options.map((option, index) => (
           <TouchableOpacity
             key={index}
-            onPress={() => handleSelect(index)}
+            onPress={() => !submitted && setSelected(index)}
             style={[styles.optionRow, getOptionStyle(index)]}
             activeOpacity={0.7}
             disabled={submitted}
@@ -132,7 +107,6 @@ const QuizBreak = ({ quiz, onComplete }: { quiz: Quiz; onComplete: () => void })
         ))}
       </View>
 
-      {/* 🌟 제출 버튼 (제출 후에는 비활성화 상태 유지) */}
       <TouchableOpacity
         style={[styles.nextButton, (selected === null || submitted) && styles.nextButtonDisabled]}
         onPress={handleSubmit}
@@ -142,35 +116,130 @@ const QuizBreak = ({ quiz, onComplete }: { quiz: Quiz; onComplete: () => void })
         <Text style={styles.nextButtonText}>정답 확인하기</Text>
       </TouchableOpacity>
 
-      {/* 힌트 */}
       {!submitted && (
-        <TouchableOpacity style={styles.hintButton} onPress={() => {}}>
+        <TouchableOpacity style={styles.hintButton} onPress={() => setShowHint(true)}>
           <Text style={styles.hintText}>힌트보기</Text>
         </TouchableOpacity>
       )}
+      {showHint && !submitted && (
+        <Text style={styles.hintContent}>{hint}</Text>
+      )}
 
-      {/* 🌟 결과 팝업창 (Modal) */}
-      <Modal
-        transparent={true}
-        visible={isModalVisible}
-        animationType="fade"
-      >
+      <Modal transparent visible={isModalVisible} animationType="fade">
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
-            {/* 정답/오답에 따른 텍스트 분기 */}
             <Text style={[styles.modalTitle, { color: isCorrect ? theme.colors.primary : '#dc3545' }]}>
               {isCorrect ? '정답입니다! 🎉' : '아쉽네요! 🥲'}
             </Text>
             <Text style={styles.modalDesc}>
-              {isCorrect ? '완벽하게 이해하셨네요!\n다음 스토리로 넘어가볼까요?' : '오답입니다.\n다시 한번 확인해 볼까요?'}
+              {isCorrect
+                ? quiz.explanation || '완벽하게 이해하셨네요!\n다음 스토리로 넘어가볼까요?'
+                : '오답입니다.\n다시 한번 확인해 볼까요?'}
             </Text>
-
-            <TouchableOpacity 
-              style={[styles.modalButton, { backgroundColor: isCorrect ? theme.colors.primary : '#dc3545' }]} 
+            <TouchableOpacity
+              style={[styles.modalButton, { backgroundColor: isCorrect ? theme.colors.primary : '#dc3545' }]}
               onPress={() => {
                 setModalVisible(false);
-                if (isCorrect) onComplete(); // 정답이면 다음 화면으로 이동
-                else setSubmitted(false); // 오답이면 모달 닫고 다시 풀게 함
+                if (isCorrect) {
+                  onComplete();
+                } else {
+                  setSubmitted(false);
+                  setSelected(null);
+                }
+              }}
+            >
+              <Text style={styles.modalButtonText}>
+                {isCorrect ? '다음으로 ➔' : '다시 풀기'}
+              </Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+    </View>
+  );
+};
+
+// ─── 주관식 퀴즈 ───
+const SubjectiveQuiz = ({
+  quiz,
+  hint,
+  onComplete,
+}: {
+  quiz: Quiz;
+  hint: string;
+  onComplete: () => void;
+}) => {
+  const [answer, setAnswer] = useState('');
+  const [submitted, setSubmitted] = useState(false);
+  const [isModalVisible, setModalVisible] = useState(false);
+  const [isCorrect, setIsCorrect] = useState(false);
+  const [showHint, setShowHint] = useState(false);
+
+  const handleSubmit = () => {
+    if (!answer.trim()) return;
+    const trimmed = answer.trim().toLowerCase();
+    const correct =
+      trimmed === quiz.correct_answer.toLowerCase() ||
+      quiz.acceptable_answers.some((a) => a.toLowerCase() === trimmed);
+    setSubmitted(true);
+    setIsCorrect(correct);
+    setModalVisible(true);
+  };
+
+  return (
+    <View style={styles.quizCard}>
+      <View style={styles.dragHandle} />
+      <Text style={styles.quizLabel}>주관식</Text>
+      <Text style={styles.quizQuestion}>{quiz.question}</Text>
+
+      <TextInput
+        style={styles.textInput}
+        placeholder="답을 입력하세요"
+        placeholderTextColor="#aaa"
+        value={answer}
+        onChangeText={setAnswer}
+        editable={!submitted}
+      />
+
+      <TouchableOpacity
+        style={[styles.nextButton, (!answer.trim() || submitted) && styles.nextButtonDisabled]}
+        onPress={handleSubmit}
+        disabled={!answer.trim() || submitted}
+        activeOpacity={0.8}
+      >
+        <Text style={styles.nextButtonText}>정답 확인하기</Text>
+      </TouchableOpacity>
+
+      {!submitted && (
+        <TouchableOpacity style={styles.hintButton} onPress={() => setShowHint(true)}>
+          <Text style={styles.hintText}>힌트보기</Text>
+        </TouchableOpacity>
+      )}
+      {showHint && !submitted && (
+        <Text style={styles.hintContent}>{hint}</Text>
+      )}
+
+      <Modal transparent visible={isModalVisible} animationType="fade">
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <Text style={[styles.modalTitle, { color: isCorrect ? theme.colors.primary : '#dc3545' }]}>
+              {isCorrect ? '정답입니다! 🎉' : '아쉽네요! 🥲'}
+            </Text>
+            <Text style={styles.modalDesc}>
+              {isCorrect
+                ? quiz.explanation || '완벽하게 이해하셨네요!\n다음 스토리로 넘어가볼까요?'
+                : `정답은 "${quiz.correct_answer}" 입니다.\n다시 도전해볼까요?`}
+            </Text>
+            <TouchableOpacity
+              style={[styles.modalButton, { backgroundColor: isCorrect ? theme.colors.primary : '#dc3545' }]}
+              onPress={() => {
+                setModalVisible(false);
+                if (isCorrect) {
+                  onComplete();
+                } else {
+                  setSubmitted(false);
+                  setAnswer('');
+                }
               }}
             >
               <Text style={styles.modalButtonText}>
@@ -188,39 +257,143 @@ const QuizBreak = ({ quiz, onComplete }: { quiz: Quiz; onComplete: () => void })
 const ChatLearnScreen = () => {
   const navigation = useNavigation<NativeStackNavigationProp<LearnStackParamList>>();
   const route = useRoute<RouteProp<LearnStackParamList, 'ChatLearn'>>();
-  const { episodeTitle } = route.params;
+  const { episodeId, episodeTitle } = route.params;
 
+  const [messages, setMessages] = useState<DisplayMessage[]>([]);
+  const [hint, setHint] = useState('');
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [visibleCount, setVisibleCount] = useState(1);
 
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const data = await getChatData(episodeId);
+        console.log('=== /chat 응답 ===', JSON.stringify(data, null, 2));
+
+        if (!data || !data.script || data.script.length === 0) {
+          setError(`API 연결 성공, 데이터 비어있음\n응답: ${JSON.stringify(data)}`);
+          return;
+        }
+
+        setHint(data.hint);
+
+        const quizMap = new Map<number, Quiz>();
+        data.quiz.forEach((q) => quizMap.set(q.script_id, q));
+
+        const display: DisplayMessage[] = [];
+        data.script.forEach((s) => {
+          display.push({ type: 'script', script: s });
+          const linkedQuiz = quizMap.get(s.script_id);
+          if (linkedQuiz) {
+            display.push({ type: 'quiz', quiz: linkedQuiz });
+          }
+        });
+
+        setMessages(display);
+      } catch (err: any) {
+        const status = err?.response?.status;
+        const code = err?.code;
+
+        if (code === 'ECONNABORTED') {
+          setError('서버 응답 시간 초과 (timeout)');
+        } else if (code === 'ERR_NETWORK' || !status) {
+          setError('서버에 연결할 수 없음 (네트워크 오류 또는 서버 꺼짐)');
+        } else if (status === 404) {
+          setError('API 경로를 찾을 수 없음 (404)');
+        } else if (status === 401 || status === 403) {
+          setError(`인증 오류 (${status}) — 토큰 확인 필요`);
+        } else if (status >= 500) {
+          setError(`서버 내부 오류 (${status})`);
+        } else {
+          setError(`알 수 없는 오류 (${status || code})`);
+        }
+
+        console.log('채팅 데이터 로딩 실패:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchData();
+  }, [episodeId]);
+
   const handleTap = () => {
-    if (visibleCount >= DUMMY_MESSAGES.length) return;
-    if (visibleCount > 0 && DUMMY_MESSAGES[visibleCount - 1]?.isQuizBreak) return;
+    if (visibleCount >= messages.length) return;
+    // 퀴즈가 보이면 퀴즈 풀기 전까지 탭 진행 막기
+    const lastVisible = messages[visibleCount - 1];
+    if (lastVisible?.type === 'quiz') return;
     setVisibleCount((prev) => prev + 1);
   };
 
-  const isQuizVisible = DUMMY_MESSAGES.slice(0, visibleCount).some(msg => msg.isQuizBreak);
+  const currentQuiz = messages.slice(0, visibleCount).find(
+    (msg, i) => msg.type === 'quiz' && i === visibleCount - 1
+  );
+
+  const handleQuizComplete = () => {
+    if (visibleCount >= messages.length) {
+      navigation.navigate('LearningResult');
+    } else {
+      setVisibleCount((prev) => prev + 1);
+    }
+  };
+
+  if (loading) {
+    return (
+      <ScreenWrapper>
+        <Header title={episodeTitle} leftType="back" rightType="menu" />
+        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+          <Text>로딩 중...</Text>
+        </View>
+      </ScreenWrapper>
+    );
+  }
+
+  if (error) {
+    return (
+      <ScreenWrapper>
+        <Header title={episodeTitle} leftType="back" rightType="menu" />
+        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', paddingHorizontal: 30 }}>
+          <Text style={{ fontSize: 16, fontWeight: '700', color: '#dc3545', marginBottom: 8 }}>
+            데이터를 불러올 수 없습니다
+          </Text>
+          <Text style={{ fontSize: 13, color: '#888', textAlign: 'center', lineHeight: 20 }}>
+            {error}
+          </Text>
+        </View>
+      </ScreenWrapper>
+    );
+  }
 
   return (
     <ScreenWrapper style={{ paddingHorizontal: 0 }}>
       <Header title={episodeTitle} leftType="back" rightType="menu" />
 
       <ScrollView
-        style={[styles.body, isQuizVisible && styles.bodyWithQuiz]}
+        style={[styles.body, currentQuiz && styles.bodyWithQuiz]}
         contentContainerStyle={styles.bodyContent}
         showsVerticalScrollIndicator={false}
         onTouchEnd={handleTap}
       >
-        {DUMMY_MESSAGES.slice(0, visibleCount).map((msg) => {
-          if (msg.isQuizBreak) return null; 
-          return <ChatBubble key={msg.id} message={msg} />;
+        {messages.slice(0, visibleCount).map((msg, index) => {
+          if (msg.type === 'quiz') return null;
+          return <ChatBubble key={index} text={msg.script!.text} />;
         })}
       </ScrollView>
 
-      {isQuizVisible && DUMMY_MESSAGES[visibleCount - 1]?.quiz && (
-        <QuizBreak
-          quiz={DUMMY_MESSAGES[visibleCount - 1].quiz!}
-          onComplete={() => navigation.navigate('LearningResult')}
-        />
+      {currentQuiz?.quiz && (
+        currentQuiz.quiz.quiz_type === 'subjective' ? (
+          <SubjectiveQuiz
+            quiz={currentQuiz.quiz}
+            hint={hint}
+            onComplete={handleQuizComplete}
+          />
+        ) : (
+          <ChoiceQuiz
+            quiz={currentQuiz.quiz}
+            hint={hint}
+            onComplete={handleQuizComplete}
+          />
+        )
       )}
     </ScreenWrapper>
   );
@@ -231,7 +404,7 @@ const styles = StyleSheet.create({
   body: { flex: 1, backgroundColor: theme.colors.background },
   bodyWithQuiz: {},
   bodyContent: { padding: 20, paddingBottom: 400 },
-  
+
   bubbleRow: { flexDirection: 'row', alignItems: 'flex-start', marginBottom: 16 },
   avatar: {
     width: 38, height: 38, borderRadius: 19, backgroundColor: theme.colors.white, marginRight: 12,
@@ -246,10 +419,10 @@ const styles = StyleSheet.create({
   quizCard: {
     position: 'absolute', bottom: 0, left: 0, right: 0, backgroundColor: '#FFFFFF',
     borderTopLeftRadius: 32, borderTopRightRadius: 32, paddingHorizontal: 24, paddingTop: 15, paddingBottom: 40,
-    shadowColor: '#000', shadowOffset: { width: 0, height: -5 }, shadowOpacity: 0.08, shadowRadius: 15, elevation: 20, 
+    shadowColor: '#000', shadowOffset: { width: 0, height: -5 }, shadowOpacity: 0.08, shadowRadius: 15, elevation: 20,
   },
   dragHandle: { width: 40, height: 5, borderRadius: 3, backgroundColor: '#E0E0E0', alignSelf: 'center', marginBottom: 20 },
-  quizTitle: { fontSize: 20, fontWeight: '800', color: '#333', marginBottom: 8 },
+  quizLabel: { fontSize: 13, fontWeight: '600', color: theme.colors.primary, marginBottom: 6 },
   quizQuestion: { fontSize: 15, color: '#555', lineHeight: 22, marginBottom: 24 },
 
   optionsWrap: { gap: 12, marginBottom: 24 },
@@ -270,55 +443,28 @@ const styles = StyleSheet.create({
   radioWrong: { borderColor: '#dc3545', backgroundColor: '#dc3545' },
   radioInner: { width: 10, height: 10, borderRadius: 5, backgroundColor: '#fff' },
 
+  textInput: {
+    borderWidth: 1.5, borderColor: '#E8E8E8', borderRadius: 16, paddingHorizontal: 18, paddingVertical: 14,
+    fontSize: 15, color: '#333', backgroundColor: '#FAFAFA', marginBottom: 24,
+  },
+
   nextButton: { backgroundColor: theme.colors.primary, borderRadius: 18, paddingVertical: 16, alignItems: 'center' },
   nextButtonDisabled: { backgroundColor: '#C5D1BC' },
   nextButtonText: { fontSize: 16, fontWeight: '700', color: '#FFFFFF' },
 
   hintButton: { marginTop: 16, alignItems: 'center' },
   hintText: { fontSize: 13, fontWeight: '600', color: '#888', textDecorationLine: 'underline' },
+  hintContent: { fontSize: 13, color: theme.colors.primary, textAlign: 'center', marginTop: 8 },
 
-  // 🌟 모달(팝업) 스타일
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.4)', // 배경을 살짝 어둡게
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
+  modalOverlay: { flex: 1, backgroundColor: 'rgba(0, 0, 0, 0.4)', justifyContent: 'center', alignItems: 'center' },
   modalContent: {
-    width: '80%',
-    backgroundColor: '#FFF',
-    borderRadius: 24,
-    padding: 30,
-    alignItems: 'center',
-    elevation: 5,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 4,
+    width: '80%', backgroundColor: '#FFF', borderRadius: 24, padding: 30, alignItems: 'center',
+    elevation: 5, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.25, shadowRadius: 4,
   },
-  modalTitle: {
-    fontSize: 22,
-    fontWeight: '800',
-    marginBottom: 12,
-  },
-  modalDesc: {
-    fontSize: 15,
-    color: '#555',
-    textAlign: 'center',
-    lineHeight: 22,
-    marginBottom: 24,
-  },
-  modalButton: {
-    width: '100%',
-    borderRadius: 16,
-    paddingVertical: 14,
-    alignItems: 'center',
-  },
-  modalButtonText: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: '#FFF',
-  },
+  modalTitle: { fontSize: 22, fontWeight: '800', marginBottom: 12 },
+  modalDesc: { fontSize: 15, color: '#555', textAlign: 'center', lineHeight: 22, marginBottom: 24 },
+  modalButton: { width: '100%', borderRadius: 16, paddingVertical: 14, alignItems: 'center' },
+  modalButtonText: { fontSize: 16, fontWeight: '700', color: '#FFF' },
 });
 
 export default ChatLearnScreen;
