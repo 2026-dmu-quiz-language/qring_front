@@ -7,6 +7,7 @@ import {
   ScrollView,
   TouchableOpacity,
   StyleSheet,
+  ActivityIndicator,
 } from 'react-native';
 import Svg, { Circle } from 'react-native-svg';
 import { theme } from '../constants/theme';
@@ -97,7 +98,8 @@ const DashboardScreen = () => {
     return(
       <ScreenWrapper>
         <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-          <Text>로딩 중...</Text>
+          <ActivityIndicator size="large" color={theme.colors.primary} />
+          <Text style={{ marginTop: 12, color: '#888' }}>로딩 중...</Text>
         </View>
       </ScreenWrapper>
     );
