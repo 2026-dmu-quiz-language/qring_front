@@ -1,20 +1,17 @@
-// screens/auth/SignUpScreen.tsx
+// screens/auth/SocialSignUpScreen.tsx
 
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Image, Alert } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-// 🌟 axios 임포트
 import axios from 'axios';
 import { ScreenWrapper } from '../../components/layout/ScreenWrapper';
 import { Header } from '../../components/layout/Header';
-import { CustomInput } from '../../components/common/Input';
 import { CustomButton } from '../../components/common/Button';
 import { theme } from '../../constants/theme';
 
-const SignUpScreen = ({ navigation }: any) => {
-  const [id, setId] = useState('');
-  const [password, setPassword] = useState('');
-  const [passwordConfirm, setPasswordConfirm] = useState('');
+const SocialSignUpScreen = ({ route, navigation }: any) => {
+  // 🌟 로그인 화면에서 넘겨준 소셜 제공자(google 등)와 토큰 정보를 받아옵니다.
+  const { provider, token } = route.params || {};
 
   const [selectedLang, setSelectedLang] = useState('영어'); 
   const [selectedLevel, setSelectedLevel] = useState('Lv.1');
@@ -28,82 +25,41 @@ const SignUpScreen = ({ navigation }: any) => {
     setAgreedPrivacy(!isAllAgreed);
   };
 
-  // 🌟 axios로 변경된 회원가입 함수
   const handleSignUp = async () => {
-    if (!id || !password) {
-      return Alert.alert('알림', '아이디와 비밀번호를 모두 입력해 주세요.');
-    }
-    if (password !== passwordConfirm) {
-      return Alert.alert('알림', '비밀번호가 일치하지 않습니다.');
-    }
+    // 소셜은 아이디/비번 검사가 필요 없으므로 약관 동의만 검사합니다.
     if (!agreedTerms || !agreedPrivacy) {
       return Alert.alert('알림', '필수 약관에 모두 동의해 주세요.');
     }
 
     try {
-      // 🌟 axios.post 사용 (자동으로 JSON 변환 됨)
-      const response = await axios.post('http://localhost:8080/api/v1/auth/signup', {
-        id: id,
-        passwd: password,
+      // 🌟 백엔드의 소셜 회원가입 API로 요청 (엔드포인트는 서버 명세에 맞게 조절 필요)
+      const response = await axios.post('http://localhost:8080/api/v1/auth/social-signup', {
+        provider: provider,
+        token: token,
         lang: selectedLang,
         level: selectedLevel,
       });
 
-      // axios는 2xx 응답일 때 자동으로 여기로 넘어옵니다.
-      Alert.alert('환영합니다!', '회원가입이 완료되었습니다.', [
-        { text: '확인', onPress: () => navigation.navigate('Login') }
+      Alert.alert('환영합니다!', '소셜 회원가입이 완료되었습니다.', [
+        { text: '확인', onPress: () => navigation.navigate('MainTab') } // 가입 완료 후 바로 대시보드로 이동!
       ]);
       
     } catch (error: any) {
-      console.error('Signup Error:', error);
-      // 🌟 서버에서 보낸 에러 메시지를 잡아냄 (error.response.data)
-      const errorMessage = error.response?.data?.message || '회원가입에 실패했습니다. 다시 시도해 주세요.';
+      console.error('Social Signup Error:', error);
+      const errorMessage = error.response?.data?.message || '가입에 실패했습니다. 다시 시도해 주세요.';
       Alert.alert('회원가입 실패', errorMessage);
     }
   };
 
   return (
     <ScreenWrapper>
-      <Header leftType="back" rightType="sprout" title="회원가입" />
+      <Header leftType="back" rightType="sprout" title="소셜 회원가입" />
       <ScrollView contentContainerStyle={styles.scrollContainer} showsVerticalScrollIndicator={false}>
         
         <Image source={require('../../../assets/quring_logo.png')} style={styles.logoImage} resizeMode="contain" />
         <Text style={styles.title}>스토리로 빠져드는 즐거운 언어 학습,{'\n'}지금 시작해 보세요!</Text>
 
-        <View style={styles.inputSection}>
-          <Text style={styles.label}>아이디</Text>
-          <View style={styles.idInputRow}>
-            <View style={styles.idInputWrap}>
-              <CustomInput 
-                iconName="person-outline" 
-                placeholder="아이디를 입력해 주세요." 
-                value={id}
-                onChangeText={setId}
-              />
-            </View>
-            <TouchableOpacity style={styles.idCheckButton}>
-              <Text style={styles.idCheckText}>중복 확인</Text>
-            </TouchableOpacity>
-          </View>
-
-          <Text style={styles.label}>비밀번호</Text>
-          <CustomInput 
-            iconName="lock-closed-outline" 
-            placeholder="비밀번호를 입력해 주세요." 
-            secureTextEntry 
-            value={password}
-            onChangeText={setPassword}
-          />
-          
-          <Text style={styles.label}>비밀번호 확인</Text>
-          <CustomInput 
-            iconName="checkmark-circle-outline" 
-            placeholder="비밀번호를 한 번 더 입력해 주세요." 
-            secureTextEntry 
-            value={passwordConfirm}
-            onChangeText={setPasswordConfirm}
-          />
-        </View>
+        {/* 🌟 아이디/비밀번호 입력란은 완전히 제거되었습니다. */}
 
         <View style={styles.settingBox}>
           <Text style={styles.settingTitle}>⚙️ 나만의 맞춤 학습 설정</Text>
@@ -171,16 +127,11 @@ const SignUpScreen = ({ navigation }: any) => {
   );
 };
 
+// 불필요한 input 관련 스타일 제거
 const styles = StyleSheet.create({
   scrollContainer: { padding: 20, paddingBottom: 100 },
   logoImage: { width: 120, height: 40, marginBottom: 10, alignSelf: 'flex-start' },
   title: { fontSize: 18, color: '#333', lineHeight: 26, marginBottom: 30, fontWeight: '500' },
-  inputSection: { marginBottom: 30 },
-  label: { fontSize: 14, fontWeight: 'bold', color: '#333', marginBottom: 8 },
-  idInputRow: { flexDirection: 'row', alignItems: 'flex-start', gap: 10 },
-  idInputWrap: { flex: 1 },
-  idCheckButton: { height: 50, backgroundColor: theme.colors.primary, paddingHorizontal: 15, borderRadius: 15, justifyContent: 'center', alignItems: 'center' },
-  idCheckText: { color: theme.colors.white, fontWeight: 'bold', fontSize: 13 },
   settingBox: { backgroundColor: '#F3F4EB', borderRadius: 30, padding: 25, marginBottom: 20 },
   settingTitle: { fontSize: 16, fontWeight: 'bold', marginBottom: 20, color: '#333' },
   subLabel: { fontSize: 14, color: '#555', marginBottom: 12, marginTop: 10, fontWeight: '600' },
@@ -205,4 +156,4 @@ const styles = StyleSheet.create({
   divider: { height: 1, backgroundColor: '#D8D8CA', marginBottom: 15 },
 });
 
-export default SignUpScreen;
+export default SocialSignUpScreen;
