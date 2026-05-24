@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   View,
   Text,
@@ -15,7 +15,7 @@ import type { LearnStackParamList } from '../constants/navigation';
 import { theme } from '../constants/theme';
 import { ScreenWrapper } from '../components/layout/ScreenWrapper';
 import { Header } from '../components/layout/Header';
-import { getChatData } from '../api/content';
+import { getChatData, submitResult } from '../api/content';
 import type { Script, Quiz } from '../api/content';
 
 // ─── 화면에 보여줄 메시지 단위 ───
@@ -23,6 +23,11 @@ interface DisplayMessage {
   type: 'script' | 'quiz';
   script?: Script;
   quiz?: Quiz;
+}
+
+interface QuizResult {
+  tryCount: number;
+  hintUsed: boolean;
 }
 
 // ─── 채팅 버블 ───
@@ -43,13 +48,14 @@ const ChoiceQuiz = ({
 }: {
   quiz: Quiz;
   hint: string;
-  onComplete: () => void;
+  onComplete: (result: QuizResult) => void;
 }) => {
   const [selected, setSelected] = useState<number | null>(null);
   const [submitted, setSubmitted] = useState(false);
   const [isModalVisible, setModalVisible] = useState(false);
   const [isCorrect, setIsCorrect] = useState(false);
   const [showHint, setShowHint] = useState(false);
+  const [tryCount, setTryCount] = useState(1);
 
   const handleSubmit = () => {
     if (selected === null) return;
@@ -141,8 +147,9 @@ const ChoiceQuiz = ({
               onPress={() => {
                 setModalVisible(false);
                 if (isCorrect) {
-                  onComplete();
+                  onComplete({ tryCount, hintUsed: showHint });
                 } else {
+                  setTryCount(prev => prev + 1);
                   setSubmitted(false);
                   setSelected(null);
                 }
@@ -167,13 +174,14 @@ const SubjectiveQuiz = ({
 }: {
   quiz: Quiz;
   hint: string;
-  onComplete: () => void;
+  onComplete: (result: QuizResult) => void;
 }) => {
   const [answer, setAnswer] = useState('');
   const [submitted, setSubmitted] = useState(false);
   const [isModalVisible, setModalVisible] = useState(false);
   const [isCorrect, setIsCorrect] = useState(false);
   const [showHint, setShowHint] = useState(false);
+  const [tryCount, setTryCount] = useState(1);
 
   const handleSubmit = () => {
     if (!answer.trim()) return;
@@ -235,8 +243,9 @@ const SubjectiveQuiz = ({
               onPress={() => {
                 setModalVisible(false);
                 if (isCorrect) {
-                  onComplete();
+                  onComplete({ tryCount, hintUsed: showHint });
                 } else {
+                  setTryCount(prev => prev + 1);
                   setSubmitted(false);
                   setAnswer('');
                 }
@@ -257,6 +266,7 @@ const SubjectiveQuiz = ({
 const ChatLearnScreen = () => {
   const navigation = useNavigation<NativeStackNavigationProp<LearnStackParamList>>();
   const route = useRoute<RouteProp<LearnStackParamList, 'ChatLearn'>>();
+  const resultRef = useRef<{ score: number; firstTry: boolean}[]>([]);
   const { episodeId, episodeTitle } = route.params;
 
   const [messages, setMessages] = useState<DisplayMessage[]>([]);
@@ -329,8 +339,23 @@ const ChatLearnScreen = () => {
     (msg, i) => msg.type === 'quiz' && i === visibleCount - 1
   );
 
-  const handleQuizComplete = () => {
+  const handleQuizComplete = async (result: QuizResult) => {
+    try{
+      const response = await submitResult({
+        try_count: String(result.tryCount),
+        correct: true,
+        hint_opened: String(result.hintUsed),
+      });
+      resultRef.current.push({ score: response.score ?? 0, firstTry: result.tryCount === 1 });
+    } catch(e) {
+      console.log('결과 제출 실패: ', e);
+      resultRef.current.push({ score: 0, firstTry: result.tryCount === 1 });
+    }
     if (visibleCount >= messages.length) {
+      const totalScore = resultRef.current.reduce((sum, r) => sum + r.score, 0);
+      const correctCount = resultRef.current.filter(r => r.firstTry).length;
+      const totalCount = resultRef.current.length;
+      console.log('=== 학습 결과 ===', { totalScore, correctCount, totalCount });
       navigation.navigate('LearningResult');
     } else {
       setVisibleCount((prev) => prev + 1);
