@@ -17,6 +17,7 @@ import { ScreenWrapper } from '../components/layout/ScreenWrapper';
 import { Header } from '../components/layout/Header';
 import { getChatData, submitResult } from '../api/content';
 import type { Script, Quiz } from '../api/content';
+import { getErrorMessage } from '../utils/errorMessage';
 
 // ─── 화면에 보여줄 메시지 단위 ───
 interface DisplayMessage {
@@ -302,23 +303,7 @@ const ChatLearnScreen = () => {
 
         setMessages(display);
       } catch (err: any) {
-        const status = err?.response?.status;
-        const code = err?.code;
-
-        if (code === 'ECONNABORTED') {
-          setError('서버 응답 시간 초과 (timeout)');
-        } else if (code === 'ERR_NETWORK' || !status) {
-          setError('서버에 연결할 수 없음 (네트워크 오류 또는 서버 꺼짐)');
-        } else if (status === 404) {
-          setError('API 경로를 찾을 수 없음 (404)');
-        } else if (status === 401 || status === 403) {
-          setError(`인증 오류 (${status}) — 토큰 확인 필요`);
-        } else if (status >= 500) {
-          setError(`서버 내부 오류 (${status})`);
-        } else {
-          setError(`알 수 없는 오류 (${status || code})`);
-        }
-
+        setError(getErrorMessage(err));
         console.log('채팅 데이터 로딩 실패:', err);
       } finally {
         setLoading(false);

@@ -16,6 +16,7 @@ import { Header } from '../components/layout/Header';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import { getDashboard } from '../api/dashboard';
+import { getErrorMessage } from '../utils/errorMessage';
 
 // ─── 색상 ───
 const C = {
@@ -76,9 +77,9 @@ const DashboardScreen = () => {
       try {
         const res = await getDashboard();
         setData(res);
-      } catch(err){
+      } catch(err: any){
         console.log('대시보드 로딩 실패 : ', err);
-        setError('데이터를 불러올 수 없음');
+        setError(getErrorMessage(err));
       }
     };
     fetchData();
