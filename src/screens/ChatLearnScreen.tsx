@@ -356,7 +356,7 @@ const ChatLearnScreen = () => {
       const correctCount = resultRef.current.filter(r => r.firstTry).length;
       const totalCount = resultRef.current.length;
       console.log('=== 학습 결과 ===', { totalScore, correctCount, totalCount });
-      navigation.navigate('LearningResult');
+      navigation.navigate('LearningResult', { totalScore, correctCount, totalCount });
     } else {
       setVisibleCount((prev) => prev + 1);
     }

@@ -12,5 +12,9 @@ export type LearnStackParamList = {
     episodeId: number;
     episodeTitle: string;
   };
-  LearningResult: undefined;
+  LearningResult: {
+    totalScore: number;
+    correctCount: number;
+    totalCount: number;
+  };
 };
