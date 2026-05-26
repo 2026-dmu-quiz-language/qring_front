@@ -16,7 +16,7 @@ import { theme } from '../constants/theme';
 import { ScreenWrapper } from '../components/layout/ScreenWrapper';
 import { Header } from '../components/layout/Header';
 import { getChatData, submitResult } from '../api/content';
-import type { Script, Quiz } from '../api/content';
+import type { Script, Quiz, QuizResultItem } from '../api/content';
 import { getErrorMessage } from '../utils/errorMessage';
 
 // ─── 화면에 보여줄 메시지 단위 ───
@@ -267,7 +267,7 @@ const SubjectiveQuiz = ({
 const ChatLearnScreen = () => {
   const navigation = useNavigation<NativeStackNavigationProp<LearnStackParamList>>();
   const route = useRoute<RouteProp<LearnStackParamList, 'ChatLearn'>>();
-  const resultRef = useRef<{ score: number; firstTry: boolean}[]>([]);
+  const resultRef = useRef<QuizResultItem[]>([]);
   const { episodeId, episodeTitle } = route.params;
 
   const [messages, setMessages] = useState<DisplayMessage[]>([]);
@@ -275,6 +275,8 @@ const ChatLearnScreen = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [visibleCount, setVisibleCount] = useState(1);
+  const [episodeComplete, setEpisodeComplete] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -313,37 +315,58 @@ const ChatLearnScreen = () => {
   }, [episodeId]);
 
   const handleTap = () => {
+    if (episodeComplete) return;
     if (visibleCount >= messages.length) return;
-    // 퀴즈가 보이면 퀴즈 풀기 전까지 탭 진행 막기
     const lastVisible = messages[visibleCount - 1];
     if (lastVisible?.type === 'quiz') return;
-    setVisibleCount((prev) => prev + 1);
+
+    const nextCount = visibleCount + 1;
+    setVisibleCount(nextCount);
+
+    if (nextCount >= messages.length && messages[nextCount - 1]?.type !== 'quiz') {
+      setEpisodeComplete(true);
+    }
   };
 
   const currentQuiz = messages.slice(0, visibleCount).find(
     (msg, i) => msg.type === 'quiz' && i === visibleCount - 1
   );
 
-  const handleQuizComplete = async (result: QuizResult) => {
-    try{
-      const response = await submitResult({
-        try_count: String(result.tryCount),
-        correct: true,
-        hint_opened: String(result.hintUsed),
-      });
-      resultRef.current.push({ score: response.score ?? 0, firstTry: result.tryCount === 1 });
-    } catch(e) {
-      console.log('결과 제출 실패: ', e);
-      resultRef.current.push({ score: 0, firstTry: result.tryCount === 1 });
-    }
+  const handleQuizComplete = (quizId: number, result: QuizResult) => {
+    resultRef.current.push({
+      quiz_id: quizId,
+      try_count: result.tryCount,
+      correct: true,
+      hint_opened: result.hintUsed,
+    });
+
     if (visibleCount >= messages.length) {
-      const totalScore = resultRef.current.reduce((sum, r) => sum + r.score, 0);
-      const correctCount = resultRef.current.filter(r => r.firstTry).length;
-      const totalCount = resultRef.current.length;
-      console.log('=== 학습 결과 ===', { totalScore, correctCount, totalCount });
-      navigation.navigate('LearningResult', { totalScore, correctCount, totalCount });
+      setEpisodeComplete(true);
     } else {
       setVisibleCount((prev) => prev + 1);
+    }
+  };
+
+  const handleShowResult = async () => {
+    setSubmitting(true);
+    const totalQuizCount = messages.filter(m => m.type === 'quiz').length;
+    try {
+      const response = await submitResult({
+        episode_id: episodeId,
+        result: resultRef.current,
+      });
+      navigation.navigate('LearningResult', {
+        totalScore: response.score ?? 0,
+        correctCount: response.correctCount ?? resultRef.current.length,
+        totalCount: totalQuizCount,
+      });
+    } catch (e) {
+      console.log('결과 제출 실패:', e);
+      navigation.navigate('LearningResult', {
+        totalScore: 0,
+        correctCount: resultRef.current.length,
+        totalCount: totalQuizCount,
+      });
     }
   };
 
@@ -390,20 +413,35 @@ const ChatLearnScreen = () => {
         })}
       </ScrollView>
 
-      {currentQuiz?.quiz && (
+      {!episodeComplete && currentQuiz?.quiz && (
         currentQuiz.quiz.quiz_type === 'subjective' ? (
           <SubjectiveQuiz
             quiz={currentQuiz.quiz}
             hint={hint}
-            onComplete={handleQuizComplete}
+            onComplete={(result) => handleQuizComplete(currentQuiz.quiz!.quiz_id, result)}
           />
         ) : (
           <ChoiceQuiz
             quiz={currentQuiz.quiz}
             hint={hint}
-            onComplete={handleQuizComplete}
+            onComplete={(result) => handleQuizComplete(currentQuiz.quiz!.quiz_id, result)}
           />
         )
+      )}
+
+      {episodeComplete && (
+        <View style={styles.resultButtonWrap}>
+          <TouchableOpacity
+            style={[styles.resultButton, submitting && styles.nextButtonDisabled]}
+            onPress={handleShowResult}
+            disabled={submitting}
+            activeOpacity={0.8}
+          >
+            <Text style={styles.resultButtonText}>
+              {submitting ? '결과 확인 중...' : '결과 보기'}
+            </Text>
+          </TouchableOpacity>
+        </View>
       )}
     </ScreenWrapper>
   );
@@ -465,6 +503,16 @@ const styles = StyleSheet.create({
   hintButton: { marginTop: 16, alignItems: 'center' },
   hintText: { fontSize: 13, fontWeight: '600', color: '#888', textDecorationLine: 'underline' },
   hintContent: { fontSize: 13, color: theme.colors.primary, textAlign: 'center', marginTop: 8 },
+
+  resultButtonWrap: {
+    position: 'absolute', bottom: 0, left: 0, right: 0,
+    paddingHorizontal: 24, paddingBottom: 40, paddingTop: 20,
+    backgroundColor: theme.colors.background,
+  },
+  resultButton: {
+    backgroundColor: theme.colors.primary, borderRadius: 18, paddingVertical: 16, alignItems: 'center',
+  },
+  resultButtonText: { fontSize: 16, fontWeight: '700', color: '#FFFFFF' },
 
   modalOverlay: { flex: 1, backgroundColor: 'rgba(0, 0, 0, 0.4)', justifyContent: 'center', alignItems: 'center' },
   modalContent: {

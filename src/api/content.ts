@@ -23,6 +23,13 @@ export interface ChatData {
   hint: string;
 }
 
+export interface QuizResultItem {
+  quiz_id: number;
+  try_count: number;
+  correct: boolean;
+  hint_opened: boolean;
+}
+
 // 컨텐츠 목록
 export const getContentList = async () => {
   const res = await client.post('/contentList');
@@ -37,9 +44,8 @@ export const getChatData = async (contentId: number): Promise<ChatData> => {
 
 // 학습 결과 제출
 export const submitResult = async (data: {
-  try_count: string;
-  correct: boolean;
-  hint_opened: string;
+  episode_id: number;
+  result: QuizResultItem[];
 }) => {
   const res = await client.post('/questionResult', data);
   return res.data;
