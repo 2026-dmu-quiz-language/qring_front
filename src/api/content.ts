@@ -2,25 +2,26 @@ import client from './client';
 
 // ─── 타입 ───
 export interface Script {
-  script_id: number;
-  text: string;
+  scriptId: number;
+  characterName: string;
+  scriptContent: string;
+  hasOptions: boolean;
 }
 
 export interface Quiz {
-  quiz_id: number;
-  script_id: number;
-  quiz_type: 'multiple_choice' | 'fill_in_blank' | 'subjective';
+  quizId: number;
+  scriptId: number;
+  quizType: string;
   question: string;
-  options: string[];
-  correct_answer: string;
-  acceptable_answers: string[];
+  options: string;
+  correctAnswer: string;
   explanation: string;
+  hint: string;
 }
 
 export interface ChatData {
   script: Script[];
-  quiz: Quiz[];
-  hint: string;
+  quizzes: Quiz[];
 }
 
 export interface QuizResultItem {

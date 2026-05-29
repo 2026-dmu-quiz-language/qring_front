@@ -57,13 +57,12 @@ const ChoiceQuiz = ({
   const [isCorrect, setIsCorrect] = useState(false);
   const [showHint, setShowHint] = useState(false);
   const [tryCount, setTryCount] = useState(1);
+  const parsedOptions: string[] = JSON.parse(quiz.options);
 
   const handleSubmit = () => {
     if (selected === null) return;
-    const answer = quiz.options[selected];
-    const correct =
-      answer === quiz.correct_answer ||
-      quiz.acceptable_answers.includes(answer);
+    const answer = parsedOptions[selected];
+    const correct = answer === quiz.correctAnswer;
     setSubmitted(true);
     setIsCorrect(correct);
     setModalVisible(true);
@@ -71,21 +70,21 @@ const ChoiceQuiz = ({
 
   const getOptionStyle = (index: number) => {
     if (!submitted && selected === index) return styles.optionSelected;
-    if (submitted && quiz.options[index] === quiz.correct_answer) return styles.optionCorrect;
-    if (submitted && selected === index && quiz.options[index] !== quiz.correct_answer) return styles.optionWrong;
+    if (submitted && parsedOptions[index] === quiz.correctAnswer) return styles.optionCorrect;
+    if (submitted && selected === index && parsedOptions[index] !== quiz.correctAnswer) return styles.optionWrong;
     return styles.optionDefault;
   };
 
   const getRadioStyle = (index: number) => {
     if (!submitted && selected === index) return styles.radioSelected;
-    if (submitted && quiz.options[index] === quiz.correct_answer) return styles.radioCorrect;
-    if (submitted && selected === index && quiz.options[index] !== quiz.correct_answer) return styles.radioWrong;
+    if (submitted && parsedOptions[index] === quiz.correctAnswer) return styles.radioCorrect;
+    if (submitted && selected === index && parsedOptions[index] !== quiz.correctAnswer) return styles.radioWrong;
     return styles.radioDefault;
   };
 
   const showCheck = (index: number) => {
     if (!submitted && selected === index) return true;
-    if (submitted && quiz.options[index] === quiz.correct_answer) return true;
+    if (submitted && parsedOptions[index] === quiz.correctAnswer) return true;
     return false;
   };
 
@@ -93,12 +92,12 @@ const ChoiceQuiz = ({
     <View style={styles.quizCard}>
       <View style={styles.dragHandle} />
       <Text style={styles.quizLabel}>
-        {quiz.quiz_type === 'fill_in_blank' ? '빈칸 채우기' : '객관식'}
+        {quiz.quizType === 'fill_in_blank' ? '빈칸 채우기' : '객관식'}
       </Text>
       <Text style={styles.quizQuestion}>{quiz.question}</Text>
 
       <View style={styles.optionsWrap}>
-        {quiz.options.map((option, index) => (
+        {parsedOptions.map((option, index) => (
           <TouchableOpacity
             key={index}
             onPress={() => !submitted && setSelected(index)}
@@ -187,9 +186,7 @@ const SubjectiveQuiz = ({
   const handleSubmit = () => {
     if (!answer.trim()) return;
     const trimmed = answer.trim().toLowerCase();
-    const correct =
-      trimmed === quiz.correct_answer.toLowerCase() ||
-      quiz.acceptable_answers.some((a) => a.toLowerCase() === trimmed);
+    const correct = trimmed === quiz.correctAnswer.toLowerCase();
     setSubmitted(true);
     setIsCorrect(correct);
     setModalVisible(true);
@@ -237,7 +234,7 @@ const SubjectiveQuiz = ({
             <Text style={styles.modalDesc}>
               {isCorrect
                 ? quiz.explanation || '완벽하게 이해하셨네요!\n다음 스토리로 넘어가볼까요?'
-                : `정답은 "${quiz.correct_answer}" 입니다.\n다시 도전해볼까요?`}
+                : `정답은 "${quiz.correctAnswer}" 입니다.\n다시 도전해볼까요?`}
             </Text>
             <TouchableOpacity
               style={[styles.modalButton, { backgroundColor: isCorrect ? theme.colors.primary : '#dc3545' }]}
@@ -271,7 +268,6 @@ const ChatLearnScreen = () => {
   const { episodeId, episodeTitle } = route.params;
 
   const [messages, setMessages] = useState<DisplayMessage[]>([]);
-  const [hint, setHint] = useState('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [visibleCount, setVisibleCount] = useState(1);
@@ -289,15 +285,13 @@ const ChatLearnScreen = () => {
           return;
         }
 
-        setHint(data.hint);
-
         const quizMap = new Map<number, Quiz>();
-        data.quiz.forEach((q) => quizMap.set(q.script_id, q));
+        data.quizzes.forEach((q) => quizMap.set(q.scriptId, q));
 
         const display: DisplayMessage[] = [];
         data.script.forEach((s) => {
           display.push({ type: 'script', script: s });
-          const linkedQuiz = quizMap.get(s.script_id);
+          const linkedQuiz = quizMap.get(s.scriptId);
           if (linkedQuiz) {
             display.push({ type: 'quiz', quiz: linkedQuiz });
           }
@@ -409,22 +403,22 @@ const ChatLearnScreen = () => {
       >
         {messages.slice(0, visibleCount).map((msg, index) => {
           if (msg.type === 'quiz') return null;
-          return <ChatBubble key={index} text={msg.script!.text} />;
+          return <ChatBubble key={index} text={msg.script!.scriptContent} />;
         })}
       </ScrollView>
 
       {!episodeComplete && currentQuiz?.quiz && (
-        currentQuiz.quiz.quiz_type === 'subjective' ? (
+        currentQuiz.quiz.quizType === 'subjective' ? (
           <SubjectiveQuiz
             quiz={currentQuiz.quiz}
-            hint={hint}
-            onComplete={(result) => handleQuizComplete(currentQuiz.quiz!.quiz_id, result)}
+            hint={currentQuiz.quiz.hint}
+            onComplete={(result) => handleQuizComplete(currentQuiz.quiz!.quizId, result)}
           />
         ) : (
           <ChoiceQuiz
             quiz={currentQuiz.quiz}
-            hint={hint}
-            onComplete={(result) => handleQuizComplete(currentQuiz.quiz!.quiz_id, result)}
+            hint={currentQuiz.quiz.hint}
+            onComplete={(result) => handleQuizComplete(currentQuiz.quiz!.quizId, result)}
           />
         )
       )}
