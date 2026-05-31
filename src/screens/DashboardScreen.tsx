@@ -1,17 +1,22 @@
 // screens/Dashboard/DashboardScreen.tsx
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
+  ScrollView,
   TouchableOpacity,
   StyleSheet,
+  ActivityIndicator,
 } from 'react-native';
 import Svg, { Circle } from 'react-native-svg';
 import { theme } from '../constants/theme';
 import { ScreenWrapper } from '../components/layout/ScreenWrapper';
 import { Header } from '../components/layout/Header';
 import { Ionicons } from '@expo/vector-icons';
+import { useNavigation } from '@react-navigation/native';
+import { getDashboard } from '../api/dashboard';
+import { getErrorMessage } from '../utils/errorMessage';
 
 // ─── 색상 ───
 const C = {
@@ -22,15 +27,7 @@ const C = {
 };
 
 // ─── 요일 데이터 ───
-const WEEKDAYS = [
-  { label: 'M', done: true },
-  { label: 'T', done: true },
-  { label: 'W', done: true },
-  { label: 'T', done: true },
-  { label: 'F', done: true },
-  { label: 'S', done: false },
-  { label: 'S', done: false },
-];
+const WEEKDAY_LABELS = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
 
 // ─── 반원 게이지 컴포넌트 ───
 const AchievementGauge = ({ percent }: { percent: number }) => {
@@ -63,6 +60,57 @@ const AchievementGauge = ({ percent }: { percent: number }) => {
 
 // ─── 메인 컴포넌트 ───
 const DashboardScreen = () => {
+  const navigation = useNavigation<any>();
+  const [data, setData] = useState<{
+    name: string;
+    level: string;
+    content_days: string;
+    content_percent: string;
+    clear_story: string;
+    content_phrase: string;
+    weekly_done: boolean[];
+  } | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const res = await getDashboard();
+        setData(res);
+      } catch(err: any){
+        console.log('대시보드 로딩 실패 : ', err);
+        setError(getErrorMessage(err));
+      }
+    };
+    fetchData();
+  }, []);
+
+  if(error){
+    return(
+      <ScreenWrapper>
+        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center'}}>
+          <Text style={{ fontSize: 16, fontWeight: '700', color: '#dc3545'}}>{error}</Text>
+        </View>
+      </ScreenWrapper>
+    );
+  }
+
+  if(!data){
+    return(
+      <ScreenWrapper>
+        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+          <ActivityIndicator size="large" color={theme.colors.primary} />
+          <Text style={{ marginTop: 12, color: '#888' }}>로딩 중...</Text>
+        </View>
+      </ScreenWrapper>
+    );
+  }
+
+  const weekdays = WEEKDAY_LABELS.map((day, i) => ({
+    day,
+    done: data.weekly_done?.[i] ?? false,
+  }));
+
   return (
     <ScreenWrapper style={{ paddingHorizontal: 0 }}>
       
@@ -70,27 +118,28 @@ const DashboardScreen = () => {
         showLogo={true} 
         leftType="none" 
         rightType="profile" 
+        userName={data.name}
       />
 
-      <View style={styles.bodyContainer}>
+      <ScrollView style={styles.bodyContainer}>
 
         {/* 연속 학습 달성 카드 */}
         <View style={styles.streakCard}>
           <View style={styles.streakHeader}>
             <Text style={styles.streakTitle}>연속 학습 달성</Text>
             <View style={styles.daysBadge}>
-              <Text style={styles.daysBadgeText}>🌿 5 DAYS</Text>
+              <Text style={styles.daysBadgeText}>🌿 {data.content_days} DAYS</Text>
             </View>
           </View>
           <View style={styles.weekRow}>
-            {WEEKDAYS.map((day, i) => (
+            {weekdays.map((day, i) => (
               <View key={i} style={styles.weekDay}>
                 <View style={[styles.weekDot, day.done && styles.weekDotDone]}>
                   {day.done && (
                     <Text style={styles.weekLeaf}>🌿</Text>
                   )}
                 </View>
-                <Text style={styles.weekLabel}>{day.label}</Text>
+                <Text style={styles.weekLabel}>{day.day}</Text>
               </View>
             ))}
           </View>
@@ -98,15 +147,15 @@ const DashboardScreen = () => {
 
         {/* 학습 성취도 */}
         <View style={styles.achievementSection}>
-          <AchievementGauge percent={75} />
+          <AchievementGauge percent={parseInt(data.content_percent, 10)} />
           <Text style={styles.achievementTitle}>학습 성취도</Text>
           <Text style={styles.achievementDesc}>
-            이번 주 엄청난 성장을 보여주고 있어요!{'\n'}이대로 쭉 가보자고요 🌱
+            {data.content_phrase}
           </Text>
         </View>
 
         {/* CTA 버튼 */}
-        <TouchableOpacity style={styles.ctaButton} activeOpacity={0.85}>
+        <TouchableOpacity style={styles.ctaButton} activeOpacity={0.85} onPress={() => navigation.navigate('Content')}>
           <Text style={styles.ctaTitle}>🚀 오늘의 썰 풀기 시작!</Text>
           <Text style={styles.ctaSub}>▶ 약 15분 소요</Text>
         </TouchableOpacity>
@@ -126,16 +175,16 @@ const DashboardScreen = () => {
           <View style={styles.statCard}>
             <Text style={styles.statIcon}>📖</Text>
             <Text style={styles.statLabel}>완료한 스토리</Text>
-            <Text style={styles.statValue}>12 편</Text>
+            <Text style={styles.statValue}>{data.clear_story} 편</Text>
           </View>
           <View style={styles.statCard}>
             <Text style={styles.statIcon}>🌿</Text>
             <Text style={styles.statLabel}>내 레벨</Text>
-            <Text style={styles.statValue}>Lv.2 일상 회화</Text>
+            <Text style={styles.statValue}>{data.level}</Text>
           </View>
         </View>
         
-      </View>
+      </ScrollView>
     </ScreenWrapper>
   );
 };
