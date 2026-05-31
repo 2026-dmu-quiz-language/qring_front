@@ -8,7 +8,7 @@ import {
   TouchableOpacity,
   StyleSheet,
   Image,
-  ActivityIndicator, // 로딩 스피너
+  ActivityIndicator,
   Alert,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
@@ -22,27 +22,38 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 
 // ─── API 응답 데이터 타입 정의 ───
 interface ContentItem {
-  content_id: number;
-  category_name: string;
-  thumbnail_url: string;
+  contentId: number;
+  categoryName: string;
+  thumbnailUrl: string;
   title: string;
-  quiz_count: number;    // 백엔드 응답명에 맞춰 변경될 수 있음
-  is_completed: boolean; // 백엔드 응답명에 맞춰 변경될 수 있음
-  status?: string;       // 추후 잠금 기능
-  required_points?: number; 
+  quizCount: number;
+  isCompleted: boolean;
+  status?: string;
+  requiredPoints?: number; 
 }
 
 // ─── 메인 컴포넌트 ───
 const StoryHomeScreen = () => {
   const navigation = useNavigation<NativeStackNavigationProp<LearnStackParamList>>();
   
-  // 🌟 API 통신을 위한 상태 관리
   const [contents, setContents] = useState<ContentItem[]>([]);
   const [categories, setCategories] = useState<{id: string, label: string, emoji: string}[]>([]);
-  const [activeCategory, setActiveCategory] = useState('');
+  const [activeCategory, setActiveCategory] = useState('ALL'); // 🌟 기본값을 '전체'로 설정
   const [isLoading, setIsLoading] = useState(true);
 
-  // 🌟 화면 로드 시 API 호출
+  // 🌟 카테고리 이름에 맞는 이모지를 반환하는 헬퍼 함수
+  const getCategoryEmoji = (name: string) => {
+    if (!name) return '📚';
+    if (name.includes('짝사랑')) return '💘';
+    if (name.includes('드라마')) return '📺';
+    if (name.includes('스릴러')) return '😱';
+    if (name.includes('추리')) return '🕵️‍♂️';
+    if (name.includes('특이한연애')) return '💬';
+    if (name.includes('연애갈등')) return '💔';
+    if (name.includes('로맨스')) return '💕';
+    return '📚'; // 위 조건에 안 맞을 때의 기본 이모지
+  };
+
   useEffect(() => {
     const fetchContentList = async () => {
       try {
@@ -52,36 +63,35 @@ const StoryHomeScreen = () => {
           return;
         }
 
-        // 백엔드 엔드포인트 주소에 맞게 수정 필요
-        const response = await axios.post('https://q-ring.app:8080/contentList', {
-          token: token // 명세서 요구사항에 따라 body에 token 포함
+        const response = await axios.post('https://q-ring.app/contentList', {
+          token: token 
         }, {
-          headers: { Authorization: `Bearer ${token}` } // 안전을 위해 헤더에도 추가
+          headers: { Authorization: `Bearer ${token}` }
         });
 
-        const data: ContentItem[] = response.data; // 서버에서 배열 형태로 온다고 가정
+        const data: ContentItem[] = response.data;
         setContents(data);
 
-        // 받아온 데이터에서 중복 없는 카테고리 목록 추출
-        const uniqueCategories = Array.from(new Set(data.map(item => item.category_name)));
+        // 중복 제거된 카테고리 목록 추출
+        const uniqueCategories = Array.from(new Set(data.map(item => item.categoryName).filter(Boolean)));
         
-        // 카테고리 객체로 매핑 (임시 이모지 매칭)
+        // 동적 카테고리 매핑
         const mappedCategories = uniqueCategories.map(name => ({
           id: name,
           label: name,
-          emoji: name.includes('로맨스') ? '💕' : (name.includes('스토리') ? '🎬' : '📚'),
+          emoji: getCategoryEmoji(name),
         }));
 
-        setCategories(mappedCategories);
-        
-        // 기본 선택 카테고리를 첫 번째 항목으로 지정
-        if (mappedCategories.length > 0) {
-          setActiveCategory(mappedCategories[0].id);
-        }
+        // 🌟 '전체' 카테고리를 배열 맨 앞에 추가
+        const finalCategories = [
+          { id: 'ALL', label: '전체', emoji: '✨' },
+          ...mappedCategories
+        ];
 
+        setCategories(finalCategories);
+        
       } catch (error) {
         console.error('Content List API Error:', error);
-        // 에러 시 빈 화면이 나오지 않도록 테스트용 더미 세팅 (실제 배포 시엔 지우세요)
         setContents([]);
       } finally {
         setIsLoading(false);
@@ -91,8 +101,10 @@ const StoryHomeScreen = () => {
     fetchContentList();
   }, []);
 
-  // 🌟 현재 선택된 카테고리에 맞는 콘텐츠만 필터링
-  const filteredContents = contents.filter(item => item.category_name === activeCategory);
+  // 🌟 선택된 카테고리가 'ALL'이면 전체 데이터를, 아니면 해당 카테고리만 필터링
+  const filteredContents = activeCategory === 'ALL' 
+    ? contents 
+    : contents.filter(item => item.categoryName === activeCategory);
 
   return (
     <ScreenWrapper style={{ paddingHorizontal: 0 }}>
@@ -109,13 +121,11 @@ const StoryHomeScreen = () => {
         </Text>
 
         {isLoading ? (
-          // 🌟 로딩 중일 때 표시할 스피너
           <View style={styles.loadingWrap}>
             <ActivityIndicator size="large" color={theme.colors.primary} />
           </View>
         ) : (
           <>
-            {/* 카테고리 칩 영역 */}
             <View style={styles.chipRow}>
               {categories.map((cat) => {
                 const isActive = cat.id === activeCategory;
@@ -142,42 +152,36 @@ const StoryHomeScreen = () => {
               })}
             </View>
 
-            {/* 필터링된 콘텐츠 목록 */}
             {filteredContents.map((ep) => (
               <TouchableOpacity
-                key={ep.content_id}
+                key={ep.contentId} 
                 style={styles.card}
                 activeOpacity={0.8}
                 onPress={() => navigation.navigate('ChatLearn', {
-                  episodeId: ep.content_id,
+                  episodeId: ep.contentId, 
                   episodeTitle: ep.title,
                 })}
               >
-                {/* 🌟 명세서의 thumbnail_url을 사용해 이미지 로드 */}
-                {ep.thumbnail_url ? (
-                  <Image source={{ uri: ep.thumbnail_url }} style={styles.cardImage} resizeMode="cover" />
+                {ep.thumbnailUrl ? (
+                  <Image source={{ uri: ep.thumbnailUrl }} style={styles.cardImage} resizeMode="cover" />
                 ) : (
-                  <View style={[styles.cardImage, { backgroundColor: '#EFEFE1' }]} /> // 이미지 없을 때의 대체 배경
+                  <View style={[styles.cardImage, { backgroundColor: '#EFEFE1' }]} />
                 )}
 
                 <View style={styles.cardInfo}>
                   <Text style={styles.cardTitle}>{ep.title}</Text>
                   <View style={styles.cardMeta}>
                     <View style={styles.badgeWrap}>
-                      {/* 퀴즈 개수 */}
                       <View style={styles.badge}>
-                        <Text style={styles.badgeText}>퀴즈 {ep.quiz_count || 0}개</Text>
+                        <Text style={styles.badgeText}>퀴즈 {ep.quizCount || 0}개</Text>
                       </View>
                       
-                      {/* 🌟 명세서의 유저 학습 여부에 따른 완료 뱃지 */}
-                      {ep.is_completed && (
+                      {ep.isCompleted && (
                         <View style={styles.badgeCompleted}>
                           <Text style={styles.badgeTextCompleted}>✅ 학습 완료</Text>
                         </View>
                       )}
                     </View>
-                    
-                    {/* 추후 잠금(status)이 구현되면 자물쇠 아이콘 등을 넣을 수 있습니다 */}
                   </View>
                 </View>
               </TouchableOpacity>
@@ -193,7 +197,6 @@ const StoryHomeScreen = () => {
   );
 };
 
-// ─── 스타일 ───
 const styles = StyleSheet.create({
   body: { flex: 1 },
   bodyContent: { padding: 20, paddingBottom: 150 },
@@ -223,7 +226,7 @@ const styles = StyleSheet.create({
     elevation: 3,
   },
   cardImage: {
-    height: 140, // 썸네일 이미지가 잘 보이게 약간 키웠습니다
+    height: 140,
     width: '100%',
   },
   cardInfo: { padding: 20 },

@@ -11,7 +11,7 @@ import { CustomButton } from '../../components/common/Button';
 import { theme } from '../../constants/theme';
 
 // 백엔드 주소 (환경에 맞게 수정하세요)
-const API_BASE_URL = 'https://q-ring.app:8080/api/v1/auth';
+const API_BASE_URL = 'https://q-ring.app/api/v1/auth';
 
 const SignUpScreen = ({ navigation }: any) => {
   // 🌟 명세서에 맞게 id 대신 email로 상태명 변경
@@ -73,6 +73,18 @@ const SignUpScreen = ({ navigation }: any) => {
 
   // 🌟 3. 회원가입 및 메일 전송 API (POST)
   const handleSignUp = async () => {
+    const languageMap: { [key: string]: string } = {
+      '일본어': 'JA',
+      '영어': 'EN',
+      '중국어': 'ZH'
+    };
+
+    // (옵션) 유저가 언어를 선택 안 하고 넘어가려 할 때 방어하기
+    if (!selectedLang) {
+      Alert.alert('알림', '학습할 언어를 선택해주세요!');
+      return;
+    }
+
     if (!email || !password || !nickname) {
       return Alert.alert('알림', '모든 정보를 입력해 주세요.');
     }
@@ -89,25 +101,19 @@ const SignUpScreen = ({ navigation }: any) => {
         email: email,
         password: password,
         nickname: nickname,
-        language: selectedLang,
+        language: languageMap[selectedLang],
         levelCode: levelCode,
       });
 
-      // 백엔드 명세의 emailsSent가 true면 메일 전송 성공으로 판단
-      if (response.data.emailsSent) {
-        Alert.alert('메일 발송 완료', response.data.message || '인증 코드를 이메일로 전송했습니다.', [
-          { 
-            text: '인증하러 가기', 
-            // 🌟 성공 시 새로 만든 이메일 인증 페이지로 이메일을 들고 이동
-            onPress: () => navigation.navigate('EmailVerify', { email: email }) 
-          }
-        ]);
-      } else {
-        Alert.alert('오류', '메일 발송에 실패했습니다. 다시 시도해주세요.');
-      }
+      // 🌟 조건문(if)을 아예 없앴습니다! 에러가 안 났다면 무조건 성공한 것입니다.
+      Alert.alert('메일 발송 완료', '인증 코드를 이메일로 전송했습니다.');
+      navigation.navigate('EmailVerify', { email: email });
+        
     } catch (error: any) {
+      // 실패하면 알아서 이쪽으로 빠집니다.
       const errorMessage = error.response?.data?.message || '회원가입에 실패했습니다.';
       Alert.alert('회원가입 실패', errorMessage);
+      console.log('🚫 회원가입 실패 상세 사유:', error.response?.data);
     }
   };
 

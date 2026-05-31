@@ -1,24 +1,65 @@
 // src/screens/auth/SplashScreen.tsx
 import React, { useEffect } from 'react';
 import { View, Text, Image, StyleSheet, StatusBar } from 'react-native';
-import { NativeStackScreenProps } from '@react-navigation/native-stack';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import axios from 'axios';
 import { theme } from '../../constants/theme';
-// RootNavigator에서 사용하는 param list 타입 정의를 가져와야 에러가 안 납니다. (일단 any 처리)
-// import { RootStackParamList } from '../../navigation/RootNavigator'; 
+
+// 🌟 백엔드 기본 주소 (환경에 맞게 수정)
+const API_BASE_URL = 'https://q-ring.app/api/v1/auth';
 
 const SplashScreen = ({ navigation }: any) => {
 
-  // 🌟 마법의 코드: 2초 뒤에 로그인 화면으로 자동 이동
   useEffect(() => {
-    const timer = setTimeout(() => {
-      // 뼈대 앱일 때는 바로 메인으로 가게 initialRouteName을 MainTab으로 바꿨었지만,
-      // 이제 로그인 화면부터 UI를 만들 거니까 'Login'으로 이동하게 둡니다.
-      // (테스트가 귀찮으시면 'MainTab'으로 적으셔도 됩니다.)
-      navigation.replace('Login'); 
-    }, 2000); // 2000ms = 2초
+    const checkAuthAndNavigate = async () => {
+      // 🌟 시작 시간 기록 (최소 2초 대기 UX를 위함)
+      const startTime = Date.now();
+      let isAuthSuccess = false;
 
-    // 컴포넌트가 꺼질 때 타이머를 정리해 줍니다 (에러 방지)
-    return () => clearTimeout(timer);
+      try {
+        const savedRefreshToken = await AsyncStorage.getItem('refreshToken');
+
+        // 🌟 1. 리프레시 토큰이 있다면 백엔드에 새 토큰 발급 요청
+        if (savedRefreshToken) {
+          try {
+            const response = await axios.post(`${API_BASE_URL}/refresh`, {
+              refreshToken: savedRefreshToken
+            });
+
+            const { accessToken, refreshToken } = response.data;
+
+            if (accessToken) {
+              await AsyncStorage.setItem('accessToken', accessToken);
+              if (refreshToken) {
+                await AsyncStorage.setItem('refreshToken', refreshToken);
+              }
+              isAuthSuccess = true; // 자동 로그인 성공!
+            }
+          } catch (apiError) {
+            console.log('Refresh Token 만료 또는 유효하지 않음:', apiError);
+            // 만료된 토큰 청소
+            await AsyncStorage.removeItem('accessToken');
+            await AsyncStorage.removeItem('refreshToken');
+          }
+        }
+      } catch (error) {
+        console.error('스플래시 스토리지 에러:', error);
+      } finally {
+        // 🌟 2. 통신에 걸린 시간을 빼고, 남은 시간만큼만 대기해서 최소 2초(2000ms)는 로고를 보여줌
+        const elapsedTime = Date.now() - startTime;
+        const remainingTime = Math.max(0, 2000 - elapsedTime);
+
+        setTimeout(() => {
+          if (isAuthSuccess) {
+            navigation.replace('MainTab'); // 토큰이 유효하면 메인으로
+          } else {
+            navigation.replace('Login');   // 토큰이 없거나 만료면 로그인으로
+          }
+        }, remainingTime);
+      }
+    };
+
+    checkAuthAndNavigate();
   }, [navigation]);
 
   return (

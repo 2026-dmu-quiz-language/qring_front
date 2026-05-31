@@ -19,19 +19,19 @@ import { getChatData, submitResult } from '../api/content';
 import type { Script, Quiz, QuizResultItem } from '../api/content';
 import { getErrorMessage } from '../utils/errorMessage';
 
-// ─── 화면에 보여줄 메시지 단위 ───
 interface DisplayMessage {
   type: 'script' | 'quiz';
   script?: Script;
   quiz?: Quiz;
 }
 
+// ✅ lastAnswer 추가
 interface QuizResult {
   tryCount: number;
   hintUsed: boolean;
+  lastAnswer: string;
 }
 
-// ─── 채팅 버블 ───
 const ChatBubble = ({ text }: { text: string }) => (
   <View style={styles.bubbleRow}>
     <View style={styles.avatar} />
@@ -41,23 +41,17 @@ const ChatBubble = ({ text }: { text: string }) => (
   </View>
 );
 
-// ─── 퀴즈 브레이크 (객관식 / 빈칸 채우기) ───
-const ChoiceQuiz = ({
-  quiz,
-  hint,
-  onComplete,
-}: {
-  quiz: Quiz;
-  hint: string;
-  onComplete: (result: QuizResult) => void;
-}) => {
+const ChoiceQuiz = ({ quiz, hint, onComplete }: { quiz: Quiz; hint: string; onComplete: (result: QuizResult) => void; }) => {
   const [selected, setSelected] = useState<number | null>(null);
   const [submitted, setSubmitted] = useState(false);
   const [isModalVisible, setModalVisible] = useState(false);
   const [isCorrect, setIsCorrect] = useState(false);
   const [showHint, setShowHint] = useState(false);
   const [tryCount, setTryCount] = useState(1);
-  const parsedOptions: string[] = JSON.parse(quiz.options);
+  
+  const parsedOptions: string[] = typeof quiz.options === 'string' 
+    ? JSON.parse(quiz.options) 
+    : quiz.options;
 
   const handleSubmit = () => {
     if (selected === null) return;
@@ -147,7 +141,8 @@ const ChoiceQuiz = ({
               onPress={() => {
                 setModalVisible(false);
                 if (isCorrect) {
-                  onComplete({ tryCount, hintUsed: showHint });
+                  // ✅ lastAnswer로 선택한 정답 전달
+                  onComplete({ tryCount, hintUsed: showHint, lastAnswer: parsedOptions[selected!] });
                 } else {
                   setTryCount(prev => prev + 1);
                   setSubmitted(false);
@@ -166,16 +161,7 @@ const ChoiceQuiz = ({
   );
 };
 
-// ─── 주관식 퀴즈 ───
-const SubjectiveQuiz = ({
-  quiz,
-  hint,
-  onComplete,
-}: {
-  quiz: Quiz;
-  hint: string;
-  onComplete: (result: QuizResult) => void;
-}) => {
+const SubjectiveQuiz = ({ quiz, hint, onComplete }: { quiz: Quiz; hint: string; onComplete: (result: QuizResult) => void; }) => {
   const [answer, setAnswer] = useState('');
   const [submitted, setSubmitted] = useState(false);
   const [isModalVisible, setModalVisible] = useState(false);
@@ -241,7 +227,8 @@ const SubjectiveQuiz = ({
               onPress={() => {
                 setModalVisible(false);
                 if (isCorrect) {
-                  onComplete({ tryCount, hintUsed: showHint });
+                  // ✅ lastAnswer로 입력한 정답 전달
+                  onComplete({ tryCount, hintUsed: showHint, lastAnswer: answer.trim() });
                 } else {
                   setTryCount(prev => prev + 1);
                   setSubmitted(false);
@@ -260,11 +247,12 @@ const SubjectiveQuiz = ({
   );
 };
 
-// ─── 메인 컴포넌트 ───
 const ChatLearnScreen = () => {
   const navigation = useNavigation<NativeStackNavigationProp<LearnStackParamList>>();
   const route = useRoute<RouteProp<LearnStackParamList, 'ChatLearn'>>();
   const resultRef = useRef<QuizResultItem[]>([]);
+  const scrollRef = useRef<ScrollView>(null);
+
   const { episodeId, episodeTitle } = route.params;
 
   const [messages, setMessages] = useState<DisplayMessage[]>([]);
@@ -273,24 +261,28 @@ const ChatLearnScreen = () => {
   const [visibleCount, setVisibleCount] = useState(1);
   const [episodeComplete, setEpisodeComplete] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [showResultModal, setShowResultModal] = useState(false);
 
   useEffect(() => {
     const fetchData = async () => {
       try {
         const data = await getChatData(episodeId);
-        console.log('=== /chat 응답 ===', JSON.stringify(data, null, 2));
-
-        if (!data || !data.script || data.script.length === 0) {
-          setError(`API 연결 성공, 데이터 비어있음\n응답: ${JSON.stringify(data)}`);
+        
+        if (!data || !data.scripts || data.scripts.length === 0) {
+          setError(`스크립트 데이터가 없습니다.`);
           return;
         }
 
         const quizMap = new Map<number, Quiz>();
-        data.quizzes.forEach((q) => quizMap.set(q.scriptId, q));
+        if (data.quizzes) {
+            data.quizzes.forEach((q: Quiz) => quizMap.set(q.scriptId, q));
+        }
 
         const display: DisplayMessage[] = [];
-        data.script.forEach((s) => {
+        
+        data.scripts.forEach((s: Script) => {
           display.push({ type: 'script', script: s });
+          
           const linkedQuiz = quizMap.get(s.scriptId);
           if (linkedQuiz) {
             display.push({ type: 'quiz', quiz: linkedQuiz });
@@ -300,7 +292,10 @@ const ChatLearnScreen = () => {
         setMessages(display);
       } catch (err: any) {
         setError(getErrorMessage(err));
-        console.log('채팅 데이터 로딩 실패:', err);
+        console.error('❌ [에러발생] 채팅 데이터 로딩 실패:', err.message);
+        if (err.response) {
+          console.error('❌ [서버 에러 상세]:', JSON.stringify(err.response.data, null, 2));
+        }
       } finally {
         setLoading(false);
       }
@@ -312,13 +307,19 @@ const ChatLearnScreen = () => {
     if (episodeComplete) return;
     if (visibleCount >= messages.length) return;
     const lastVisible = messages[visibleCount - 1];
+    
     if (lastVisible?.type === 'quiz') return;
 
     const nextCount = visibleCount + 1;
     setVisibleCount(nextCount);
 
+    setTimeout(() => {
+      scrollRef.current?.scrollToEnd({ animated: true });
+    }, 100);
+
     if (nextCount >= messages.length && messages[nextCount - 1]?.type !== 'quiz') {
       setEpisodeComplete(true);
+      setShowResultModal(true);
     }
   };
 
@@ -327,17 +328,23 @@ const ChatLearnScreen = () => {
   );
 
   const handleQuizComplete = (quizId: number, result: QuizResult) => {
+    // ✅ 서버 명세에 맞게 필드명 수정
     resultRef.current.push({
-      quiz_id: quizId,
-      try_count: result.tryCount,
+      quizId: quizId,
+      attemptCount: result.tryCount,
       correct: true,
-      hint_opened: result.hintUsed,
+      lastAnswer: result.lastAnswer,
+      hintUsed: result.hintUsed,
     });
 
     if (visibleCount >= messages.length) {
       setEpisodeComplete(true);
+      setShowResultModal(true);
     } else {
       setVisibleCount((prev) => prev + 1);
+      setTimeout(() => {
+        scrollRef.current?.scrollToEnd({ animated: true });
+      }, 100);
     }
   };
 
@@ -346,20 +353,20 @@ const ChatLearnScreen = () => {
     const totalQuizCount = messages.filter(m => m.type === 'quiz').length;
     try {
       const response = await submitResult({
-        episode_id: episodeId,
+        episodeId: episodeId,
         result: resultRef.current,
       });
       navigation.navigate('LearningResult', {
-        totalScore: response.score ?? 0,
+        score: response.totalScore ?? 0,
         correctCount: response.correctCount ?? resultRef.current.length,
-        totalCount: totalQuizCount,
+        totalQuestions: totalQuizCount,
       });
     } catch (e) {
       console.log('결과 제출 실패:', e);
       navigation.navigate('LearningResult', {
-        totalScore: 0,
+        score: 0,
         correctCount: resultRef.current.length,
-        totalCount: totalQuizCount,
+        totalQuestions: totalQuizCount,
       });
     }
   };
@@ -396,6 +403,7 @@ const ChatLearnScreen = () => {
       <Header title={episodeTitle} leftType="back" rightType="menu" />
 
       <ScrollView
+        ref={scrollRef}
         style={[styles.body, currentQuiz && styles.bodyWithQuiz]}
         contentContainerStyle={styles.bodyContent}
         showsVerticalScrollIndicator={false}
@@ -423,25 +431,30 @@ const ChatLearnScreen = () => {
         )
       )}
 
-      {episodeComplete && (
-        <View style={styles.resultButtonWrap}>
-          <TouchableOpacity
-            style={[styles.resultButton, submitting && styles.nextButtonDisabled]}
-            onPress={handleShowResult}
-            disabled={submitting}
-            activeOpacity={0.8}
-          >
-            <Text style={styles.resultButtonText}>
-              {submitting ? '결과 확인 중...' : '결과 보기'}
+      <Modal transparent visible={showResultModal} animationType="fade">
+        <View style={styles.modalOverlay}>
+          <View style={styles.resultModalContent}>
+            <Text style={styles.resultModalTitle}>학습 완료! 🎉</Text>
+            <Text style={styles.resultModalDesc}>
+              모든 문제를 풀었어요!{'\n'}결과를 확인해볼까요?
             </Text>
-          </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.resultModalButton, submitting && styles.nextButtonDisabled]}
+              onPress={handleShowResult}
+              disabled={submitting}
+              activeOpacity={0.8}
+            >
+              <Text style={styles.resultModalButtonText}>
+                {submitting ? '결과 확인 중...' : '결과 보기 ➔'}
+              </Text>
+            </TouchableOpacity>
+          </View>
         </View>
-      )}
+      </Modal>
     </ScreenWrapper>
   );
 };
 
-// ─── 스타일 ───
 const styles = StyleSheet.create({
   body: { flex: 1, backgroundColor: theme.colors.background },
   bodyWithQuiz: {},
@@ -461,7 +474,7 @@ const styles = StyleSheet.create({
   quizCard: {
     position: 'absolute', bottom: 0, left: 0, right: 0, backgroundColor: '#FFFFFF',
     borderTopLeftRadius: 32, borderTopRightRadius: 32, paddingHorizontal: 24, paddingTop: 15, paddingBottom: 40,
-    shadowColor: '#000', shadowOffset: { width: 0, height: -5 }, shadowOpacity: 0.08, shadowRadius: 15, elevation: 20,
+    shadowColor: '#6C5CE7', shadowOffset: { width: 0, height: -5 }, shadowOpacity: 0.04, shadowRadius: 15, elevation: 20,
   },
   dragHandle: { width: 40, height: 5, borderRadius: 3, backgroundColor: '#E0E0E0', alignSelf: 'center', marginBottom: 20 },
   quizLabel: { fontSize: 13, fontWeight: '600', color: theme.colors.primary, marginBottom: 6 },
@@ -517,6 +530,17 @@ const styles = StyleSheet.create({
   modalDesc: { fontSize: 15, color: '#555', textAlign: 'center', lineHeight: 22, marginBottom: 24 },
   modalButton: { width: '100%', borderRadius: 16, paddingVertical: 14, alignItems: 'center' },
   modalButtonText: { fontSize: 16, fontWeight: '700', color: '#FFF' },
+
+  resultModalContent: {
+    width: '80%', backgroundColor: '#FFF', borderRadius: 24, padding: 30, alignItems: 'center',
+    elevation: 5, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.25, shadowRadius: 4,
+  },
+  resultModalTitle: { fontSize: 24, fontWeight: '900', color: '#1a1a1a', marginBottom: 12 },
+  resultModalDesc: { fontSize: 15, color: '#666', textAlign: 'center', lineHeight: 22, marginBottom: 24 },
+  resultModalButton: {
+    width: '100%', backgroundColor: theme.colors.primary, borderRadius: 16, paddingVertical: 16, alignItems: 'center',
+  },
+  resultModalButtonText: { fontSize: 16, fontWeight: '700', color: '#FFF' },
 });
 
 export default ChatLearnScreen;

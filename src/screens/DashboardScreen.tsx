@@ -1,5 +1,3 @@
-// screens/Dashboard/DashboardScreen.tsx
-
 import React, { useState, useEffect } from 'react';
 import {
   View,
@@ -15,7 +13,7 @@ import { ScreenWrapper } from '../components/layout/ScreenWrapper';
 import { Header } from '../components/layout/Header';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
-import { getDashboard } from '../api/dashboard';
+import { getDashboard, type DashboardResponse } from '../api/dashboard';
 import { getErrorMessage } from '../utils/errorMessage';
 
 // ─── 색상 ───
@@ -31,11 +29,16 @@ const WEEKDAY_LABELS = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
 
 // ─── 반원 게이지 컴포넌트 ───
 const AchievementGauge = ({ percent }: { percent: number }) => {
+  // 🌟 1. NaN 방어: 서버에서 값이 안 오거나 에러가 나서 숫자가 아니면 무조건 0으로 처리
+  const safePercent = isNaN(percent) ? 0 : percent;
+
   const size = 120;
   const strokeWidth = 12; 
   const radius = (size - strokeWidth) / 2;
   const circumference = Math.PI * radius; 
-  const strokeDashoffset = circumference - (circumference * percent) / 100;
+  
+  // 🌟 2. 안전한 값(safePercent)으로 계산하도록 수정
+  const strokeDashoffset = circumference - (circumference * safePercent) / 100;
 
   return (
     <View style={styles.gaugeWrap}>
@@ -44,16 +47,23 @@ const AchievementGauge = ({ percent }: { percent: number }) => {
           cx={size / 2} cy={size / 2} r={radius}
           stroke={C.streakInactive} strokeWidth={strokeWidth} fill="none"
           strokeLinecap="round" strokeDasharray={`${circumference} ${circumference}`}
-          rotation="180" origin={`${size / 2}, ${size / 2}`}
+          rotation="180" 
+          // 🌟 3. transform-origin 에러 해결: origin="x,y" 대신 originX, originY 사용
+          originX={size / 2} originY={size / 2}
         />
-        <Circle
-          cx={size / 2} cy={size / 2} r={radius}
-          stroke={theme.colors.primary} strokeWidth={strokeWidth} fill="none"
-          strokeLinecap="round" strokeDasharray={`${circumference} ${circumference}`}
-          strokeDashoffset={strokeDashoffset} rotation="180" origin={`${size / 2}, ${size / 2}`}
-        />
+        {safePercent > 0 && (
+          <Circle
+            cx={size / 2} cy={size / 2} r={radius}
+            stroke={theme.colors.primary} strokeWidth={strokeWidth} fill="none"
+            strokeLinecap="round" strokeDasharray={`${circumference} ${circumference}`}
+            strokeDashoffset={strokeDashoffset}
+            rotation="180"
+            originX={size / 2} originY={size / 2}
+          />
+        )}
       </Svg>
-      <Text style={styles.arcPercent}>{percent}%</Text>
+      {/* 🌟 화면에 찍히는 텍스트도 안전한 값으로 출력 */}
+      <Text style={styles.arcPercent}>{safePercent}%</Text>
     </View>
   );
 };
@@ -61,15 +71,7 @@ const AchievementGauge = ({ percent }: { percent: number }) => {
 // ─── 메인 컴포넌트 ───
 const DashboardScreen = () => {
   const navigation = useNavigation<any>();
-  const [data, setData] = useState<{
-    name: string;
-    level: string;
-    content_days: string;
-    content_percent: string;
-    clear_story: string;
-    content_phrase: string;
-    weekly_done: boolean[];
-  } | null>(null);
+  const [data, setData] = useState<DashboardResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -106,9 +108,10 @@ const DashboardScreen = () => {
     );
   }
 
+  console.log('👀 서버가 준 데이터:', data);
   const weekdays = WEEKDAY_LABELS.map((day, i) => ({
     day,
-    done: data.weekly_done?.[i] ?? false,
+    done: data.weeklyStudy?.[i] ?? false,
   }));
 
   return (
@@ -128,7 +131,7 @@ const DashboardScreen = () => {
           <View style={styles.streakHeader}>
             <Text style={styles.streakTitle}>연속 학습 달성</Text>
             <View style={styles.daysBadge}>
-              <Text style={styles.daysBadgeText}>🌿 {data.content_days} DAYS</Text>
+              <Text style={styles.daysBadgeText}>🌿 {data.consecutiveDays} DAYS</Text>
             </View>
           </View>
           <View style={styles.weekRow}>
@@ -147,10 +150,10 @@ const DashboardScreen = () => {
 
         {/* 학습 성취도 */}
         <View style={styles.achievementSection}>
-          <AchievementGauge percent={parseInt(data.content_percent, 10)} />
+          <AchievementGauge percent={data.progressRate} />
           <Text style={styles.achievementTitle}>학습 성취도</Text>
           <Text style={styles.achievementDesc}>
-            {data.content_phrase}
+            {data.commentText || '아직 학습을 시작하지 않았어요. 첫 스토리를 열어보세요!'}
           </Text>
         </View>
 
@@ -175,12 +178,13 @@ const DashboardScreen = () => {
           <View style={styles.statCard}>
             <Text style={styles.statIcon}>📖</Text>
             <Text style={styles.statLabel}>완료한 스토리</Text>
-            <Text style={styles.statValue}>{data.clear_story} 편</Text>
+            <Text style={styles.statValue}>{data.completedStoryCount ?? 0} 편</Text>
           </View>
           <View style={styles.statCard}>
             <Text style={styles.statIcon}>🌿</Text>
             <Text style={styles.statLabel}>내 레벨</Text>
-            <Text style={styles.statValue}>{data.level}</Text>
+            <Text style={styles.statValue}>Lv.{data.levelCode}</Text>
+            <Text style={styles.statDesc}>{data.levelDesc}</Text>
           </View>
         </View>
         
@@ -290,6 +294,7 @@ const styles = StyleSheet.create({
   statIcon: { fontSize: 18, marginBottom: 6 },
   statLabel: { fontSize: 11, color: '#999', fontWeight: '500' },
   statValue: { fontSize: 16, fontWeight: '800', color: '#1a1a1a', marginTop: 4 },
+  statDesc: { fontSize: 12, fontWeight: '500', color: '#888', marginTop: 2 },
 });
 
 export default DashboardScreen;

@@ -10,7 +10,7 @@ import { Header } from '../../components/layout/Header';
 import { CustomButton } from '../../components/common/Button';
 import { theme } from '../../constants/theme';
 
-const API_BASE_URL = 'https://q-ring.app:8080/api/v1/auth'; 
+const API_BASE_URL = 'https://q-ring.app/api/v1/auth'; 
 
 // 🌟 명세서 맞춤형 언어 코드 매핑 (EN/ZH/JA)
 const LANG_MAP: Record<string, string> = {

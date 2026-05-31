@@ -2,7 +2,7 @@ import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const client = axios.create({
-  baseURL: 'https://q-ring.app:8080', // 본인 컴퓨터 IP로 바꿔야 함
+  baseURL: 'https://q-ring.app', // 본인 컴퓨터 IP로 바꿔야 함
   timeout: 10000,
   headers: { 'Content-Type': 'application/json' },
 });

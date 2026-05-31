@@ -17,7 +17,7 @@ interface HeaderProps {
 }
 
 // 환경 변수 또는 상수 파일에서 백엔드 주소 가져오기 (임시 하드코딩)
-const API_BASE_URL = 'https://q-ring.app:8080/api/v1/auth';
+const API_BASE_URL = 'https://q-ring.app/api/v1/auth';
 
 export const Header = ({ 
   title, 
@@ -25,12 +25,31 @@ export const Header = ({
   rightType = 'none', 
   onRightPress, 
   showLogo = false, 
-  userName = '박수현' 
+  userName // 🌟 기본값('박수현')을 지워줍니다.
 }: HeaderProps) => {
   const navigation = useNavigation<any>();
-  
-  // 🌟 프로필 메뉴(모달) 노출 여부 상태
   const [isProfileMenuVisible, setProfileMenuVisible] = useState(false);
+
+  // 🌟 1. 화면에 보여줄 이름을 담을 그릇 (처음엔 '학습자'로 둠)
+  const [displayName, setDisplayName] = useState('학습자');
+
+  // 🌟 2. 닉네임 자동 저장 & 불러오기 로직
+  React.useEffect(() => {
+    const fetchAndSaveName = async () => {
+      if (userName) {
+        // 대시보드처럼 이름을 직접 넘겨준 경우: 화면에 띄우고 메모장에 저장!
+        setDisplayName(userName);
+        await AsyncStorage.setItem('savedUserName', userName);
+      } else {
+        // 스토리홈처럼 이름을 안 넘겨준 경우: 메모장에서 꺼내오기!
+        const saved = await AsyncStorage.getItem('savedUserName');
+        if (saved) {
+          setDisplayName(saved);
+        }
+      }
+    };
+    fetchAndSaveName();
+  }, [userName]);
 
   // 🌟 오른쪽 버튼 클릭 핸들러 (profile일 때는 메뉴를 띄우고, 아니면 부모가 넘겨준 함수 실행)
   const handleRightPress = () => {
@@ -79,7 +98,7 @@ export const Header = ({
         
         {showLogo ? (
           <View style={styles.logoSection}>
-            <Text style={styles.greetingText}>안녕하세요, {userName}님!</Text>
+            <Text style={styles.greetingText}>안녕하세요, {displayName}님!</Text>
             <Image 
               source={require('../../../assets/quring_logo.png')} 
               style={styles.headerLogo} 
@@ -133,27 +152,28 @@ export const Header = ({
         animationType="fade"
         onRequestClose={() => setProfileMenuVisible(false)}
       >
-        {/* 모달 바깥 영역(어두운 배경)을 누르면 모달이 닫히도록 설정 */}
+        {/* 🌟 1. 모달 배경 (메뉴 박스를 감싸지 않고 따로 둡니다!) */}
         <TouchableOpacity 
           style={styles.modalOverlay} 
           activeOpacity={1} 
           onPress={() => setProfileMenuVisible(false)}
-        >
-          {/* 실제 메뉴 컨테이너 (우측 상단에 위치) */}
-          <View style={styles.menuContainer}>
-            <View style={styles.menuHeader}>
-              <Ionicons name="person-circle" size={32} color="#CCC" />
-              <Text style={styles.menuUserName}>{userName} 님</Text>
-            </View>
-            
-            <View style={styles.menuDivider} />
-
-            <TouchableOpacity style={styles.menuItem} onPress={handleLogout}>
-              <Ionicons name="log-out-outline" size={20} color="#dc3545" />
-              <Text style={styles.menuLogoutText}>로그아웃</Text>
-            </TouchableOpacity>
+        />
+          
+        {/* 🌟 2. 실제 메뉴 컨테이너 (배경과 겹치지 않게 밖으로 꺼냄) */}
+        <View style={styles.menuContainer}>
+          <View style={styles.menuHeader}>
+            <Ionicons name="person-circle" size={32} color="#CCC" />
+            <Text style={styles.menuUserName}>{displayName} 님</Text>
           </View>
-        </TouchableOpacity>
+          
+          <View style={styles.menuDivider} />
+
+          {/* 이제 터치 간섭 없이 로그아웃 함수가 정상적으로 실행됩니다 */}
+          <TouchableOpacity style={styles.menuItem} onPress={handleLogout}>
+            <Ionicons name="log-out-outline" size={20} color="#dc3545" />
+            <Text style={styles.menuLogoutText}>로그아웃</Text>
+          </TouchableOpacity>
+        </View>
       </Modal>
 
     </View>
