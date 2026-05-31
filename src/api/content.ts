@@ -48,13 +48,10 @@ export const getContentList = async () => {
 export const getChatData = async (episodeId: number): Promise<ChatData> => {
   console.log(`📤 [요청: /chat] 파라미터로 전송할 contentId:`, episodeId);
   
-  // 🌟 해결 포인트: 데이터를 Body(두 번째 칸)가 아니라, params(세 번째 칸 설정)에 넣어서 보냅니다.
-  // 이렇게 하면 Axios가 알아서 "https://q-ring.app/chat?contentId=1" 형태로 만들어서 보냅니다!
   const res = await client.post('/chat', null, { 
     params: { contentId: episodeId } 
   });
   
-  console.log('📥 [응답: /chat] 받은 데이터:', JSON.stringify(res.data, null, 2));
   return res.data;
 };
 
@@ -64,10 +61,8 @@ export const submitResult = async (data: {
 }): Promise<SubmitResultResponse> => {
   const requestBody = {
     contentId: data.episodeId,
-    results: data.result,  // result → results
+    results: data.result,  
   };
-  
-  console.log('📤 [요청: /questionResult]', JSON.stringify(requestBody, null, 2));
   
   const res = await client.post('/questionResult', requestBody);
   return res.data;

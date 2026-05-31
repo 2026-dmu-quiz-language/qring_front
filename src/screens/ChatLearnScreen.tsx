@@ -18,6 +18,7 @@ import { Header } from '../components/layout/Header';
 import { getChatData, submitResult } from '../api/content';
 import type { Script, Quiz, QuizResultItem } from '../api/content';
 import { getErrorMessage } from '../utils/errorMessage';
+import { Ionicons } from '@expo/vector-icons';
 
 interface DisplayMessage {
   type: 'script' | 'quiz';
@@ -30,11 +31,14 @@ interface QuizResult {
   tryCount: number;
   hintUsed: boolean;
   lastAnswer: string;
+  correct: boolean;
 }
 
 const ChatBubble = ({ text }: { text: string }) => (
   <View style={styles.bubbleRow}>
-    <View style={styles.avatar} />
+    <View style={styles.avatar}>
+      <Ionicons name="person" size={20} color={theme.colors.primary} />
+    </View>
     <View style={styles.bubble}>
       <Text style={styles.bubbleText}>{text}</Text>
     </View>
@@ -64,21 +68,21 @@ const ChoiceQuiz = ({ quiz, hint, onComplete }: { quiz: Quiz; hint: string; onCo
 
   const getOptionStyle = (index: number) => {
     if (!submitted && selected === index) return styles.optionSelected;
-    if (submitted && parsedOptions[index] === quiz.correctAnswer) return styles.optionCorrect;
-    if (submitted && selected === index && parsedOptions[index] !== quiz.correctAnswer) return styles.optionWrong;
+    if (submitted && isCorrect && parsedOptions[index] === quiz.correctAnswer) return styles.optionCorrect;
+    if (submitted && !isCorrect && selected === index) return styles.optionWrong;
     return styles.optionDefault;
   };
 
   const getRadioStyle = (index: number) => {
     if (!submitted && selected === index) return styles.radioSelected;
-    if (submitted && parsedOptions[index] === quiz.correctAnswer) return styles.radioCorrect;
-    if (submitted && selected === index && parsedOptions[index] !== quiz.correctAnswer) return styles.radioWrong;
+    if (submitted && isCorrect && parsedOptions[index] === quiz.correctAnswer) return styles.radioCorrect;
+    if (submitted && !isCorrect && selected === index) return styles.radioWrong;
     return styles.radioDefault;
   };
 
   const showCheck = (index: number) => {
     if (!submitted && selected === index) return true;
-    if (submitted && parsedOptions[index] === quiz.correctAnswer) return true;
+    if (submitted && isCorrect && parsedOptions[index] === quiz.correctAnswer) return true;
     return false;
   };
 
@@ -89,6 +93,12 @@ const ChoiceQuiz = ({ quiz, hint, onComplete }: { quiz: Quiz; hint: string; onCo
         {quiz.quizType === 'fill_in_blank' ? '빈칸 채우기' : '객관식'}
       </Text>
       <Text style={styles.quizQuestion}>{quiz.question}</Text>
+
+      {showHint && !submitted && (
+        <View style={styles.hintBox}>
+          <Text style={styles.hintContent}>{hint}</Text>
+        </View>
+      )}
 
       <View style={styles.optionsWrap}>
         {parsedOptions.map((option, index) => (
@@ -121,28 +131,25 @@ const ChoiceQuiz = ({ quiz, hint, onComplete }: { quiz: Quiz; hint: string; onCo
           <Text style={styles.hintText}>힌트보기</Text>
         </TouchableOpacity>
       )}
-      {showHint && !submitted && (
-        <Text style={styles.hintContent}>{hint}</Text>
-      )}
-
       <Modal transparent visible={isModalVisible} animationType="fade">
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
             <Text style={[styles.modalTitle, { color: isCorrect ? theme.colors.primary : '#dc3545' }]}>
-              {isCorrect ? '정답입니다! 🎉' : '아쉽네요! 🥲'}
+              {isCorrect ? '정답입니다! 🎉' : tryCount >= 3 ? '기회를 모두 사용했어요 😢' : '아쉽네요! 🥲'}
             </Text>
             <Text style={styles.modalDesc}>
               {isCorrect
                 ? quiz.explanation || '완벽하게 이해하셨네요!\n다음 스토리로 넘어가볼까요?'
-                : '오답입니다.\n다시 한번 확인해 볼까요?'}
+                : tryCount >= 3
+                  ? '다음 문제로 넘어갈게요.\n복습에서 다시 도전해보세요!'
+                  : `오답입니다. (${tryCount}/3)\n다시 한번 확인해 볼까요?`}
             </Text>
             <TouchableOpacity
               style={[styles.modalButton, { backgroundColor: isCorrect ? theme.colors.primary : '#dc3545' }]}
               onPress={() => {
                 setModalVisible(false);
-                if (isCorrect) {
-                  // ✅ lastAnswer로 선택한 정답 전달
-                  onComplete({ tryCount, hintUsed: showHint, lastAnswer: parsedOptions[selected!] });
+                if (isCorrect || tryCount >= 3) {
+                  onComplete({ tryCount: isCorrect ? tryCount : 4, hintUsed: showHint, lastAnswer: parsedOptions[selected!], correct: isCorrect });
                 } else {
                   setTryCount(prev => prev + 1);
                   setSubmitted(false);
@@ -151,7 +158,7 @@ const ChoiceQuiz = ({ quiz, hint, onComplete }: { quiz: Quiz; hint: string; onCo
               }}
             >
               <Text style={styles.modalButtonText}>
-                {isCorrect ? '다음으로 ➔' : '다시 풀기'}
+                {isCorrect || tryCount >= 3 ? '다음으로 ➔' : '다시 풀기'}
               </Text>
             </TouchableOpacity>
           </View>
@@ -184,6 +191,12 @@ const SubjectiveQuiz = ({ quiz, hint, onComplete }: { quiz: Quiz; hint: string; 
       <Text style={styles.quizLabel}>주관식</Text>
       <Text style={styles.quizQuestion}>{quiz.question}</Text>
 
+      {showHint && !submitted && (
+        <View style={styles.hintBox}>
+          <Text style={styles.hintContent}>{hint}</Text>
+        </View>
+      )}
+
       <TextInput
         style={styles.textInput}
         placeholder="답을 입력하세요"
@@ -207,28 +220,25 @@ const SubjectiveQuiz = ({ quiz, hint, onComplete }: { quiz: Quiz; hint: string; 
           <Text style={styles.hintText}>힌트보기</Text>
         </TouchableOpacity>
       )}
-      {showHint && !submitted && (
-        <Text style={styles.hintContent}>{hint}</Text>
-      )}
-
       <Modal transparent visible={isModalVisible} animationType="fade">
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
             <Text style={[styles.modalTitle, { color: isCorrect ? theme.colors.primary : '#dc3545' }]}>
-              {isCorrect ? '정답입니다! 🎉' : '아쉽네요! 🥲'}
+              {isCorrect ? '정답입니다! 🎉' : tryCount >= 3 ? '기회를 모두 사용했어요 😢' : '아쉽네요! 🥲'}
             </Text>
             <Text style={styles.modalDesc}>
               {isCorrect
                 ? quiz.explanation || '완벽하게 이해하셨네요!\n다음 스토리로 넘어가볼까요?'
-                : `정답은 "${quiz.correctAnswer}" 입니다.\n다시 도전해볼까요?`}
+                : tryCount >= 3
+                  ? '다음 문제로 넘어갈게요.\n복습에서 다시 도전해보세요!'
+                  : `오답입니다. (${tryCount}/3)\n다시 도전해볼까요?`}
             </Text>
             <TouchableOpacity
               style={[styles.modalButton, { backgroundColor: isCorrect ? theme.colors.primary : '#dc3545' }]}
               onPress={() => {
                 setModalVisible(false);
-                if (isCorrect) {
-                  // ✅ lastAnswer로 입력한 정답 전달
-                  onComplete({ tryCount, hintUsed: showHint, lastAnswer: answer.trim() });
+                if (isCorrect || tryCount >= 3) {
+                  onComplete({ tryCount: isCorrect ? tryCount : 4, hintUsed: showHint, lastAnswer: answer.trim(), correct: isCorrect });
                 } else {
                   setTryCount(prev => prev + 1);
                   setSubmitted(false);
@@ -237,7 +247,7 @@ const SubjectiveQuiz = ({ quiz, hint, onComplete }: { quiz: Quiz; hint: string; 
               }}
             >
               <Text style={styles.modalButtonText}>
-                {isCorrect ? '다음으로 ➔' : '다시 풀기'}
+                {isCorrect || tryCount >= 3 ? '다음으로 ➔' : '다시 풀기'}
               </Text>
             </TouchableOpacity>
           </View>
@@ -260,7 +270,6 @@ const ChatLearnScreen = () => {
   const [error, setError] = useState<string | null>(null);
   const [visibleCount, setVisibleCount] = useState(1);
   const [episodeComplete, setEpisodeComplete] = useState(false);
-  const [submitting, setSubmitting] = useState(false);
   const [showResultModal, setShowResultModal] = useState(false);
 
   useEffect(() => {
@@ -332,7 +341,7 @@ const ChatLearnScreen = () => {
     resultRef.current.push({
       quizId: quizId,
       attemptCount: result.tryCount,
-      correct: true,
+      correct: result.correct,
       lastAnswer: result.lastAnswer,
       hintUsed: result.hintUsed,
     });
@@ -349,7 +358,7 @@ const ChatLearnScreen = () => {
   };
 
   const handleShowResult = async () => {
-    setSubmitting(true);
+    setShowResultModal(false);
     const totalQuizCount = messages.filter(m => m.type === 'quiz').length;
     try {
       const response = await submitResult({
@@ -415,6 +424,16 @@ const ChatLearnScreen = () => {
         })}
       </ScrollView>
 
+      {/* 하단 가짜 입력바 */}
+      <View style={styles.fakeInputBar}>
+        <View style={styles.fakeInput}>
+          <Text style={styles.fakeInputText}>메시지 입력</Text>
+        </View>
+        <TouchableOpacity style={styles.fakeSendButton} activeOpacity={0.7}>
+          <Ionicons name="send" size={18} color="#fff" />
+        </TouchableOpacity>
+      </View>
+
       {!episodeComplete && currentQuiz?.quiz && (
         currentQuiz.quiz.quizType === 'subjective' ? (
           <SubjectiveQuiz
@@ -439,14 +458,11 @@ const ChatLearnScreen = () => {
               모든 문제를 풀었어요!{'\n'}결과를 확인해볼까요?
             </Text>
             <TouchableOpacity
-              style={[styles.resultModalButton, submitting && styles.nextButtonDisabled]}
+              style={styles.resultModalButton}
               onPress={handleShowResult}
-              disabled={submitting}
               activeOpacity={0.8}
             >
-              <Text style={styles.resultModalButtonText}>
-                {submitting ? '결과 확인 중...' : '결과 보기 ➔'}
-              </Text>
+              <Text style={styles.resultModalButtonText}>결과 보기 ➔</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -458,11 +474,12 @@ const ChatLearnScreen = () => {
 const styles = StyleSheet.create({
   body: { flex: 1, backgroundColor: theme.colors.background },
   bodyWithQuiz: {},
-  bodyContent: { padding: 20, paddingBottom: 400 },
+  bodyContent: { padding: 20, paddingBottom: 20 },
 
   bubbleRow: { flexDirection: 'row', alignItems: 'flex-start', marginBottom: 16 },
   avatar: {
     width: 38, height: 38, borderRadius: 19, backgroundColor: theme.colors.white, marginRight: 12,
+    justifyContent: 'center', alignItems: 'center',
     elevation: 2, shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.1, shadowRadius: 2,
   },
   bubble: {
@@ -509,7 +526,11 @@ const styles = StyleSheet.create({
 
   hintButton: { marginTop: 16, alignItems: 'center' },
   hintText: { fontSize: 13, fontWeight: '600', color: '#888', textDecorationLine: 'underline' },
-  hintContent: { fontSize: 13, color: theme.colors.primary, textAlign: 'center', marginTop: 8 },
+  hintBox: {
+    backgroundColor: '#F5F9F0', borderRadius: 12, padding: 12, marginBottom: 16,
+    borderLeftWidth: 3, borderLeftColor: theme.colors.primary,
+  },
+  hintContent: { fontSize: 13, color: theme.colors.primary, lineHeight: 20 },
 
   resultButtonWrap: {
     position: 'absolute', bottom: 0, left: 0, right: 0,
@@ -541,6 +562,20 @@ const styles = StyleSheet.create({
     width: '100%', backgroundColor: theme.colors.primary, borderRadius: 16, paddingVertical: 16, alignItems: 'center',
   },
   resultModalButtonText: { fontSize: 16, fontWeight: '700', color: '#FFF' },
+
+  fakeInputBar: {
+    flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 10,
+    backgroundColor: '#fff', borderTopWidth: 1, borderTopColor: '#E8E8E8',
+  },
+  fakeInput: {
+    flex: 1, backgroundColor: '#F5F5F5', borderRadius: 20, paddingHorizontal: 16, paddingVertical: 12,
+    marginRight: 10,
+  },
+  fakeInputText: { fontSize: 14, color: '#bbb' },
+  fakeSendButton: {
+    width: 36, height: 36, borderRadius: 18, backgroundColor: theme.colors.primary,
+    justifyContent: 'center', alignItems: 'center',
+  },
 });
 
 export default ChatLearnScreen;
