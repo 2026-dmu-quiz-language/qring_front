@@ -11,7 +11,7 @@ import { CustomButton } from '../../components/common/Button';
 import { theme } from '../../constants/theme';
 
 // 백엔드 주소 (환경에 맞게 수정하세요)
-const API_BASE_URL = 'http://localhost:8080/api/v1/auth';
+const API_BASE_URL = 'https://q-ring.app:8080/api/v1/auth';
 
 const SignUpScreen = ({ navigation }: any) => {
   // 🌟 명세서에 맞게 id 대신 email로 상태명 변경

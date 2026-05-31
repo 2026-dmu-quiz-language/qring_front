@@ -52,8 +52,8 @@ const StoryHomeScreen = () => {
           return;
         }
 
-        // 백엔드 엔드포인트 주소에 맞게 수정 필요 (예: http://localhost:8080/api/v1/contentList)
-        const response = await axios.post('http://localhost:8080/contentList', {
+        // 백엔드 엔드포인트 주소에 맞게 수정 필요
+        const response = await axios.post('https://q-ring.app:8080/contentList', {
           token: token // 명세서 요구사항에 따라 body에 token 포함
         }, {
           headers: { Authorization: `Bearer ${token}` } // 안전을 위해 헤더에도 추가

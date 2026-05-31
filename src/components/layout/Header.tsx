@@ -17,7 +17,7 @@ interface HeaderProps {
 }
 
 // 환경 변수 또는 상수 파일에서 백엔드 주소 가져오기 (임시 하드코딩)
-const API_BASE_URL = 'http://localhost:8080/api/v1/auth';
+const API_BASE_URL = 'https://q-ring.app:8080/api/v1/auth';
 
 export const Header = ({ 
   title, 

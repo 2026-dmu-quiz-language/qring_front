@@ -16,7 +16,7 @@ import * as Google from 'expo-auth-session/providers/google';
 WebBrowser.maybeCompleteAuthSession();
 
 // 백엔드 기본 주소
-const API_BASE_URL = 'http://localhost:8080/api/v1/auth'; 
+const API_BASE_URL = 'https://q-ring.app:8080/api/v1/auth'; 
 
 const kakaoDiscovery = { authorizationEndpoint: 'https://kauth.kakao.com/oauth/authorize' };
 const lineDiscovery = { authorizationEndpoint: 'https://access.line.me/oauth2/v2.1/authorize' };
