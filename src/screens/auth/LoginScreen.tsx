@@ -15,9 +15,9 @@ import * as Google from 'expo-auth-session/providers/google';
 
 WebBrowser.maybeCompleteAuthSession();
 
-const API_BASE_URL = 'http://localhost:8080'; 
+// 백엔드 기본 주소
+const API_BASE_URL = 'http://localhost:8080/api/v1/auth'; 
 
-// 🌟 카카오 & 라인 인증 엔드포인트 수동 설정 (최신 방식)
 const kakaoDiscovery = { authorizationEndpoint: 'https://kauth.kakao.com/oauth/authorize' };
 const lineDiscovery = { authorizationEndpoint: 'https://access.line.me/oauth2/v2.1/authorize' };
 
@@ -35,7 +35,7 @@ const LoginScreen = ({ navigation }: any) => {
     if (!id || !password) return Alert.alert('알림', '아이디와 비밀번호를 입력해 주세요.');
 
     try {
-      const response = await axios.post(`${API_BASE_URL}/api/v1/auth/login`, {
+      const response = await axios.post(`${API_BASE_URL}/login`, {
         email: id,
         password: password,
       });
@@ -55,51 +55,40 @@ const LoginScreen = ({ navigation }: any) => {
   };
 
   // ==========================================
-  // 2. 소셜 로그인 백엔드 전송 (신규 유저 처리 추가)
+  // 2. 소셜 로그인 백엔드 전송 (/oauth/...)
   // ==========================================
-  const sendSocialTokenToBackend = async (provider: string, payload: any) => {
+  const sendSocialTokenToBackend = async (provider: string, tokenVal: string) => {
     try {
-      const response = await axios.post(`${API_BASE_URL}/api/v1/auth/oauth/${provider}`, payload);
-      
-      // 케이스 A: 백엔드에서 신규 유저라고 알려주는 경우
-      if (response.data?.isNewUser) {
-        Alert.alert('환영합니다!', '추가 정보 입력을 위해 회원가입 화면으로 이동합니다.', [
-          { 
-            text: '확인', 
-            // 🌟 SocialSignUp 화면으로 소셜 제공자 이름과 받은 토큰을 넘겨줍니다!
-            onPress: () => navigation.navigate('SocialSignUp', { provider: provider, token: payload.token }) 
-          }
-        ]);
-        return;
-      }
+      // 명세서 Request: token, redirectUri
+      const payload = {
+        token: tokenVal,
+        redirectUri: redirectUri
+      };
 
-      // 기존 유저 처리 로직...
-      const token = response.data?.accessToken;
-      if (token) {
-        await AsyncStorage.setItem('accessToken', token);
-        if (response.data?.refreshToken) {
-          await AsyncStorage.setItem('refreshToken', response.data.refreshToken);
+      const response = await axios.post(`${API_BASE_URL}/oauth/${provider}`, payload);
+      
+      const { accessToken, refreshToken, newUser } = response.data;
+
+      // 🌟 신규 유저든 기존 유저든 일단 발급받은 토큰은 저장합니다.
+      if (accessToken) {
+        await AsyncStorage.setItem('accessToken', accessToken);
+        if (refreshToken) {
+          await AsyncStorage.setItem('refreshToken', refreshToken);
         }
-        navigation.navigate('MainTab');
+        
+        // 🌟 명세서 Response: newUser가 true면 학습 설정 페이지로!
+        if (newUser) {
+          navigation.navigate('SocialSignUp');
+        } else {
+          navigation.navigate('MainTab');
+        }
+      } else {
+        Alert.alert('오류', '토큰을 발급받지 못했습니다.');
       }
       
     } catch (error: any) {
       console.error(`${provider} Login Error:`, error);
-      const errorCode = error.response?.data?.code;
-      const errorMessage = error.response?.data?.message;
-
-      // 케이스 B: 가입되지 않은 유저 에러 코드일 경우
-      if (errorCode === 'USER_NOT_FOUND') {
-        Alert.alert('회원가입 필요', '아직 가입되지 않은 소셜 계정입니다. 가입을 진행해 주세요.', [
-          { 
-            text: '확인', 
-            // 🌟 에러로 거절되었을 때도 SocialSignUp으로 보냅니다!
-            onPress: () => navigation.navigate('SocialSignUp', { provider: provider, token: payload.token }) 
-          }
-        ]);
-      } else {
-        Alert.alert('로그인 실패', errorMessage || '서버 연동에 실패했습니다.');
-      }
+      Alert.alert('로그인 실패', error.response?.data?.message || '서버 연동에 실패했습니다.');
     }
   };
 
@@ -107,23 +96,21 @@ const LoginScreen = ({ navigation }: any) => {
   // 3. 구글 로그인 Hook
   // ==========================================
   const [googleRequest, googleResponse, promptGoogleAsync] = Google.useAuthRequest({
-    webClientId: 'YOUR_WEB_CLIENT_ID.apps.googleusercontent.com',
-    iosClientId: 'YOUR_IOS_CLIENT_ID.apps.googleusercontent.com',
-    androidClientId: 'YOUR_ANDROID_CLIENT_ID.apps.googleusercontent.com',
+    webClientId: '472758554338-hvjco2n0okeqsfe8uv7d8ecm1ih8qlb6.apps.googleusercontent.com',
   });
 
   useEffect(() => {
     if (googleResponse?.type === 'success' && googleResponse.params?.id_token) {
-      sendSocialTokenToBackend('google', { token: googleResponse.params.id_token });
+      sendSocialTokenToBackend('google', googleResponse.params.id_token);
     }
   }, [googleResponse]);
 
   // ==========================================
-  // 4. 카카오 로그인 Hook (최신 방식)
+  // 4. 카카오 로그인 Hook
   // ==========================================
   const [kakaoRequest, kakaoResponse, promptKakaoAsync] = AuthSession.useAuthRequest(
     {
-      clientId: 'YOUR_KAKAO_REST_API_KEY', // 💡 REST API 키 입력
+      clientId: '34ef02f3d1f4df166ecdfea02aa21bd1', 
       redirectUri,
       responseType: AuthSession.ResponseType.Code,
     },
@@ -132,19 +119,16 @@ const LoginScreen = ({ navigation }: any) => {
 
   useEffect(() => {
     if (kakaoResponse?.type === 'success' && kakaoResponse.params?.code) {
-      sendSocialTokenToBackend('kakao', { 
-        token: kakaoResponse.params.code, 
-        redirectUri 
-      });
+      sendSocialTokenToBackend('kakao', kakaoResponse.params.code);
     }
   }, [kakaoResponse]);
 
   // ==========================================
-  // 5. 라인 로그인 Hook (최신 방식)
+  // 5. 라인 로그인 Hook
   // ==========================================
   const [lineRequest, lineResponse, promptLineAsync] = AuthSession.useAuthRequest(
     {
-      clientId: 'YOUR_LINE_CHANNEL_ID', // 💡 채널 ID 입력
+      clientId: '2009845869', 
       redirectUri,
       scopes: ['profile', 'openid', 'email'],
       responseType: AuthSession.ResponseType.Code,
@@ -155,10 +139,7 @@ const LoginScreen = ({ navigation }: any) => {
 
   useEffect(() => {
     if (lineResponse?.type === 'success' && lineResponse.params?.code) {
-      sendSocialTokenToBackend('line', { 
-        token: lineResponse.params.code, 
-        redirectUri 
-      });
+      sendSocialTokenToBackend('line', lineResponse.params.code);
     }
   }, [lineResponse]);
 
@@ -171,22 +152,10 @@ const LoginScreen = ({ navigation }: any) => {
 
         <View style={styles.inputSection}>
           <Text style={styles.label}>ID</Text>
-          <CustomInput 
-            iconName="person-outline" 
-            placeholder="아이디(이메일)를 입력해 주세요." 
-            value={id}
-            onChangeText={setId}
-            autoCapitalize="none"
-          />
+          <CustomInput iconName="person-outline" placeholder="이메일을 입력해 주세요." value={id} onChangeText={setId} autoCapitalize="none" />
           
           <Text style={styles.label}>PASSWORD</Text>
-          <CustomInput 
-            iconName="lock-closed-outline" 
-            placeholder="비밀번호를 입력해 주세요." 
-            secureTextEntry 
-            value={password}
-            onChangeText={setPassword}
-          />
+          <CustomInput iconName="lock-closed-outline" placeholder="비밀번호를 입력해 주세요." secureTextEntry value={password} onChangeText={setPassword} />
           
           <TouchableOpacity style={styles.forgotBtn}>
             <Text style={styles.forgotText}>비밀번호를 잊으셨나요?</Text>
@@ -199,32 +168,30 @@ const LoginScreen = ({ navigation }: any) => {
           <View style={styles.line} /><Text style={styles.orText}>OR</Text><View style={styles.line} />
         </View>
 
+        {/* 🌟 소셜 아이콘 브랜드 스타일 적용 */}
         <View style={styles.socialContainer}>
-          {/* 🌟 구글 버튼 */}
+          {/* 구글 */}
           <TouchableOpacity 
-            style={[styles.socialCircle, { backgroundColor: '#FFF' }]} 
-            onPress={() => promptGoogleAsync()}
-            disabled={!googleRequest} // 로딩 중 클릭 방지
+            style={[styles.socialCircle, { backgroundColor: '#FFFFFF', borderColor: '#E5E5E5', borderWidth: 1 }]} 
+            onPress={() => promptGoogleAsync()} disabled={!googleRequest}
           >
-            <Ionicons name="logo-google" size={24} color="#EA4335" />
+            <Ionicons name="logo-google" size={22} color="#EA4335" />
           </TouchableOpacity>
 
-          {/* 🌟 카카오 버튼 */}
+          {/* 카카오 */}
           <TouchableOpacity 
-            style={[styles.socialCircle, { backgroundColor: '#FEE500' }]} 
-            onPress={() => promptKakaoAsync()}
-            disabled={!kakaoRequest}
+            style={[styles.socialCircle, { backgroundColor: '#FEE500', borderWidth: 0 }]} 
+            onPress={() => promptKakaoAsync()} disabled={!kakaoRequest}
           >
-            <Ionicons name="chatbubble-sharp" size={24} color="#3C1E1E" />
+            <Ionicons name="chatbubble-sharp" size={22} color="#000000" />
           </TouchableOpacity>
 
-          {/* 🌟 라인 버튼 */}
+          {/* 라인 */}
           <TouchableOpacity 
-            style={[styles.socialCircle, { backgroundColor: '#06C755' }]} 
-            onPress={() => promptLineAsync()}
-            disabled={!lineRequest}
+            style={[styles.socialCircle, { backgroundColor: '#06C755', borderWidth: 0 }]} 
+            onPress={() => promptLineAsync()} disabled={!lineRequest}
           >
-            <Ionicons name="chatbubble-ellipses" size={24} color="#FFF" />
+            <Ionicons name="chatbubbles" size={24} color="#FFFFFF" />
           </TouchableOpacity>
         </View>
 
@@ -249,7 +216,7 @@ const styles = StyleSheet.create({
   line: { flex: 1, height: 1, backgroundColor: '#DDD' },
   orText: { marginHorizontal: 10, color: '#AAA', fontSize: 12 },
   socialContainer: { flexDirection: 'row', gap: 20, marginBottom: 30 },
-  socialCircle: { width: 50, height: 50, borderRadius: 25, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: '#EEE', elevation: 2 },
+  socialCircle: { width: 52, height: 52, borderRadius: 26, alignItems: 'center', justifyContent: 'center', elevation: 2, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.1, shadowRadius: 3 },
   signUpLink: { marginTop: 10 },
   signUpText: { color: '#666' }
 });

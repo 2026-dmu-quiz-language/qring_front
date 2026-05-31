@@ -3,7 +3,6 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Image, Alert } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-// 🌟 axios 임포트
 import axios from 'axios';
 import { ScreenWrapper } from '../../components/layout/ScreenWrapper';
 import { Header } from '../../components/layout/Header';
@@ -11,8 +10,18 @@ import { CustomInput } from '../../components/common/Input';
 import { CustomButton } from '../../components/common/Button';
 import { theme } from '../../constants/theme';
 
+// 백엔드 주소 (환경에 맞게 수정하세요)
+const API_BASE_URL = 'http://localhost:8080/api/v1/auth';
+
 const SignUpScreen = ({ navigation }: any) => {
-  const [id, setId] = useState('');
+  // 🌟 명세서에 맞게 id 대신 email로 상태명 변경
+  const [email, setEmail] = useState('');
+  const [isEmailAvailable, setIsEmailAvailable] = useState(false); // 이메일 중복확인 완료 여부
+
+  // 🌟 닉네임 상태 추가
+  const [nickname, setNickname] = useState('');
+  const [isNicknameAvailable, setIsNicknameAvailable] = useState(false); // 닉네임 중복확인 완료 여부
+
   const [password, setPassword] = useState('');
   const [passwordConfirm, setPasswordConfirm] = useState('');
 
@@ -28,36 +37,76 @@ const SignUpScreen = ({ navigation }: any) => {
     setAgreedPrivacy(!isAllAgreed);
   };
 
-  // 🌟 axios로 변경된 회원가입 함수
+  // 🌟 1. 이메일 중복 확인 API (GET)
+  const handleCheckEmail = async () => {
+    if (!email) return Alert.alert('알림', '이메일을 입력해 주세요.');
+    try {
+      const response = await axios.get(`${API_BASE_URL}/check-email`, { params: { email } });
+      if (response.data.available) {
+        setIsEmailAvailable(true);
+        Alert.alert('확인', '사용 가능한 이메일입니다.');
+      } else {
+        setIsEmailAvailable(false);
+        Alert.alert('불가', '이미 사용 중인 이메일입니다.');
+      }
+    } catch (error) {
+      Alert.alert('에러', '중복 확인에 실패했습니다.');
+    }
+  };
+
+  // 🌟 2. 닉네임 중복 확인 API (GET)
+  const handleCheckNickname = async () => {
+    if (!nickname) return Alert.alert('알림', '닉네임을 입력해 주세요.');
+    try {
+      const response = await axios.get(`${API_BASE_URL}/check-nickname`, { params: { nickname } });
+      if (response.data.available) {
+        setIsNicknameAvailable(true);
+        Alert.alert('확인', '사용 가능한 닉네임입니다.');
+      } else {
+        setIsNicknameAvailable(false);
+        Alert.alert('불가', '이미 사용 중인 닉네임입니다.');
+      }
+    } catch (error) {
+      Alert.alert('에러', '중복 확인에 실패했습니다.');
+    }
+  };
+
+  // 🌟 3. 회원가입 및 메일 전송 API (POST)
   const handleSignUp = async () => {
-    if (!id || !password) {
-      return Alert.alert('알림', '아이디와 비밀번호를 모두 입력해 주세요.');
+    if (!email || !password || !nickname) {
+      return Alert.alert('알림', '모든 정보를 입력해 주세요.');
     }
-    if (password !== passwordConfirm) {
-      return Alert.alert('알림', '비밀번호가 일치하지 않습니다.');
-    }
-    if (!agreedTerms || !agreedPrivacy) {
-      return Alert.alert('알림', '필수 약관에 모두 동의해 주세요.');
-    }
+    if (!isEmailAvailable) return Alert.alert('알림', '이메일 중복 확인을 해주세요.');
+    if (!isNicknameAvailable) return Alert.alert('알림', '닉네임 중복 확인을 해주세요.');
+    if (password !== passwordConfirm) return Alert.alert('알림', '비밀번호가 일치하지 않습니다.');
+    if (!agreedTerms || !agreedPrivacy) return Alert.alert('알림', '필수 약관에 모두 동의해 주세요.');
+
+    // 레벨 코드를 int로 변환 ('Lv.1' -> 1)
+    const levelCode = parseInt(selectedLevel.replace('Lv.', ''), 10);
 
     try {
-      // 🌟 axios.post 사용 (자동으로 JSON 변환 됨)
-      const response = await axios.post('http://localhost:8080/api/v1/auth/signup', {
-        id: id,
-        passwd: password,
-        lang: selectedLang,
-        level: selectedLevel,
+      const response = await axios.post(`${API_BASE_URL}/signup`, {
+        email: email,
+        password: password,
+        nickname: nickname,
+        language: selectedLang,
+        levelCode: levelCode,
       });
 
-      // axios는 2xx 응답일 때 자동으로 여기로 넘어옵니다.
-      Alert.alert('환영합니다!', '회원가입이 완료되었습니다.', [
-        { text: '확인', onPress: () => navigation.navigate('Login') }
-      ]);
-      
+      // 백엔드 명세의 emailsSent가 true면 메일 전송 성공으로 판단
+      if (response.data.emailsSent) {
+        Alert.alert('메일 발송 완료', response.data.message || '인증 코드를 이메일로 전송했습니다.', [
+          { 
+            text: '인증하러 가기', 
+            // 🌟 성공 시 새로 만든 이메일 인증 페이지로 이메일을 들고 이동
+            onPress: () => navigation.navigate('EmailVerify', { email: email }) 
+          }
+        ]);
+      } else {
+        Alert.alert('오류', '메일 발송에 실패했습니다. 다시 시도해주세요.');
+      }
     } catch (error: any) {
-      console.error('Signup Error:', error);
-      // 🌟 서버에서 보낸 에러 메시지를 잡아냄 (error.response.data)
-      const errorMessage = error.response?.data?.message || '회원가입에 실패했습니다. 다시 시도해 주세요.';
+      const errorMessage = error.response?.data?.message || '회원가입에 실패했습니다.';
       Alert.alert('회원가입 실패', errorMessage);
     }
   };
@@ -71,22 +120,47 @@ const SignUpScreen = ({ navigation }: any) => {
         <Text style={styles.title}>스토리로 빠져드는 즐거운 언어 학습,{'\n'}지금 시작해 보세요!</Text>
 
         <View style={styles.inputSection}>
-          <Text style={styles.label}>아이디</Text>
+          {/* 이메일 영역 */}
+          <Text style={styles.label}>이메일</Text>
+          <View style={styles.idInputRow}>
+            <View style={styles.idInputWrap}>
+              <CustomInput 
+                iconName="mail-outline" 
+                placeholder="이메일을 입력해 주세요." 
+                value={email}
+                onChangeText={(text) => { setEmail(text); setIsEmailAvailable(false); }}
+                autoCapitalize="none"
+              />
+            </View>
+            <TouchableOpacity 
+              style={[styles.idCheckButton, isEmailAvailable && { backgroundColor: '#AAB87B' }]} 
+              onPress={handleCheckEmail}
+            >
+              <Text style={styles.idCheckText}>{isEmailAvailable ? '확인완료' : '중복확인'}</Text>
+            </TouchableOpacity>
+          </View>
+
+          {/* 🌟 닉네임 영역 추가 */}
+          <Text style={[styles.label, { marginTop: 10 }]}>닉네임</Text>
           <View style={styles.idInputRow}>
             <View style={styles.idInputWrap}>
               <CustomInput 
                 iconName="person-outline" 
-                placeholder="아이디를 입력해 주세요." 
-                value={id}
-                onChangeText={setId}
+                placeholder="닉네임을 입력해 주세요." 
+                value={nickname}
+                onChangeText={(text) => { setNickname(text); setIsNicknameAvailable(false); }}
               />
             </View>
-            <TouchableOpacity style={styles.idCheckButton}>
-              <Text style={styles.idCheckText}>중복 확인</Text>
+            <TouchableOpacity 
+              style={[styles.idCheckButton, isNicknameAvailable && { backgroundColor: '#AAB87B' }]} 
+              onPress={handleCheckNickname}
+            >
+              <Text style={styles.idCheckText}>{isNicknameAvailable ? '확인완료' : '중복확인'}</Text>
             </TouchableOpacity>
           </View>
 
-          <Text style={styles.label}>비밀번호</Text>
+          {/* 비밀번호 영역 */}
+          <Text style={[styles.label, { marginTop: 10 }]}>비밀번호</Text>
           <CustomInput 
             iconName="lock-closed-outline" 
             placeholder="비밀번호를 입력해 주세요." 
@@ -105,30 +179,21 @@ const SignUpScreen = ({ navigation }: any) => {
           />
         </View>
 
+        {/* --- 학습 설정 및 약관 동의 (기존 코드와 동일) --- */}
         <View style={styles.settingBox}>
           <Text style={styles.settingTitle}>⚙️ 나만의 맞춤 학습 설정</Text>
-          
           <Text style={styles.subLabel}>언어 설정</Text>
           <View style={styles.row}>
             {['일본어', '영어', '중국어'].map((lang) => (
-              <TouchableOpacity 
-                key={lang} 
-                style={[styles.chip, lang === selectedLang && styles.chipActive]}
-                onPress={() => setSelectedLang(lang)}
-              >
+              <TouchableOpacity key={lang} style={[styles.chip, lang === selectedLang && styles.chipActive]} onPress={() => setSelectedLang(lang)}>
                 <Text style={[styles.chipText, lang === selectedLang && styles.chipTextActive]}>{lang}</Text>
               </TouchableOpacity>
             ))}
           </View>
-
           <Text style={styles.subLabel}>시작 레벨 선택</Text>
           <View style={styles.row}>
             {[ {lv: 'Lv.1', t: '왕초보'}, {lv: 'Lv.2', t: '일상 회화'}, {lv: 'Lv.3', t: '프리토킹'} ].map((item) => (
-              <TouchableOpacity 
-                key={item.lv} 
-                style={[styles.levelCard, item.lv === selectedLevel && styles.levelCardActive]}
-                onPress={() => setSelectedLevel(item.lv)}
-              >
+              <TouchableOpacity key={item.lv} style={[styles.levelCard, item.lv === selectedLevel && styles.levelCardActive]} onPress={() => setSelectedLevel(item.lv)}>
                 <Text style={[styles.levelTag, item.lv === selectedLevel && styles.levelTagActive]}>{item.t}</Text>
                 <Text style={[styles.levelText, item.lv === selectedLevel && styles.levelTextActive]}>{item.lv}</Text>
               </TouchableOpacity>
@@ -138,16 +203,10 @@ const SignUpScreen = ({ navigation }: any) => {
 
         <View style={styles.agreementSection}>
           <TouchableOpacity style={styles.agreeRowAll} onPress={toggleAllAgreements}>
-            <Ionicons 
-              name={agreedTerms && agreedPrivacy ? "checkmark-circle" : "checkmark-circle-outline"} 
-              size={24} 
-              color={agreedTerms && agreedPrivacy ? theme.colors.primary : "#CCC"} 
-            />
+            <Ionicons name={agreedTerms && agreedPrivacy ? "checkmark-circle" : "checkmark-circle-outline"} size={24} color={agreedTerms && agreedPrivacy ? theme.colors.primary : "#CCC"} />
             <Text style={styles.agreeTextAll}>약관 전체 동의</Text>
           </TouchableOpacity>
-          
           <View style={styles.divider} />
-
           <View style={styles.agreeRow}>
             <TouchableOpacity style={styles.agreeLeft} onPress={() => setAgreedTerms(!agreedTerms)}>
               <Ionicons name="checkmark" size={20} color={agreedTerms ? theme.colors.primary : "#CCC"} />
@@ -155,7 +214,6 @@ const SignUpScreen = ({ navigation }: any) => {
             </TouchableOpacity>
             <TouchableOpacity><Text style={styles.detailText}>보기</Text></TouchableOpacity>
           </View>
-
           <View style={styles.agreeRow}>
             <TouchableOpacity style={styles.agreeLeft} onPress={() => setAgreedPrivacy(!agreedPrivacy)}>
               <Ionicons name="checkmark" size={20} color={agreedPrivacy ? theme.colors.primary : "#CCC"} />
@@ -165,7 +223,7 @@ const SignUpScreen = ({ navigation }: any) => {
           </View>
         </View>
 
-        <CustomButton title="가입 완료 및 시작하기 ➔" onPress={handleSignUp} />
+        <CustomButton title="다음 단계 ➔" onPress={handleSignUp} />
       </ScrollView>
     </ScreenWrapper>
   );
@@ -177,7 +235,7 @@ const styles = StyleSheet.create({
   title: { fontSize: 18, color: '#333', lineHeight: 26, marginBottom: 30, fontWeight: '500' },
   inputSection: { marginBottom: 30 },
   label: { fontSize: 14, fontWeight: 'bold', color: '#333', marginBottom: 8 },
-  idInputRow: { flexDirection: 'row', alignItems: 'flex-start', gap: 10 },
+  idInputRow: { flexDirection: 'row', alignItems: 'flex-start', gap: 10, marginBottom: 15 },
   idInputWrap: { flex: 1 },
   idCheckButton: { height: 50, backgroundColor: theme.colors.primary, paddingHorizontal: 15, borderRadius: 15, justifyContent: 'center', alignItems: 'center' },
   idCheckText: { color: theme.colors.white, fontWeight: 'bold', fontSize: 13 },

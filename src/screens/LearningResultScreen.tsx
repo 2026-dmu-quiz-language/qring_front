@@ -1,6 +1,6 @@
 // screens/ChatLearn/LearningResultScreen.tsx
 
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import {
   View,
   Text,
@@ -12,71 +12,14 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Ionicons } from '@expo/vector-icons';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import axios from 'axios';
 import { theme } from '../constants/theme';
 
 const LearningResultScreen = () => {
   const navigation = useNavigation<NativeStackNavigationProp<any>>();
-  const route = useRoute<any>(); // 이전 화면에서 넘겨준 퀴즈 데이터를 받기 위해 추가
+  const route = useRoute<any>(); 
 
-  // 🌟 API에서 받아올 결과 상태 관리
-  const [score, setScore] = useState<number>(0);
-  const [correctCount, setCorrectCount] = useState<number>(0);
-  const [isLoading, setIsLoading] = useState<boolean>(true);
-
-  // 이전 화면(채팅 학습)에서 넘어왔다고 가정한 데이터 (없을 경우를 대비한 기본값 세팅)
-  const quizData = route.params || {
-    quizId: 1,
-    attemptCount: 1,
-    isCorrect: true,
-    lastAnswer: '정답 텍스트',
-    hintUsed: false,
-    totalQuestions: 6 // 전체 문제 수 표시용
-  };
-
-  // 🌟 화면이 로드될 때 API 호출
-  useEffect(() => {
-    const postQuizResult = async () => {
-      try {
-        const token = await AsyncStorage.getItem('accessToken');
-        
-        // 명세서에 맞춘 Request Body
-        const payload = {
-          token: token, // 명세서 파라미터 요구사항에 따라 바디에도 추가
-          quiz_id: quizData.quizId,
-          attempt_count: quizData.attemptCount,
-          is_correct: quizData.isCorrect,
-          last_answer: quizData.lastAnswer,
-          hint_used: quizData.hintUsed,
-        };
-
-        // 백엔드 엔드포인트에 맞춰 URL 수정 필요
-        const response = await axios.post('http://localhost:8080/api/v1/questionResult', payload, {
-          headers: {
-            // JWT 표준에 맞춰 헤더에도 토큰 추가
-            Authorization: `Bearer ${token}`, 
-          },
-        });
-
-        if (response.data) {
-          // 서버에서 받아온 점수와 정답 횟수로 상태 업데이트
-          setScore(response.data.score || 0);
-          // 명세서의 '정답 횟수' 컬럼 키 이름에 따라 data.정답횟수 또는 data.correct_count로 변경하세요
-          setCorrectCount(response.data.correct_count || response.data.정답횟수 || 0);
-        }
-      } catch (error) {
-        console.error('Quiz Result API Error:', error);
-        // 에러 발생 시 임시 더미 데이터 세팅 (테스트용)
-        setScore(50);
-        setCorrectCount(1);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    postQuizResult();
-  }, []);
+  // 🌟 이전 화면(ChatLearnScreen)에서 API 호출 후 넘겨준 데이터
+  const { score = 0, correctCount = 0, totalQuestions = 6 } = route.params || {};
 
   return (
     <SafeAreaView style={styles.safeArea} edges={['top']}>
@@ -95,21 +38,18 @@ const LearningResultScreen = () => {
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
       >
-
-        {/* 학습 완료 타이틀 */}
         <Text style={styles.completeTitle}>학습 완료!</Text>
         <Text style={styles.completeSubtitle}>
           오늘의 도파민 충전 완료!{'\n'}다음 에피소드를 열어볼까요?
         </Text>
 
-        {/* EXP + 정답 카드 */}
         <View style={styles.cardRow}>
           <View style={styles.statCard}>
             <View style={[styles.statIconWrap, { backgroundColor: '#EBF0E6' }]}>
               <Ionicons name="star" size={20} color={theme.colors.primary} />
             </View>
-            {/* 🌟 서버에서 받아온 점수 적용 */}
-            <Text style={styles.statValueScore}>+{isLoading ? '...' : score}</Text>
+            {/* 🌟 로딩 없이 넘어온 점수 바로 표시 */}
+            <Text style={styles.statValueScore}>+{score}</Text>
             <Text style={styles.statUnitEXP}>EXP</Text>
             <Text style={styles.statLabel}>획득한 점수</Text>
           </View>
@@ -118,16 +58,13 @@ const LearningResultScreen = () => {
             <View style={[styles.statIconWrap, { backgroundColor: '#EBF0E6' }]}>
               <Ionicons name="checkmark-circle" size={22} color={theme.colors.primary} />
             </View>
-            {/* 🌟 서버에서 받아온 정답 횟수 적용 */}
-            <Text style={styles.statValueCount}>
-              {isLoading ? '...' : `${correctCount}/${quizData.totalQuestions}`}
-            </Text>
+            {/* 🌟 로딩 없이 넘어온 정답 횟수 바로 표시 */}
+            <Text style={styles.statValueCount}>{correctCount}/{totalQuestions}</Text>
             <Text style={[styles.statUnitEXP, { color: 'transparent' }]}>-</Text>
             <Text style={styles.statLabel}>정답 횟수</Text>
           </View>
         </View>
 
-        {/* 연속 정답 달성 바 */}
         <View style={styles.streakCard}>
           <View style={styles.streakIconWrap}>
             <Ionicons name="flag" size={20} color="#B7A07A" />
@@ -143,7 +80,6 @@ const LearningResultScreen = () => {
           </View>
         </View>
 
-        {/* 오늘의 핵심 표현 카드 */}
         <View style={styles.summaryCard}>
           <View style={styles.summaryHeader}>
             <Ionicons name="bulb" size={18} color="#B7A07A" />
@@ -163,7 +99,6 @@ const LearningResultScreen = () => {
           <Text style={styles.homeButtonText}>학습 홈으로 돌아가기 ➔</Text>
         </TouchableOpacity>
 
-        {/* 틀린 문제 다시 보기 */}
         <TouchableOpacity style={styles.reviewButton} onPress={() => {}}>
           <View style={styles.reviewInner}>
             <Ionicons name="document-text-outline" size={18} color="#555" />
@@ -176,7 +111,7 @@ const LearningResultScreen = () => {
   );
 };
 
-// ─── 스타일 ───
+// 스타일 기존 코드 유지 (생략)
 const styles = StyleSheet.create({
   safeArea: { flex: 1, backgroundColor: theme.colors.background },
   header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingVertical: 15 },

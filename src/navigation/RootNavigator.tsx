@@ -8,6 +8,7 @@ import LoginScreen from '../screens/auth/LoginScreen';
 import SignUpScreen from '../screens/auth/SignUpScreen'; 
 import ChatLearnScreen from '../screens/ChatLearnScreen';
 import LearningResultScreen from '../screens/LearningResultScreen';
+import EmailVerifyScreen from '../screens/auth/EmailVerifyScreen';
 
 const Stack = createNativeStackNavigator();
 
@@ -25,6 +26,7 @@ export const RootNavigator = () => {
       <Stack.Screen name="Splash" options={{ headerShown: false,title: '', }} component={SplashScreen} />
       <Stack.Screen name="Login" component={LoginScreen} />
       <Stack.Screen name="SignUp" component={SignUpScreen} />
+      <Stack.Screen name="EmailVerify" component={EmailVerifyScreen} />
       
       {/* Main Tab Flow (하단 탭이 있는 화면들) */}
       <Stack.Screen name="MainTab" component={BottomTabNav} />
