@@ -176,13 +176,18 @@ const SignUpScreen = ({ navigation }: any) => {
           />
           
           <Text style={styles.label}>비밀번호 확인</Text>
-          <CustomInput 
-            iconName="checkmark-circle-outline" 
-            placeholder="비밀번호를 한 번 더 입력해 주세요." 
-            secureTextEntry 
+          <CustomInput
+            iconName="checkmark-circle-outline"
+            placeholder="비밀번호를 한 번 더 입력해 주세요."
+            secureTextEntry
             value={passwordConfirm}
             onChangeText={setPasswordConfirm}
           />
+          <View style={styles.passwordMismatchWrap}>
+            {passwordConfirm.length > 0 && password !== passwordConfirm && (
+              <Text style={styles.passwordMismatch}>비밀번호가 일치하지 않습니다.</Text>
+            )}
+          </View>
         </View>
 
         {/* --- 학습 설정 및 약관 동의 (기존 코드와 동일) --- */}
@@ -267,6 +272,8 @@ const styles = StyleSheet.create({
   agreeText: { fontSize: 14, color: '#555', marginLeft: 10 },
   detailText: { fontSize: 13, color: '#888', textDecorationLine: 'underline' },
   divider: { height: 1, backgroundColor: '#D8D8CA', marginBottom: 15 },
+  passwordMismatchWrap: { height: 8 },
+  passwordMismatch: { color: '#E74C3C', fontSize: 12, marginLeft: 5, marginTop: -8 },
 });
 
 export default SignUpScreen;
