@@ -409,7 +409,7 @@ const ChatLearnScreen = () => {
 
   return (
     <ScreenWrapper style={{ paddingHorizontal: 0 }}>
-      <Header title={episodeTitle} leftType="back" rightType="menu" />
+      <Header title={episodeTitle} leftType="back" rightType="none" />
 
       <ScrollView
         ref={scrollRef}
