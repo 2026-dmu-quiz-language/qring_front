@@ -5,6 +5,7 @@ import {
   ScrollView,
   TextInput,
   TouchableOpacity,
+  Pressable,
   StyleSheet,
   Modal,
 } from 'react-native';
@@ -411,18 +412,19 @@ const ChatLearnScreen = () => {
     <ScreenWrapper style={{ paddingHorizontal: 0 }}>
       <Header title={episodeTitle} leftType="back" rightType="none" />
 
-      <ScrollView
-        ref={scrollRef}
-        style={[styles.body, currentQuiz && styles.bodyWithQuiz]}
-        contentContainerStyle={styles.bodyContent}
-        showsVerticalScrollIndicator={false}
-        onTouchEnd={handleTap}
-      >
-        {messages.slice(0, visibleCount).map((msg, index) => {
-          if (msg.type === 'quiz') return null;
-          return <ChatBubble key={index} text={msg.script!.scriptContent} />;
-        })}
-      </ScrollView>
+      <Pressable style={{ flex: 1 }} onPress={handleTap}>
+        <ScrollView
+          ref={scrollRef}
+          style={[styles.body, currentQuiz && styles.bodyWithQuiz]}
+          contentContainerStyle={styles.bodyContent}
+          showsVerticalScrollIndicator={false}
+        >
+          {messages.slice(0, visibleCount).map((msg, index) => {
+            if (msg.type === 'quiz') return null;
+            return <ChatBubble key={index} text={msg.script!.scriptContent} />;
+          })}
+        </ScrollView>
+      </Pressable>
 
       {/* 하단 가짜 입력바 */}
       <View style={styles.fakeInputBar}>

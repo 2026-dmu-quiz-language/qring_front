@@ -7,7 +7,7 @@ import {
   StyleSheet,
   ActivityIndicator,
 } from 'react-native';
-import Svg, { Circle } from 'react-native-svg';
+import Svg, { Path } from 'react-native-svg';
 import { theme } from '../constants/theme';
 import { ScreenWrapper } from '../components/layout/ScreenWrapper';
 import { Header } from '../components/layout/Header';
@@ -29,40 +29,30 @@ const WEEKDAY_LABELS = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
 
 // ─── 반원 게이지 컴포넌트 ───
 const AchievementGauge = ({ percent }: { percent: number }) => {
-  // 🌟 1. NaN 방어: 서버에서 값이 안 오거나 에러가 나서 숫자가 아니면 무조건 0으로 처리
-  const safePercent = isNaN(percent) ? 0 : percent;
+  const safePercent = isNaN(percent) ? 0 : Math.min(100, Math.max(0, percent));
 
-  const size = 120;
-  const strokeWidth = 12; 
+  const size = 160;
+  const strokeWidth = 14;
   const radius = (size - strokeWidth) / 2;
-  const circumference = Math.PI * radius; 
-  
-  // 🌟 2. 안전한 값(safePercent)으로 계산하도록 수정
-  const strokeDashoffset = circumference - (circumference * safePercent) / 100;
+  const cx = size / 2;
+  const cy = size / 2;
+
+  const bgPath = `M ${cx - radius} ${cy} A ${radius} ${radius} 0 0 1 ${cx + radius} ${cy}`;
+
+  const angle = (safePercent / 100) * Math.PI;
+  const endX = cx - radius * Math.cos(angle);
+  const endY = cy - radius * Math.sin(angle);
+  const largeArc = safePercent > 50 ? 1 : 0;
+  const progressPath = `M ${cx - radius} ${cy} A ${radius} ${radius} 0 ${largeArc} 1 ${endX} ${endY}`;
 
   return (
     <View style={styles.gaugeWrap}>
-      <Svg width={size} height={size / 2 + strokeWidth} viewBox={`0 0 ${size} ${size / 2 + strokeWidth}`}>
-        <Circle
-          cx={size / 2} cy={size / 2} r={radius}
-          stroke={C.streakInactive} strokeWidth={strokeWidth} fill="none"
-          strokeLinecap="round" strokeDasharray={`${circumference} ${circumference}`}
-          rotation="180" 
-          // 🌟 3. transform-origin 에러 해결: origin="x,y" 대신 originX, originY 사용
-          originX={size / 2} originY={size / 2}
-        />
+      <Svg width={size} height={size / 2 + strokeWidth / 2}>
+        <Path d={bgPath} stroke={C.streakInactive} strokeWidth={strokeWidth} strokeLinecap="round" fill="none" />
         {safePercent > 0 && (
-          <Circle
-            cx={size / 2} cy={size / 2} r={radius}
-            stroke={theme.colors.primary} strokeWidth={strokeWidth} fill="none"
-            strokeLinecap="round" strokeDasharray={`${circumference} ${circumference}`}
-            strokeDashoffset={strokeDashoffset}
-            rotation="180"
-            originX={size / 2} originY={size / 2}
-          />
+          <Path d={progressPath} stroke={theme.colors.primary} strokeWidth={strokeWidth} strokeLinecap="round" fill="none" />
         )}
       </Svg>
-      {/* 🌟 화면에 찍히는 텍스트도 안전한 값으로 출력 */}
       <Text style={styles.arcPercent}>{safePercent}%</Text>
     </View>
   );
@@ -160,7 +150,7 @@ const DashboardScreen = () => {
         {/* CTA 버튼 */}
         <TouchableOpacity style={styles.ctaButton} activeOpacity={0.85} onPress={() => navigation.navigate('Content')}>
           <Text style={styles.ctaTitle}>🚀 오늘의 썰 풀기 시작!</Text>
-          <Text style={styles.ctaSub}>▶ 약 15분 소요</Text>
+          <Text style={styles.ctaSub}>▶ 약 5분 소요</Text>
         </TouchableOpacity>
 
         {/* 오늘의 핵심 표현 카드 */}
@@ -183,8 +173,7 @@ const DashboardScreen = () => {
           <View style={styles.statCard}>
             <Text style={styles.statIcon}>🌿</Text>
             <Text style={styles.statLabel}>내 레벨</Text>
-            <Text style={styles.statValue}>Lv.{data.levelCode}</Text>
-            <Text style={styles.statDesc}>{data.levelDesc}</Text>
+            <Text style={styles.statValue}>Lv.{data.levelCode} {data.levelDesc}</Text>
           </View>
         </View>
         
@@ -294,7 +283,6 @@ const styles = StyleSheet.create({
   statIcon: { fontSize: 18, marginBottom: 6 },
   statLabel: { fontSize: 11, color: '#999', fontWeight: '500' },
   statValue: { fontSize: 16, fontWeight: '800', color: '#1a1a1a', marginTop: 4 },
-  statDesc: { fontSize: 12, fontWeight: '500', color: '#888', marginTop: 2 },
 });
 
 export default DashboardScreen;
