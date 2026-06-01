@@ -20,6 +20,7 @@ import { getChatData, submitResult } from '../api/content';
 import type { Script, Quiz, QuizResultItem } from '../api/content';
 import { getErrorMessage } from '../utils/errorMessage';
 import { Ionicons } from '@expo/vector-icons';
+import WordBreakText from '../components/common/WordBreakText';
 
 interface DisplayMessage {
   type: 'script' | 'quiz';
@@ -41,7 +42,7 @@ const ChatBubble = ({ text }: { text: string }) => (
       <Ionicons name="person" size={20} color={theme.colors.primary} />
     </View>
     <View style={styles.bubble}>
-      <Text style={styles.bubbleText}>{text}</Text>
+      <WordBreakText text={text} textStyles={styles.bubbleText} />
     </View>
   </View>
 );
@@ -54,9 +55,9 @@ const ChoiceQuiz = ({ quiz, hint, onComplete }: { quiz: Quiz; hint: string; onCo
   const [showHint, setShowHint] = useState(false);
   const [tryCount, setTryCount] = useState(1);
   
-  const parsedOptions: string[] = typeof quiz.options === 'string' 
-    ? JSON.parse(quiz.options) 
-    : quiz.options;
+  const parsedOptions: string[] = Array.isArray(quiz.options)
+    ? quiz.options
+    : JSON.parse(quiz.options);
 
   const handleSubmit = () => {
     if (selected === null) return;
@@ -484,7 +485,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center', alignItems: 'center',
     elevation: 2, shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.1, shadowRadius: 2,
   },
-  bubble: {
+  bubble: { //채팅 버블
     backgroundColor: theme.colors.white, borderRadius: 20, borderTopLeftRadius: 4, paddingHorizontal: 16, paddingVertical: 12,
     maxWidth: '75%', elevation: 1, shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.05, shadowRadius: 2,
   },
