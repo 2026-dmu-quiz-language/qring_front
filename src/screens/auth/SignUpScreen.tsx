@@ -167,14 +167,28 @@ const SignUpScreen = ({ navigation }: any) => {
 
           {/* 비밀번호 영역 */}
           <Text style={[styles.label, { marginTop: 10 }]}>비밀번호</Text>
-          <CustomInput 
-            iconName="lock-closed-outline" 
-            placeholder="비밀번호를 입력해 주세요." 
-            secureTextEntry 
+          <CustomInput
+            iconName="lock-closed-outline"
+            placeholder="비밀번호를 입력해 주세요."
+            secureTextEntry
             value={password}
             onChangeText={setPassword}
           />
-          
+          <View style={styles.passwordRulesWrap}>
+            {password.length > 0 && password.length < 8 && (
+              <Text style={styles.passwordRuleError}>8자 이상 입력해 주세요.</Text>
+            )}
+            {password.length >= 8 && !/[a-zA-Z]/.test(password) && (
+              <Text style={styles.passwordRuleError}>영문자를 포함해 주세요.</Text>
+            )}
+            {password.length >= 8 && !/[0-9]/.test(password) && (
+              <Text style={styles.passwordRuleError}>숫자를 포함해 주세요.</Text>
+            )}
+            {password.length >= 8 && /[a-zA-Z]/.test(password) && /[0-9]/.test(password) && !/[A-Z]/.test(password) && !/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password) && (
+              <Text style={styles.passwordRuleError}>대문자 또는 특수기호를 포함해 주세요.</Text>
+            )}
+          </View>
+
           <Text style={styles.label}>비밀번호 확인</Text>
           <CustomInput
             iconName="checkmark-circle-outline"
@@ -272,8 +286,10 @@ const styles = StyleSheet.create({
   agreeText: { fontSize: 14, color: '#555', marginLeft: 10 },
   detailText: { fontSize: 13, color: '#888', textDecorationLine: 'underline' },
   divider: { height: 1, backgroundColor: '#D8D8CA', marginBottom: 15 },
-  passwordMismatchWrap: { height: 8 },
-  passwordMismatch: { color: '#E74C3C', fontSize: 12, marginLeft: 5, marginTop: -8 },
+  passwordRulesWrap: { height: 15, marginTop: -8, alignItems: 'flex-end' },
+  passwordRuleError: { color: '#E74C3C', fontSize: 12, marginRight: 5 },
+  passwordMismatchWrap: { height: 18, marginTop: -8, alignItems: 'flex-end' },
+  passwordMismatch: { color: '#E74C3C', fontSize: 12, marginRight: 5 },
 });
 
 export default SignUpScreen;

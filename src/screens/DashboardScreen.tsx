@@ -6,12 +6,12 @@ import {
   TouchableOpacity,
   StyleSheet,
   ActivityIndicator,
+  Image,
 } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
 import { theme } from '../constants/theme';
 import { ScreenWrapper } from '../components/layout/ScreenWrapper';
 import { Header } from '../components/layout/Header';
-import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import { getDashboard, type DashboardResponse } from '../api/dashboard';
 import { getErrorMessage } from '../utils/errorMessage';
@@ -153,14 +153,24 @@ const DashboardScreen = () => {
           <Text style={styles.ctaSub}>▶ 약 5분 소요</Text>
         </TouchableOpacity>
 
-        {/* 오늘의 핵심 표현 카드 */}
-        <View style={styles.summaryCard}>
-          <View style={styles.summaryHeader}>
-            <Ionicons name="bulb" size={16} color="#B7A07A" />
-            <Text style={styles.summaryTitle}>오늘의 핵심 표현</Text>
+        {/* 마스코트 말풍선 */}
+        <View style={styles.mascotSection}>
+          <Image
+            source={require('../../assets/Qring-img3.png')}
+            style={styles.mascotImageLeft}
+            resizeMode="contain"
+          />
+          <View style={styles.mascotRight}>
+            <View style={styles.speechBubble}>
+              <Text style={styles.speechText}>오늘도 와주셨군요!{'\n'}열심히 해봐요!</Text>
+              <View style={styles.speechTail} />
+            </View>
+            <Image
+              source={require('../../assets/Qring-img.png')}
+              style={styles.mascotImage}
+              resizeMode="contain"
+            />
           </View>
-          <Text style={styles.summaryEn}>Caught red-handed</Text>
-          <Text style={styles.summaryKo}>현장범으로 딱 걸리다</Text>
         </View>
 
         {/* 하단 스탯 카드 */}
@@ -249,23 +259,43 @@ const styles = StyleSheet.create({
   ctaTitle: { fontSize: 18, fontWeight: '800', color: '#fff' },
   ctaSub: { fontSize: 12, fontWeight: '500', color: 'rgba(255,255,255,0.7)', marginTop: 4 },
 
-  // 오늘의 핵심 표현 카드
-  summaryCard: {
-    backgroundColor: '#F3F4EB', 
-    borderRadius: 20,
-    padding: 16, 
-    alignItems: 'center',
-    marginBottom: 28, // 🌟 미세 확장 (24 -> 28)
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.05,
-    shadowRadius: 15,
-    elevation: 3,
+  // 마스코트 말풍선
+  mascotSection: {
+    flexDirection: 'row',
+    alignItems: 'flex-end',
+    justifyContent: 'space-between',
+    marginBottom: 10,
   },
-  summaryHeader: { flexDirection: 'row', alignItems: 'center', marginBottom: 8, gap: 6 },
-  summaryTitle: { fontSize: 13, fontWeight: 'bold', color: '#B7A07A' },
-  summaryEn: { fontSize: 18, fontWeight: '900', color: theme.colors.primary, marginBottom: 4 },
-  summaryKo: { fontSize: 14, fontWeight: '500', color: '#555' },
+  speechBubble: {
+    backgroundColor: theme.colors.white,
+    borderRadius: 16,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    marginRight: 8,
+    marginBottom: 30,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
+    elevation: 2,
+  },
+  speechText: { fontSize: 13, fontWeight: '600', color: '#333', lineHeight: 20 },
+  speechTail: {
+    position: 'absolute',
+    right: -6,
+    bottom: 12,
+    width: 0,
+    height: 0,
+    borderLeftWidth: 8,
+    borderTopWidth: 6,
+    borderBottomWidth: 6,
+    borderLeftColor: theme.colors.white,
+    borderTopColor: 'transparent',
+    borderBottomColor: 'transparent',
+  },
+  mascotImageLeft: { width: 100, height: 100 },
+  mascotRight: { flexDirection: 'row', alignItems: 'flex-end' },
+  mascotImage: { width: 100, height: 100 },
 
   // 하단 스탯
   statsRow: { flexDirection: 'row', gap: 12 },
