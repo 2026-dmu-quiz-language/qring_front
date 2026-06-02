@@ -19,7 +19,7 @@ export interface Quiz {
   scriptId: number; // 🌟 이 scriptId와 대사의 scriptId가 같으면 퀴즈 출현!
   quizType: string;
   question: string;
-  options: string;
+  options: string[];
   correctAnswer: string;
   explanation: string;
   hint: string;

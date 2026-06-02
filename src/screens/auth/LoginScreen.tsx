@@ -7,7 +7,6 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { ScreenWrapper } from '../../components/layout/ScreenWrapper';
 import { CustomInput } from '../../components/common/Input';
 import { CustomButton } from '../../components/common/Button';
-import { Ionicons } from '@expo/vector-icons';
 
 import * as WebBrowser from 'expo-web-browser';
 import * as AuthSession from 'expo-auth-session';
@@ -172,33 +171,35 @@ const LoginScreen = ({ navigation }: any) => {
         {/* 🌟 소셜 아이콘 브랜드 스타일 적용 */}
         <View style={styles.socialContainer}>
           {/* 구글 */}
-          <TouchableOpacity 
-            style={[styles.socialCircle, { backgroundColor: '#FFFFFF', borderColor: '#E5E5E5', borderWidth: 1 }]} 
+          <TouchableOpacity
+            style={styles.socialCircle}
             onPress={() => promptGoogleAsync()} disabled={!googleRequest}
           >
-            <Ionicons name="logo-google" size={22} color="#EA4335" />
+            <Image source={require('../../../assets/google.png')} style={styles.socialIcon} />
           </TouchableOpacity>
 
           {/* 카카오 */}
-          <TouchableOpacity 
-            style={[styles.socialCircle, { backgroundColor: '#FEE500', borderWidth: 0 }]} 
+          <TouchableOpacity
+            style={styles.socialCircle}
             onPress={() => promptKakaoAsync()} disabled={!kakaoRequest}
           >
-            <Ionicons name="chatbubble-sharp" size={22} color="#000000" />
+            <Image source={require('../../../assets/kakaoTalk-Flaticon.png')} style={styles.socialIcon} />
           </TouchableOpacity>
 
           {/* 라인 */}
-          <TouchableOpacity 
-            style={[styles.socialCircle, { backgroundColor: '#06C755', borderWidth: 0 }]} 
+          <TouchableOpacity
+            style={styles.socialCircle}
             onPress={() => promptLineAsync()} disabled={!lineRequest}
           >
-            <Ionicons name="chatbubbles" size={24} color="#FFFFFF" />
+            <Image source={require('../../../assets/line.png')} style={styles.socialIcon} />
           </TouchableOpacity>
         </View>
 
         <TouchableOpacity onPress={() => navigation.navigate('SignUp')} style={styles.signUpLink}>
           <Text style={styles.signUpText}>계정이 없으신가요? <Text style={{ fontWeight: 'bold', color: '#6F9F63' }}>회원가입</Text></Text>
         </TouchableOpacity>
+
+        <Text style={styles.attributionText}>Icon by Freepik - Flaticon</Text>
       </View>
     </ScreenWrapper>
   );
@@ -217,9 +218,11 @@ const styles = StyleSheet.create({
   line: { flex: 1, height: 1, backgroundColor: '#DDD' },
   orText: { marginHorizontal: 10, color: '#AAA', fontSize: 12 },
   socialContainer: { flexDirection: 'row', gap: 20, marginBottom: 30 },
-  socialCircle: { width: 52, height: 52, borderRadius: 26, alignItems: 'center', justifyContent: 'center', elevation: 2, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.1, shadowRadius: 3 },
+  socialCircle: { width: 52, height: 52, borderRadius: 26, alignItems: 'center', justifyContent: 'center' },
+  socialIcon: { width: 48, height: 48, resizeMode: 'contain' as const },
   signUpLink: { marginTop: 10 },
-  signUpText: { color: '#666' }
+  signUpText: { color: '#666' },
+  attributionText: { fontSize: 10, color: '#BBB', marginTop: 15 }
 });
 
 export default LoginScreen;
