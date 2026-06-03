@@ -8,6 +8,9 @@ import {
   Pressable,
   StyleSheet,
   Modal,
+  // 🌟 KeyboardAvoidingView와 Platform 추가
+  KeyboardAvoidingView,
+  Platform,
 } from 'react-native';
 import { useRoute, useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -413,46 +416,58 @@ const ChatLearnScreen = () => {
     <ScreenWrapper style={{ paddingHorizontal: 0 }}>
       <Header title={episodeTitle} leftType="back" rightType="none" />
 
-      <Pressable style={{ flex: 1 }} onPress={handleTap}>
-        <ScrollView
-          ref={scrollRef}
-          style={[styles.body, currentQuiz && styles.bodyWithQuiz]}
-          contentContainerStyle={styles.bodyContent}
-          showsVerticalScrollIndicator={false}
-        >
-          {messages.slice(0, visibleCount).map((msg, index) => {
-            if (msg.type === 'quiz') return null;
-            return <ChatBubble key={index} text={msg.script!.scriptContent} />;
-          })}
-        </ScrollView>
-      </Pressable>
+      {/* 🌟 1. 화면 전체를 감싸서 키보드가 올라올 때 밀어 올릴 준비를 합니다 */}
+      <KeyboardAvoidingView
+        style={{ flex: 1 }}
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
+      >
+        <Pressable style={{ flex: 1 }} onPress={handleTap}>
+          <ScrollView
+            ref={scrollRef}
+            style={styles.body}
+            // 🌟 2. absolute를 뺐으므로 이제 억지 패딩(350px)이 필요 없습니다! 깔끔하게 원상복구!
+            contentContainerStyle={styles.bodyContent}
+            showsVerticalScrollIndicator={false}
+          >
+            {messages.slice(0, visibleCount).map((msg, index) => {
+              if (msg.type === 'quiz') return null;
+              return <ChatBubble key={index} text={msg.script!.scriptContent} />;
+            })}
+          </ScrollView>
+        </Pressable>
 
-      {/* 하단 가짜 입력바 */}
-      <View style={styles.fakeInputBar}>
-        <View style={styles.fakeInput}>
-          <Text style={styles.fakeInputText}>메시지 입력</Text>
-        </View>
-        <TouchableOpacity style={styles.fakeSendButton} activeOpacity={0.7}>
-          <Ionicons name="send" size={18} color="#fff" />
-        </TouchableOpacity>
-      </View>
+        {/* 🌟 3. 가짜 입력바 (퀴즈가 없을 때만 바닥에 위치) */}
+        {!currentQuiz && (
+          <View style={styles.fakeInputBar}>
+            <View style={styles.fakeInput}>
+              <Text style={styles.fakeInputText}>메시지 입력</Text>
+            </View>
+            <TouchableOpacity style={styles.fakeSendButton} activeOpacity={0.7}>
+              <Ionicons name="send" size={18} color="#fff" />
+            </TouchableOpacity>
+          </View>
+        )}
 
-      {!episodeComplete && currentQuiz?.quiz && (
-        currentQuiz.quiz.quizType === 'subjective' ? (
-          <SubjectiveQuiz
-            quiz={currentQuiz.quiz}
-            hint={currentQuiz.quiz.hint}
-            onComplete={(result) => handleQuizComplete(currentQuiz.quiz!.quizId, result)}
-          />
-        ) : (
-          <ChoiceQuiz
-            quiz={currentQuiz.quiz}
-            hint={currentQuiz.quiz.hint}
-            onComplete={(result) => handleQuizComplete(currentQuiz.quiz!.quizId, result)}
-          />
-        )
-      )}
+        {/* 🌟 4. 퀴즈 영역 (absolute를 뺐기 때문에 이제 키보드가 올라오면 그 위에 찰떡같이 얹혀서 올라갑니다) */}
+        {!episodeComplete && currentQuiz?.quiz && (
+          currentQuiz.quiz.quizType === 'subjective' ? (
+            <SubjectiveQuiz
+              quiz={currentQuiz.quiz}
+              hint={currentQuiz.quiz.hint}
+              onComplete={(result) => handleQuizComplete(currentQuiz.quiz!.quizId, result)}
+            />
+          ) : (
+            <ChoiceQuiz
+              quiz={currentQuiz.quiz}
+              hint={currentQuiz.quiz.hint}
+              onComplete={(result) => handleQuizComplete(currentQuiz.quiz!.quizId, result)}
+            />
+          )
+        )}
+      </KeyboardAvoidingView>
 
+      {/* 모달은 키보드에 밀리지 않도록 가장 바깥에 둡니다 */}
       <Modal transparent visible={showResultModal} animationType="fade">
         <View style={styles.modalOverlay}>
           <View style={styles.resultModalContent}>
@@ -492,9 +507,19 @@ const styles = StyleSheet.create({
   bubbleText: { fontSize: 15, color: theme.colors.text, lineHeight: 22 },
 
   quizCard: {
-    position: 'absolute', bottom: 0, left: 0, right: 0, backgroundColor: '#FFFFFF',
-    borderTopLeftRadius: 32, borderTopRightRadius: 32, paddingHorizontal: 24, paddingTop: 15, paddingBottom: 40,
-    shadowColor: '#6C5CE7', shadowOffset: { width: 0, height: -5 }, shadowOpacity: 0.04, shadowRadius: 15, elevation: 20,
+    left: 0, 
+    right: 0, 
+    backgroundColor: '#FFFFFF',
+    borderTopLeftRadius: 32, 
+    borderTopRightRadius: 32, 
+    paddingHorizontal: 24, 
+    paddingTop: 15, 
+    paddingBottom: Platform.OS === 'ios' ? 40 : 20, // iOS 홈 바 고려
+    shadowColor: theme.colors.primary, 
+    shadowOffset: { width: 0, height: -5 }, 
+    shadowOpacity: 0.1, 
+    shadowRadius: 15, 
+    elevation: 20,
   },
   dragHandle: { width: 40, height: 5, borderRadius: 3, backgroundColor: '#E0E0E0', alignSelf: 'center', marginBottom: 20 },
   quizLabel: { fontSize: 13, fontWeight: '600', color: theme.colors.primary, marginBottom: 6 },
