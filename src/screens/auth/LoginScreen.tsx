@@ -95,7 +95,7 @@ const LoginScreen = ({ navigation }: any) => {
   // ==========================================
   // 3. 구글 로그인 Hook
   // ==========================================
-  const [googleRequest, googleResponse, promptGoogleAsync] = Google.useAuthRequest({
+  /*const [googleRequest, googleResponse, promptGoogleAsync] = Google.useAuthRequest({
     webClientId: '472758554338-hvjco2n0okeqsfe8uv7d8ecm1ih8qlb6.apps.googleusercontent.com',
   });
 
@@ -104,11 +104,11 @@ const LoginScreen = ({ navigation }: any) => {
       sendSocialTokenToBackend('google', googleResponse.params.id_token);
     }
   }, [googleResponse]);
-
+  */
   // ==========================================
   // 4. 카카오 로그인 Hook
   // ==========================================
-  const [kakaoRequest, kakaoResponse, promptKakaoAsync] = AuthSession.useAuthRequest(
+  /*const [kakaoRequest, kakaoResponse, promptKakaoAsync] = AuthSession.useAuthRequest(
     {
       clientId: '34ef02f3d1f4df166ecdfea02aa21bd1', 
       redirectUri,
@@ -142,7 +142,7 @@ const LoginScreen = ({ navigation }: any) => {
       sendSocialTokenToBackend('line', lineResponse.params.code);
     }
   }, [lineResponse]);
-
+  */
   return (
     <ScreenWrapper>
       <View style={styles.container}>
@@ -163,14 +163,17 @@ const LoginScreen = ({ navigation }: any) => {
         </View>
 
         <CustomButton title="로그인 ➔" onPress={handleLogin} />
-
+        {/* 
         <View style={styles.dividerContainer}>
           <View style={styles.line} /><Text style={styles.orText}>OR</Text><View style={styles.line} />
         </View>
 
-        {/* 🌟 소셜 아이콘 브랜드 스타일 적용 */}
+        {/* 주석 시작: 소셜 로그인 UI 숨기기
+        <View style={styles.dividerContainer}>
+          <View style={styles.line} /><Text style={styles.orText}>OR</Text><View style={styles.line} />
+        </View>
+
         <View style={styles.socialContainer}>
-          {/* 구글 */}
           <TouchableOpacity
             style={styles.socialCircle}
             onPress={() => promptGoogleAsync()} disabled={!googleRequest}
@@ -178,7 +181,6 @@ const LoginScreen = ({ navigation }: any) => {
             <Image source={require('../../../assets/google.png')} style={styles.socialIcon} />
           </TouchableOpacity>
 
-          {/* 카카오 */}
           <TouchableOpacity
             style={styles.socialCircle}
             onPress={() => promptKakaoAsync()} disabled={!kakaoRequest}
@@ -186,7 +188,6 @@ const LoginScreen = ({ navigation }: any) => {
             <Image source={require('../../../assets/kakaoTalk-Flaticon.png')} style={styles.socialIcon} />
           </TouchableOpacity>
 
-          {/* 라인 */}
           <TouchableOpacity
             style={styles.socialCircle}
             onPress={() => promptLineAsync()} disabled={!lineRequest}
@@ -194,6 +195,7 @@ const LoginScreen = ({ navigation }: any) => {
             <Image source={require('../../../assets/line.png')} style={styles.socialIcon} />
           </TouchableOpacity>
         </View>
+        주석 끝 */}
 
         <TouchableOpacity onPress={() => navigation.navigate('SignUp')} style={styles.signUpLink}>
           <Text style={styles.signUpText}>계정이 없으신가요? <Text style={{ fontWeight: 'bold', color: '#6F9F63' }}>회원가입</Text></Text>
