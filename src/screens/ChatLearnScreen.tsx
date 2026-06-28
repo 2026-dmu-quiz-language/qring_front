@@ -1,3 +1,5 @@
+// screens/ChatLearn/ChatLearnScreen.tsx
+
 import React, { useState, useEffect, useRef } from 'react';
 import {
   View,
@@ -19,7 +21,6 @@ import { getChatData, submitResult } from '../api/content';
 import type { Script, Quiz, QuizResultItem } from '../api/content';
 import { getErrorMessage } from '../utils/errorMessage';
 
-// ─── 화면에 보여줄 메시지 단위 ───
 interface DisplayMessage {
   type: 'script' | 'quiz';
   script?: Script;
@@ -31,7 +32,6 @@ interface QuizResult {
   hintUsed: boolean;
 }
 
-// ─── 채팅 버블 ───
 const ChatBubble = ({ text }: { text: string }) => (
   <View style={styles.bubbleRow}>
     <View style={styles.avatar} />
@@ -41,23 +41,17 @@ const ChatBubble = ({ text }: { text: string }) => (
   </View>
 );
 
-// ─── 퀴즈 브레이크 (객관식 / 빈칸 채우기) ───
-const ChoiceQuiz = ({
-  quiz,
-  hint,
-  onComplete,
-}: {
-  quiz: Quiz;
-  hint: string;
-  onComplete: (result: QuizResult) => void;
-}) => {
+const ChoiceQuiz = ({ quiz, hint, onComplete }: { quiz: Quiz; hint: string; onComplete: (result: QuizResult) => void; }) => {
   const [selected, setSelected] = useState<number | null>(null);
   const [submitted, setSubmitted] = useState(false);
   const [isModalVisible, setModalVisible] = useState(false);
   const [isCorrect, setIsCorrect] = useState(false);
   const [showHint, setShowHint] = useState(false);
   const [tryCount, setTryCount] = useState(1);
-  const parsedOptions: string[] = JSON.parse(quiz.options);
+  
+  const parsedOptions: string[] = typeof quiz.options === 'string' 
+    ? JSON.parse(quiz.options) 
+    : quiz.options;
 
   const handleSubmit = () => {
     if (selected === null) return;
@@ -166,16 +160,7 @@ const ChoiceQuiz = ({
   );
 };
 
-// ─── 주관식 퀴즈 ───
-const SubjectiveQuiz = ({
-  quiz,
-  hint,
-  onComplete,
-}: {
-  quiz: Quiz;
-  hint: string;
-  onComplete: (result: QuizResult) => void;
-}) => {
+const SubjectiveQuiz = ({ quiz, hint, onComplete }: { quiz: Quiz; hint: string; onComplete: (result: QuizResult) => void; }) => {
   const [answer, setAnswer] = useState('');
   const [submitted, setSubmitted] = useState(false);
   const [isModalVisible, setModalVisible] = useState(false);
@@ -260,12 +245,13 @@ const SubjectiveQuiz = ({
   );
 };
 
-// ─── 메인 컴포넌트 ───
 const ChatLearnScreen = () => {
   const navigation = useNavigation<NativeStackNavigationProp<LearnStackParamList>>();
   const route = useRoute<RouteProp<LearnStackParamList, 'ChatLearn'>>();
   const resultRef = useRef<QuizResultItem[]>([]);
-  const { episodeId, episodeTitle } = route.params;
+  
+  // 🌟 추가: route.params에서 language 정보를 받습니다.
+  const { episodeId, episodeTitle, language } = route.params;
 
   const [messages, setMessages] = useState<DisplayMessage[]>([]);
   const [loading, setLoading] = useState(true);
@@ -277,20 +263,24 @@ const ChatLearnScreen = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const data = await getChatData(episodeId);
-        console.log('=== /chat 응답 ===', JSON.stringify(data, null, 2));
-
-        if (!data || !data.script || data.script.length === 0) {
-          setError(`API 연결 성공, 데이터 비어있음\n응답: ${JSON.stringify(data)}`);
+        // 🌟 수정: getChatData 호출 시 언어 정보도 함께 넘겨줍니다.
+        const data = await getChatData(episodeId, language);
+        
+        if (!data || !data.scripts || data.scripts.length === 0) {
+          setError(`스크립트 데이터가 없습니다.`);
           return;
         }
 
         const quizMap = new Map<number, Quiz>();
-        data.quizzes.forEach((q) => quizMap.set(q.scriptId, q));
+        if (data.quizzes) {
+            data.quizzes.forEach((q: Quiz) => quizMap.set(q.scriptId, q));
+        }
 
         const display: DisplayMessage[] = [];
-        data.script.forEach((s) => {
+        
+        data.scripts.forEach((s: Script) => {
           display.push({ type: 'script', script: s });
+          
           const linkedQuiz = quizMap.get(s.scriptId);
           if (linkedQuiz) {
             display.push({ type: 'quiz', quiz: linkedQuiz });
@@ -300,18 +290,22 @@ const ChatLearnScreen = () => {
         setMessages(display);
       } catch (err: any) {
         setError(getErrorMessage(err));
-        console.log('채팅 데이터 로딩 실패:', err);
+        console.error('❌ [에러발생] 채팅 데이터 로딩 실패:', err.message);
+        if (err.response) {
+          console.error('❌ [서버 에러 상세]:', JSON.stringify(err.response.data, null, 2));
+        }
       } finally {
         setLoading(false);
       }
     };
     fetchData();
-  }, [episodeId]);
+  }, [episodeId, language]); // language가 변경될 때도 데이터를 다시 불러오도록 의존성 배열에 추가
 
   const handleTap = () => {
     if (episodeComplete) return;
     if (visibleCount >= messages.length) return;
     const lastVisible = messages[visibleCount - 1];
+    
     if (lastVisible?.type === 'quiz') return;
 
     const nextCount = visibleCount + 1;
@@ -328,10 +322,10 @@ const ChatLearnScreen = () => {
 
   const handleQuizComplete = (quizId: number, result: QuizResult) => {
     resultRef.current.push({
-      quiz_id: quizId,
-      try_count: result.tryCount,
+      quizId: quizId,
+      tryCount: result.tryCount,
       correct: true,
-      hint_opened: result.hintUsed,
+      hintOpened: result.hintUsed,
     });
 
     if (visibleCount >= messages.length) {
@@ -345,21 +339,23 @@ const ChatLearnScreen = () => {
     setSubmitting(true);
     const totalQuizCount = messages.filter(m => m.type === 'quiz').length;
     try {
+      // 🌟 수정: submitResult 호출 시 언어 정보도 함께 넘겨줍니다.
       const response = await submitResult({
-        episode_id: episodeId,
+        episodeId: episodeId, 
+        language: language, 
         result: resultRef.current,
       });
       navigation.navigate('LearningResult', {
-        totalScore: response.score ?? 0,
+        score: response.score ?? 0,
         correctCount: response.correctCount ?? resultRef.current.length,
-        totalCount: totalQuizCount,
+        totalQuestions: totalQuizCount,
       });
     } catch (e) {
       console.log('결과 제출 실패:', e);
       navigation.navigate('LearningResult', {
-        totalScore: 0,
+        score: 0, 
         correctCount: resultRef.current.length,
-        totalCount: totalQuizCount,
+        totalQuestions: totalQuizCount,
       });
     }
   };
@@ -441,7 +437,6 @@ const ChatLearnScreen = () => {
   );
 };
 
-// ─── 스타일 ───
 const styles = StyleSheet.create({
   body: { flex: 1, backgroundColor: theme.colors.background },
   bodyWithQuiz: {},

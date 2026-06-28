@@ -20,15 +20,15 @@ export interface Quiz {
 }
 
 export interface ChatData {
-  script: Script[];
+  scripts: Script[];
   quizzes: Quiz[];
 }
 
 export interface QuizResultItem {
-  quiz_id: number;
-  try_count: number;
+  quizId: number;
+  tryCount: number;
   correct: boolean;
-  hint_opened: boolean;
+  hintOpened: boolean;
 }
 
 // 컨텐츠 목록
@@ -38,17 +38,19 @@ export const getContentList = async () => {
 };
 
 // 학습 페이지 (채팅 + 퀴즈)
-export const getChatData = async (contentId: number): Promise<ChatData> => {
-  const res = await client.post('/chat', { content_id: contentId });
+export const getChatData = async (episodeId: number, language: string): Promise<ChatData> => {
+  const res = await client.post('/chat', null, { 
+    // 🌟 백엔드 설정에 따라 변수명(lang, language 등)이 다를 수 있습니다!
+    params: { contentId: episodeId, language: language } 
+  });
   return res.data;
 };
 
 // 학습 결과 제출
-export const submitResult = async (data: {
-  episode_id: number;
-  result: QuizResultItem[];
-}) => {
-  const res = await client.post('/questionResult', data);
+export const submitResult = async (data: { episodeId: number; language: string; result: QuizResultItem[]; }) => {
+  const res = await client.post('/questionResult', data.result, {
+    params: { contentId: data.episodeId, language: data.language } 
+  });
   return res.data;
   // 응답: { 정답횟수, score }
 };

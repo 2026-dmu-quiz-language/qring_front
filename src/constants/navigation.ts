@@ -11,10 +11,11 @@ export type LearnStackParamList = {
   ChatLearn: {
     episodeId: number;
     episodeTitle: string;
+    language: string;
   };
   LearningResult: {
-    totalScore: number;
+    score: number;
     correctCount: number;
-    totalCount: number;
+    totalQuestions: number;
   };
 };
