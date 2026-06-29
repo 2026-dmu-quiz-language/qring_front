@@ -9,6 +9,7 @@ import SignUpScreen from '../screens/auth/SignUpScreen';
 import ChatLearnScreen from '../screens/ChatLearnScreen';
 import LearningResultScreen from '../screens/LearningResultScreen';
 import EmailVerifyScreen from '../screens/auth/EmailVerifyScreen';
+import MyPageScreen from '../screens/MypageScreen';
 
 const Stack = createNativeStackNavigator();
 
@@ -34,6 +35,7 @@ export const RootNavigator = () => {
       {/* Learning Flow (하단 탭이 없는 화면들) */}
       <Stack.Screen name="ChatLearn" component={ChatLearnScreen} />
       <Stack.Screen name="LearningResult" component={LearningResultScreen} />
+      <Stack.Screen name="MyPage" component={MyPageScreen} />
     </Stack.Navigator>
   );
 };

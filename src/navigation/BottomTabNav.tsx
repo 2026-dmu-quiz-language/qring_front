@@ -5,7 +5,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { theme } from '../constants/theme';
 import StoryHomeScreen from '../screens/StoryHomeScreen';
 import DashboardScreen from '../screens/DashboardScreen';
-import MyPageScreen from '../screens/MypageScreen';
+import WrongNoteScreen from '../screens/WrongNoteScreen';
 
 const Tab = createBottomTabNavigator();
 
@@ -44,9 +44,9 @@ export const BottomTabNav = () => {
           } else if (route.name === 'Dashboard') {
             iconName = focused ? 'book' : 'book-outline';
             label = '홈';
-          } else if (route.name === 'MyPage') {
-            iconName = focused ? 'person' : 'person-outline';
-            label = '마이페이지';
+          } else if (route.name === 'WrongNote') {
+            iconName = focused ? 'document-text' : 'document-text-outline';
+            label = '오답노트';
           }
 
           return (
@@ -66,7 +66,7 @@ export const BottomTabNav = () => {
     >
       <Tab.Screen name="Content" component={StoryHomeScreen} />
       <Tab.Screen name="Dashboard" component={DashboardScreen} />
-      <Tab.Screen name="MyPage" component={MyPageScreen} />
+      <Tab.Screen name="WrongNote" component={WrongNoteScreen} />
     </Tab.Navigator>
   );
 };
