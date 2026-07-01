@@ -184,6 +184,19 @@ const DashboardScreen = () => {
             <Text style={styles.statValue}>Lv.{data.levelCode} {data.levelDesc}</Text>
           </View>
         </View>
+
+        <View style={styles.statsRowLast}>
+          <View style={styles.statCard}>
+            <Text style={styles.statIcon}>❌</Text>
+            <Text style={styles.statLabel}>오답 문제 수</Text>
+            <Text style={styles.statValue}>3 문제</Text>
+          </View>
+          <View style={styles.statCard}>
+            <Text style={styles.statIcon}>💰</Text>
+            <Text style={styles.statLabel}>보유 포인트</Text>
+            <Text style={styles.statValue}>1,250 P</Text>
+          </View>
+        </View>
         
       </ScrollView>
     </ScreenWrapper>
@@ -295,10 +308,15 @@ const styles = StyleSheet.create({
   mascotImage: { width: 82, height: 82 }, // 🌟 딱 좋은 황금 밸런스 크기로 확대 (70 -> 82)
 
   // 하단 스탯
-  statsRow: { 
-    flexDirection: 'row', 
+  statsRow: {
+    flexDirection: 'row',
     gap: 12,
-    marginBottom: 105, // 🌟 전체 레이아웃이 늘어났으므로 탭바 바로 위인 105px로 조절하여 꽉 차게 마감
+    marginBottom: 12,
+  },
+  statsRowLast: {
+    flexDirection: 'row',
+    gap: 12,
+    marginBottom: 105,
   },
   statCard: {
     flex: 1,

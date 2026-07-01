@@ -56,7 +56,7 @@ const MenuIcon = ({ name, isLogout }: { name: keyof typeof Ionicons.glyphMap; is
 const MyPageScreen = () => {
   return (
     <ScreenWrapper style={{ paddingHorizontal: 0 }}>
-      <Header title="마이페이지" leftType="none" rightType="none" />
+      <Header title="마이페이지" leftType="back" rightType="none" />
 
       <ScrollView
         style={styles.scroll}
