@@ -4,9 +4,12 @@ import {
   Text,
   ScrollView,
   TouchableOpacity,
+  TextInput,
   StyleSheet,
   ActivityIndicator,
   Alert,
+  KeyboardAvoidingView,
+  Platform,
 } from 'react-native';
 import { useRoute, useNavigation } from '@react-navigation/native';
 import type { RouteProp } from '@react-navigation/native';
@@ -23,7 +26,7 @@ import {
 const WrongNoteQuizScreen = () => {
   const navigation = useNavigation<any>();
   const route = useRoute<RouteProp<any>>();
-  const { episodeId, episodeTitle } = route.params as {
+  const { episodeId } = route.params as {
     episodeId: number;
     episodeTitle: string;
   };
@@ -34,18 +37,25 @@ const WrongNoteQuizScreen = () => {
 
   const [currentIndex, setCurrentIndex] = useState(0);
   const [selected, setSelected] = useState<number | null>(null);
+  const [answer, setAnswer] = useState('');
   const [submitted, setSubmitted] = useState(false);
   const [totalPoint, setTotalPoint] = useState(0);
 
   useEffect(() => {
     const fetchData = async () => {
+      console.log('📤 [오답풀이] API 호출 시작: POST /incorrect/retry, contentId:', episodeId);
       try {
         const data = await getIncorrectRetry(episodeId);
+        console.log('✅ [오답풀이] API 응답 성공:', JSON.stringify(data));
         setQuizzes(data);
       } catch (err: any) {
-        console.error('오답 퀴즈 로딩 실패:', err);
+        console.error('❌ [오답풀이] API 호출 실패:', err.message);
+        if (err.response) {
+          console.error('❌ [오답풀이] 서버 응답:', err.response.status, JSON.stringify(err.response.data));
+        }
         setError('오답 문제를 불러올 수 없습니다.');
       } finally {
+        console.log('📋 [오답풀이] 로딩 완료');
         setLoading(false);
       }
     };
@@ -75,16 +85,25 @@ const WrongNoteQuizScreen = () => {
   }
 
   const quiz = quizzes[currentIndex];
-  const parsedOptions: string[] = Array.isArray(quiz.options)
+
+  const rawOptions = Array.isArray(quiz.options)
     ? quiz.options
-    : JSON.parse(quiz.options as any);
-  const isCorrect =
-    selected !== null && parsedOptions[selected] === quiz.correctAnswer;
+    : typeof quiz.options === 'string' && quiz.options
+      ? JSON.parse(quiz.options)
+      : [];
+  const parsedOptions: string[] = rawOptions;
+  const isSubjective = parsedOptions.length === 0;
+
+  const isCorrect = isSubjective
+    ? answer.trim().toLowerCase() === quiz.correctAnswer.toLowerCase()
+    : selected !== null && parsedOptions[selected] === quiz.correctAnswer;
+
+  const canSubmit = isSubjective ? answer.trim().length > 0 : selected !== null;
 
   const handleSubmit = () => {
-    if (selected === null) return;
+    if (!canSubmit) return;
     setSubmitted(true);
-    if (selected !== null && parsedOptions[selected] === quiz.correctAnswer) {
+    if (isCorrect) {
       setTotalPoint((prev) => prev + 3);
     } else {
       setTotalPoint((prev) => prev + 1);
@@ -95,6 +114,7 @@ const WrongNoteQuizScreen = () => {
     if (currentIndex < quizzes.length - 1) {
       setCurrentIndex((prev) => prev + 1);
       setSelected(null);
+      setAnswer('');
       setSubmitted(false);
     } else {
       try {
@@ -102,11 +122,9 @@ const WrongNoteQuizScreen = () => {
           contentId: episodeId,
           point: totalPoint,
         });
-        Alert.alert(
-          '오답 풀이 완료',
-          `총점: ${result.totalPoint}`,
-          [{ text: '확인', onPress: () => navigation.goBack() }]
-        );
+        Alert.alert('오답 풀이 완료', `총점: ${result.totalPoint}`, [
+          { text: '확인', onPress: () => navigation.goBack() },
+        ]);
       } catch (err) {
         console.error('오답 결과 제출 실패:', err);
         navigation.goBack();
@@ -126,95 +144,117 @@ const WrongNoteQuizScreen = () => {
     <ScreenWrapper style={{ paddingHorizontal: 0 }}>
       <Header title="오답 풀이" leftType="back" rightType="none" />
 
-      <ScrollView
-        style={styles.body}
-        contentContainerStyle={styles.bodyContent}
-        showsVerticalScrollIndicator={false}
+      <KeyboardAvoidingView
+        style={{ flex: 1 }}
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
       >
-        <View style={styles.incorrectBadge}>
-          <Ionicons name="close-circle" size={16} color="#dc3545" />
-          <Text style={styles.incorrectText}>Incorrect</Text>
-        </View>
-
-        <Text style={styles.question}>{quiz.question}</Text>
-
-        <View style={styles.hintBox}>
-          <View style={styles.hintHeader}>
-            <Ionicons
-              name="bulb-outline"
-              size={16}
-              color={theme.colors.primary}
-            />
-            <Text style={styles.hintLabel}>힌트</Text>
+        <ScrollView
+          style={styles.body}
+          contentContainerStyle={styles.bodyContent}
+          showsVerticalScrollIndicator={false}
+        >
+          <View style={styles.incorrectBadge}>
+            <Ionicons name="close-circle" size={16} color="#dc3545" />
+            <Text style={styles.incorrectText}>Incorrect</Text>
           </View>
-          <Text style={styles.hintContent}>{quiz.hint}</Text>
-        </View>
 
-        <View style={styles.optionsWrap}>
-          {parsedOptions.map((option, index) => (
-            <TouchableOpacity
-              key={index}
-              style={[styles.optionRow, getOptionStyle(index)]}
-              onPress={() => !submitted && setSelected(index)}
-              disabled={submitted}
-              activeOpacity={0.7}
-            >
-              <Text style={styles.optionText}>{option}</Text>
-              <View
+          <Text style={styles.question}>{quiz.question}</Text>
+
+          <View style={styles.hintBox}>
+            <View style={styles.hintHeader}>
+              <Ionicons name="bulb-outline" size={16} color={theme.colors.primary} />
+              <Text style={styles.hintLabel}>힌트</Text>
+            </View>
+            <Text style={styles.hintContent}>{quiz.hint}</Text>
+          </View>
+
+          {isSubjective ? (
+            <>
+              <TextInput
                 style={[
-                  styles.radio,
-                  selected === index && !submitted && styles.radioSelected,
-                  submitted &&
-                    parsedOptions[index] === quiz.correctAnswer &&
-                    styles.radioCorrect,
-                  submitted &&
-                    selected === index &&
-                    !isCorrect &&
-                    styles.radioWrong,
+                  styles.textInput,
+                  submitted && isCorrect && styles.textInputCorrect,
+                  submitted && !isCorrect && styles.textInputWrong,
                 ]}
-              >
-                {selected === index && !submitted && (
-                  <View style={styles.radioInner} />
-                )}
-                {submitted &&
-                  parsedOptions[index] === quiz.correctAnswer && (
-                    <View style={styles.radioInner} />
-                  )}
-              </View>
+                placeholder="답을 입력하세요"
+                placeholderTextColor="#aaa"
+                value={answer}
+                onChangeText={setAnswer}
+                editable={!submitted}
+              />
+              {submitted && !isCorrect && (
+                <View style={styles.correctAnswerBox}>
+                  <Text style={styles.correctAnswerLabel}>정답</Text>
+                  <Text style={styles.correctAnswerText}>{quiz.correctAnswer}</Text>
+                </View>
+              )}
+            </>
+          ) : (
+            <View style={styles.optionsWrap}>
+              {parsedOptions.map((option, index) => (
+                <TouchableOpacity
+                  key={index}
+                  style={[styles.optionRow, getOptionStyle(index)]}
+                  onPress={() => !submitted && setSelected(index)}
+                  disabled={submitted}
+                  activeOpacity={0.7}
+                >
+                  <Text style={styles.optionText}>{option}</Text>
+                  <View
+                    style={[
+                      styles.radio,
+                      selected === index && !submitted && styles.radioSelected,
+                      submitted &&
+                        parsedOptions[index] === quiz.correctAnswer &&
+                        styles.radioCorrect,
+                      submitted &&
+                        selected === index &&
+                        !isCorrect &&
+                        styles.radioWrong,
+                    ]}
+                  >
+                    {selected === index && !submitted && (
+                      <View style={styles.radioInner} />
+                    )}
+                    {submitted &&
+                      parsedOptions[index] === quiz.correctAnswer && (
+                        <View style={styles.radioInner} />
+                      )}
+                  </View>
+                </TouchableOpacity>
+              ))}
+            </View>
+          )}
+
+          <Text style={styles.progressText}>
+            {currentIndex + 1} / {quizzes.length}
+          </Text>
+        </ScrollView>
+
+        <View style={styles.bottomBar}>
+          {!submitted ? (
+            <TouchableOpacity
+              style={[styles.submitButton, !canSubmit && styles.submitButtonDisabled]}
+              onPress={handleSubmit}
+              disabled={!canSubmit}
+              activeOpacity={0.8}
+            >
+              <Text style={styles.submitButtonText}>제출하기 →</Text>
             </TouchableOpacity>
-          ))}
+          ) : (
+            <TouchableOpacity
+              style={styles.submitButton}
+              onPress={handleNext}
+              activeOpacity={0.8}
+            >
+              <Text style={styles.submitButtonText}>
+                {currentIndex < quizzes.length - 1 ? '다음 문제 →' : '완료'}
+              </Text>
+            </TouchableOpacity>
+          )}
         </View>
-
-        <Text style={styles.progressText}>
-          {currentIndex + 1} / {quizzes.length}
-        </Text>
-      </ScrollView>
-
-      <View style={styles.bottomBar}>
-        {!submitted ? (
-          <TouchableOpacity
-            style={[
-              styles.submitButton,
-              selected === null && styles.submitButtonDisabled,
-            ]}
-            onPress={handleSubmit}
-            disabled={selected === null}
-            activeOpacity={0.8}
-          >
-            <Text style={styles.submitButtonText}>제출하기 →</Text>
-          </TouchableOpacity>
-        ) : (
-          <TouchableOpacity
-            style={styles.submitButton}
-            onPress={handleNext}
-            activeOpacity={0.8}
-          >
-            <Text style={styles.submitButtonText}>
-              {currentIndex < quizzes.length - 1 ? '다음 문제 →' : '완료'}
-            </Text>
-          </TouchableOpacity>
-        )}
-      </View>
+      </KeyboardAvoidingView>
     </ScreenWrapper>
   );
 };
@@ -279,6 +319,45 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#555',
     lineHeight: 20,
+  },
+
+  textInput: {
+    borderWidth: 1.5,
+    borderColor: '#E8E8E8',
+    borderRadius: 16,
+    paddingHorizontal: 18,
+    paddingVertical: 14,
+    fontSize: 15,
+    color: '#333',
+    backgroundColor: '#FAFAFA',
+    marginBottom: 20,
+  },
+  textInputCorrect: {
+    borderColor: theme.colors.primary,
+    backgroundColor: theme.colors.primary + '15',
+  },
+  textInputWrong: {
+    borderColor: '#dc3545',
+    backgroundColor: '#fef2f2',
+  },
+  correctAnswerBox: {
+    backgroundColor: theme.colors.primary + '15',
+    borderRadius: 12,
+    padding: 12,
+    marginBottom: 20,
+    borderLeftWidth: 3,
+    borderLeftColor: theme.colors.primary,
+  },
+  correctAnswerLabel: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: theme.colors.primary,
+    marginBottom: 4,
+  },
+  correctAnswerText: {
+    fontSize: 15,
+    fontWeight: '700',
+    color: '#1a1a1a',
   },
 
   optionsWrap: { gap: 12, marginBottom: 20 },

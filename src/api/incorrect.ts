@@ -4,13 +4,13 @@ import client from './client';
 
 export interface IncorrectEpisode {
   contentId: number;
-  title: string;
+  storyName: string;
 }
 
 export interface IncorrectQuiz {
-  quizId: number;
+  quizContentId: number;
   question: string;
-  options: string[];
+  options: string | string[];
   correctAnswer: string;
   hint: string;
 }
@@ -22,13 +22,13 @@ export interface IncorrectResultResponse {
 // 오답 에피소드 목록
 export const getIncorrectList = async (): Promise<IncorrectEpisode[]> => {
   const res = await client.post('/incorrect');
-  return res.data;
+  return res.data.wrongAnswers;
 };
 
 // 오답 퀴즈 조회
 export const getIncorrectRetry = async (contentId: number): Promise<IncorrectQuiz[]> => {
   const res = await client.post('/incorrect/retry', { contentId });
-  return res.data;
+  return res.data.quizzes;
 };
 
 // 오답 풀이 결과 제출

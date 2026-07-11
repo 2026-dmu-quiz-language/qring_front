@@ -23,13 +23,19 @@ const WrongNoteScreen = () => {
 
   useEffect(() => {
     const fetchData = async () => {
+      console.log('📤 [오답노트] API 호출 시작: POST /incorrect');
       try {
         const data = await getIncorrectList();
+        console.log('✅ [오답노트] API 응답 성공:', JSON.stringify(data));
         setEpisodes(data);
       } catch (err: any) {
-        console.error('오답 목록 로딩 실패:', err);
+        console.error('❌ [오답노트] API 호출 실패:', err.message);
+        if (err.response) {
+          console.error('❌ [오답노트] 서버 응답:', err.response.status, JSON.stringify(err.response.data));
+        }
         setError('오답 목록을 불러올 수 없습니다.');
       } finally {
+        console.log('📋 [오답노트] 로딩 완료');
         setLoading(false);
       }
     };
@@ -82,12 +88,12 @@ const WrongNoteScreen = () => {
               onPress={() =>
                 navigation.navigate('WrongNoteQuiz', {
                   episodeId: ep.contentId,
-                  episodeTitle: ep.title,
+                  episodeTitle: ep.storyName,
                 })
               }
             >
               <View style={styles.episodeInfo}>
-                <Text style={styles.episodeTitle}>{ep.title}</Text>
+                <Text style={styles.episodeTitle}>{ep.storyName}</Text>
               </View>
               <Ionicons name="chevron-forward" size={20} color="#bbb" />
             </TouchableOpacity>

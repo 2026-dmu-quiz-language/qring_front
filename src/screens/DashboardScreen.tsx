@@ -189,12 +189,12 @@ const DashboardScreen = () => {
           <View style={styles.statCard}>
             <Text style={styles.statIcon}>❌</Text>
             <Text style={styles.statLabel}>오답 문제 수</Text>
-            <Text style={styles.statValue}>3 문제</Text>
+            <Text style={styles.statValue}>{data.incorrectQuizCount ?? 0} 문제</Text>
           </View>
           <View style={styles.statCard}>
             <Text style={styles.statIcon}>💰</Text>
             <Text style={styles.statLabel}>보유 포인트</Text>
-            <Text style={styles.statValue}>1,250 P</Text>
+            <Text style={styles.statValue}>{(data.currentPoints ?? 0).toLocaleString()} P</Text>
           </View>
         </View>
         
