@@ -7,7 +7,6 @@ import {
   TextInput,
   StyleSheet,
   ActivityIndicator,
-  Alert,
   KeyboardAvoidingView,
   Platform,
 } from 'react-native';
@@ -39,7 +38,8 @@ const WrongNoteQuizScreen = () => {
   const [selected, setSelected] = useState<number | null>(null);
   const [answer, setAnswer] = useState('');
   const [submitted, setSubmitted] = useState(false);
-  const [totalPoint, setTotalPoint] = useState(0);
+  const [results, setResults] = useState<{ quizContentId: number; correct: boolean }[]>([]);
+  const [completed, setCompleted] = useState<number | null>(null);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -84,6 +84,30 @@ const WrongNoteQuizScreen = () => {
     );
   }
 
+  if (completed !== null) {
+    return (
+      <ScreenWrapper style={{ paddingHorizontal: 0 }}>
+        <Header title="오답 풀이" leftType="none" rightType="none" />
+        <View style={styles.centerWrap}>
+          <Ionicons name="checkmark-circle" size={64} color={theme.colors.primary} />
+          <Text style={styles.completedTitle}>오답 풀이 완료!</Text>
+          {completed >= 0 && (
+            <Text style={styles.completedScore}>총점: {completed}</Text>
+          )}
+        </View>
+        <View style={styles.bottomBar}>
+          <TouchableOpacity
+            style={styles.submitButton}
+            onPress={() => navigation.goBack()}
+            activeOpacity={0.8}
+          >
+            <Text style={styles.submitButtonText}>돌아가기</Text>
+          </TouchableOpacity>
+        </View>
+      </ScreenWrapper>
+    );
+  }
+
   const quiz = quizzes[currentIndex];
 
   const rawOptions = Array.isArray(quiz.options)
@@ -92,7 +116,7 @@ const WrongNoteQuizScreen = () => {
       ? JSON.parse(quiz.options)
       : [];
   const parsedOptions: string[] = rawOptions;
-  const isSubjective = parsedOptions.length === 0;
+  const isSubjective = quiz.quizType === 'subjective';
 
   const isCorrect = isSubjective
     ? answer.trim().toLowerCase() === quiz.correctAnswer.toLowerCase()
@@ -103,14 +127,14 @@ const WrongNoteQuizScreen = () => {
   const handleSubmit = () => {
     if (!canSubmit) return;
     setSubmitted(true);
-    if (isCorrect) {
-      setTotalPoint((prev) => prev + 3);
-    } else {
-      setTotalPoint((prev) => prev + 1);
-    }
+    setResults((prev) => [
+      ...prev,
+      { quizContentId: quiz.quizContentId, correct: isCorrect },
+    ]);
   };
 
   const handleNext = async () => {
+    console.log('🔥 [handleNext] 호출됨, currentIndex:', currentIndex, 'quizzes.length:', quizzes.length);
     if (currentIndex < quizzes.length - 1) {
       setCurrentIndex((prev) => prev + 1);
       setSelected(null);
@@ -118,16 +142,20 @@ const WrongNoteQuizScreen = () => {
       setSubmitted(false);
     } else {
       try {
-        const result = await submitIncorrectResult({
+        console.log('📤 [오답결과] API 호출 시작: POST /incorrect/result');
+        console.log('📤 [오답결과] 전송 데이터:', JSON.stringify({ contentId: episodeId, results }));
+        const res = await submitIncorrectResult({
           contentId: episodeId,
-          point: totalPoint,
+          results,
         });
-        Alert.alert('오답 풀이 완료', `총점: ${result.totalPoint}`, [
-          { text: '확인', onPress: () => navigation.goBack() },
-        ]);
-      } catch (err) {
-        console.error('오답 결과 제출 실패:', err);
-        navigation.goBack();
+        console.log('✅ [오답결과] API 응답 성공:', JSON.stringify(res));
+        setCompleted(res.totalPoint);
+      } catch (err: any) {
+        console.error('❌ [오답결과] API 호출 실패:', err.message);
+        if (err.response) {
+          console.error('❌ [오답결과] 서버 응답:', err.response.status, JSON.stringify(err.response.data));
+        }
+        setCompleted(-1);
       }
     }
   };
@@ -271,6 +299,18 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: '700',
     color: '#dc3545',
+  },
+  completedTitle: {
+    fontSize: 22,
+    fontWeight: '800',
+    color: '#1a1a1a',
+    marginTop: 16,
+  },
+  completedScore: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#888',
+    marginTop: 8,
   },
 
   incorrectBadge: {

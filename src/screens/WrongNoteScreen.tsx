@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useCallback } from 'react';
 import {
   View,
   Text,
@@ -7,7 +7,7 @@ import {
   StyleSheet,
   ActivityIndicator,
 } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Ionicons } from '@expo/vector-icons';
 import { theme } from '../constants/theme';
@@ -21,26 +21,29 @@ const WrongNoteScreen = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    const fetchData = async () => {
-      console.log('📤 [오답노트] API 호출 시작: POST /incorrect');
-      try {
-        const data = await getIncorrectList();
-        console.log('✅ [오답노트] API 응답 성공:', JSON.stringify(data));
-        setEpisodes(data);
-      } catch (err: any) {
-        console.error('❌ [오답노트] API 호출 실패:', err.message);
-        if (err.response) {
-          console.error('❌ [오답노트] 서버 응답:', err.response.status, JSON.stringify(err.response.data));
+  useFocusEffect(
+    useCallback(() => {
+      const fetchData = async () => {
+        setLoading(true);
+        console.log('📤 [오답노트] API 호출 시작: POST /incorrect');
+        try {
+          const data = await getIncorrectList();
+          console.log('✅ [오답노트] API 응답 성공:', JSON.stringify(data));
+          setEpisodes(data);
+        } catch (err: any) {
+          console.error('❌ [오답노트] API 호출 실패:', err.message);
+          if (err.response) {
+            console.error('❌ [오답노트] 서버 응답:', err.response.status, JSON.stringify(err.response.data));
+          }
+          setError('오답 목록을 불러올 수 없습니다.');
+        } finally {
+          console.log('📋 [오답노트] 로딩 완료');
+          setLoading(false);
         }
-        setError('오답 목록을 불러올 수 없습니다.');
-      } finally {
-        console.log('📋 [오답노트] 로딩 완료');
-        setLoading(false);
-      }
-    };
-    fetchData();
-  }, []);
+      };
+      fetchData();
+    }, []),
+  );
 
   if (loading) {
     return (
@@ -73,7 +76,6 @@ const WrongNoteScreen = () => {
         contentContainerStyle={styles.bodyContent}
         showsVerticalScrollIndicator={false}
       >
-        <Text style={styles.subtitle}>학습 진행 상황을 확인해 보세요.</Text>
 
         {episodes.length === 0 ? (
           <View style={styles.emptyWrap}>

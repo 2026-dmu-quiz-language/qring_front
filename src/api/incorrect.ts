@@ -9,6 +9,7 @@ export interface IncorrectEpisode {
 
 export interface IncorrectQuiz {
   quizContentId: number;
+  quizType: string;
   question: string;
   options: string | string[];
   correctAnswer: string;
@@ -34,7 +35,7 @@ export const getIncorrectRetry = async (contentId: number): Promise<IncorrectQui
 // 오답 풀이 결과 제출
 export const submitIncorrectResult = async (data: {
   contentId: number;
-  point: number;
+  results: { quizContentId: number; correct: boolean }[];
 }): Promise<IncorrectResultResponse> => {
   const res = await client.post('/incorrect/result', data);
   return res.data;
