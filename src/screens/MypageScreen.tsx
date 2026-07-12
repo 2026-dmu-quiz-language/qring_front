@@ -99,7 +99,16 @@ const MyPageScreen = () => {
                 item.isLogout && styles.menuRowLogout,
               ]}
               activeOpacity={0.7}
-              onPress={() => {}}
+              // MyPageScreen.tsx 메뉴 클릭 이벤트 수정 예시
+              onPress={() => {
+                if (item.id === 'account') {
+                  navigation.navigate('AccountManagementScreen');
+                } else if (item.id === 'levelLang') {
+                  navigation.navigate('LearningSettingsScreen');
+                } else if (item.isLogout) {
+                  // 로그아웃 로직 처리
+                }
+              }}
             >
               <View style={styles.menuLeft}>
                 <MenuIcon name={item.icon} isLogout={item.isLogout} />

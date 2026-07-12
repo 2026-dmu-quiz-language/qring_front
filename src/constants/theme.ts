@@ -14,5 +14,6 @@ export const theme = {
     // 폰트 파일 연동 후 사용할 이름들
     headline: 'PlusJakartaSans-Bold',
     body: 'BeVietnamPro-Regular',
+    label: 'PlusJakartaSans-Medium',
   }
 };
