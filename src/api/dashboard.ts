@@ -9,6 +9,8 @@ export interface DashboardResponse {
   completedStoryCount: number;
   commentText: string;
   weeklyStudy: boolean[];
+  incorrectQuizCount: number; 
+  currentPoints: number;
 }
 
 export const getDashboard = async (): Promise<DashboardResponse> => {

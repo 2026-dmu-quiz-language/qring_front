@@ -1,17 +1,24 @@
 // screens/MyPage/MyPageScreen.tsx
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
   ScrollView,
   TouchableOpacity,
   StyleSheet,
+  ActivityIndicator,
+  Alert,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { theme } from '../constants/theme';
+import axios from 'axios';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { theme } from '../constants/theme'
 import { ScreenWrapper } from '../components/layout/ScreenWrapper';
 import { Header } from '../components/layout/Header';
+
+// 💡 백엔드 기본 서버 주소 (본인 환경에 맞게 확인해주세요)
+const API_BASE_URL = 'https://q-ring.app/api/v1';
 
 // ─── 색상 ───
 const C = {
@@ -22,6 +29,25 @@ const C = {
   badgeBg: '#edf7e6',
   logoutBg: '#FEF2F2',
   logoutText: '#BA1A1A',
+};
+
+// ─── 백엔드 응답 데이터 타입 정의 ───
+interface MyPageData {
+  nickname: string;
+  levelCode: number;
+  levelDesc: string;
+  language: string; // 'ko', 'en', 'ja', 'zh', 'es' 등
+  points: number;
+  consecutiveDays: number;
+}
+
+// ─── 백엔드 언어 코드('en') -> 한글 명칭('영어') 변환 맵 ───
+const LANGUAGE_MAP: { [key: string]: string } = {
+  ko: '한국어',
+  en: '영어',
+  ja: '일본어',
+  zh: '중국어',
+  es: '스페인어',
 };
 
 // ─── 메뉴 아이템 타입 ───
@@ -53,7 +79,67 @@ const MenuIcon = ({ name, isLogout }: { name: keyof typeof Ionicons.glyphMap; is
 };
 
 // ─── 메인 컴포넌트 ───
-const MyPageScreen = () => {
+const MyPageScreen = ({ navigation }: any) => {
+  const [userData, setUserData] = useState<MyPageData | null>(null);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
+
+  // 🌟 마이페이지 API 호출 함수
+  const fetchMyPageData = async () => {
+    try {
+      setIsLoading(true);
+      // 저장된 토큰 가져오기 (없을 경우 임시 토큰 사용)
+      const token = (await AsyncStorage.getItem('accessToken')) || 'your-auth-token-example';
+
+      // POST 방식으로 프론트가 토큰을 JSON 바디에 담아 전송
+      const response = await axios.post(
+        `${API_BASE_URL}/mypage`,
+        {}, // 바디 내용이 없으면 빈 객체 {} 전송
+        {
+          headers: {
+            Authorization: `Bearer ${token}`, // 헤더에 토큰 첨부
+          },
+        }
+      );
+
+      if (response.data) {
+        setUserData(response.data);
+      }
+    } catch (error: any) {
+      console.error('마이페이지 정보 조회 에러:', error);
+      Alert.alert('알림', '마이페이지 정보를 불러오지 못했습니다.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // 🌟 화면이 로드될 때 API 호출
+  useEffect(() => {
+    fetchMyPageData();
+  }, []);
+
+  // 로딩 중일 때 스피너 표시
+  if (isLoading) {
+    return (
+      <ScreenWrapper style={{ paddingHorizontal: 0 }}>
+        <Header title="마이페이지" leftType="back" rightType="none" />
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color={theme.colors.primary} />
+          <Text style={styles.loadingText}>정보를 불러오는 중...</Text>
+        </View>
+      </ScreenWrapper>
+    );
+  }
+
+  // 데이터 조회 실패 시 기본값 fallback 처리
+  const nickname = userData?.nickname || '사용자';
+  const levelCode = userData?.levelCode || 1;
+  const levelDesc = userData?.levelDesc || '기초';
+  const points = userData?.points || 0;
+  const consecutiveDays = userData?.consecutiveDays || 0;
+  
+  // 백엔드 언어 코드('en')를 한글 명칭('영어')으로 변환 (매칭 안 되면 '영어' 기본값)
+  const userLangKorean = userData?.language ? (LANGUAGE_MAP[userData.language] || '영어') : '영어';
+
   return (
     <ScreenWrapper style={{ paddingHorizontal: 0 }}>
       <Header title="마이페이지" leftType="back" rightType="none" />
@@ -71,20 +157,20 @@ const MyPageScreen = () => {
               <Ionicons name="pencil" size={12} color="#fff" />
             </View>
           </View>
-          <Text style={styles.userName}>김동양</Text>
+          <Text style={styles.userName}>{nickname}</Text>
           <View style={styles.levelBadge}>
-            <Text style={styles.levelBadgeText}>Lv.2 일상 회화</Text>
+            <Text style={styles.levelBadgeText}>Lv.{levelCode} {levelDesc}</Text>
           </View>
         </View>
 
-        {/* 스탯 카드 */}
+        {/* 스탯 카드 (누적 점수 대신 API 응답인 보유 포인트 & 연속 학습일 매핑) */}
         <View style={styles.statsRow}>
           <View style={styles.statCard}>
-            <Text style={styles.statValue1}>2450</Text>
-            <Text style={styles.statLabel}>누적 점수</Text>
+            <Text style={styles.statValue1}>{points.toLocaleString()}</Text>
+            <Text style={styles.statLabel}>보유 포인트 (P)</Text>
           </View>
           <View style={styles.statCard}>
-            <Text style={styles.statValue2}>15</Text>
+            <Text style={styles.statValue2}>{consecutiveDays}</Text>
             <Text style={styles.statLabel}>연속 학습일</Text>
           </View>
         </View>
@@ -99,14 +185,23 @@ const MyPageScreen = () => {
                 item.isLogout && styles.menuRowLogout,
               ]}
               activeOpacity={0.7}
-              // MyPageScreen.tsx 메뉴 클릭 이벤트 수정 예시
               onPress={() => {
                 if (item.id === 'account') {
-                  navigation.navigate('AccountManagementScreen');
+                  navigation.navigate('AccountManagementScreen', { nickname: nickname });
                 } else if (item.id === 'levelLang') {
-                  navigation.navigate('LearningSettingsScreen');
+                  // 🌟 API로 받아온 실제 언어(한글명)와 레벨 정보를 파라미터로 실어서 넘겨줍니다!
+                  navigation.navigate('LearningSettingsScreen', {
+                    userLang: userLangKorean,
+                    userLevel: levelCode,
+                  });
                 } else if (item.isLogout) {
-                  // 로그아웃 로직 처리
+                  Alert.alert('로그아웃', '정말 로그아웃 하시겠습니까?', [
+                    { text: '취소', style: 'cancel' },
+                    { text: '확인', style: 'destructive', onPress: async () => {
+                      await AsyncStorage.clear();
+                      navigation.navigate('Login');
+                    }}
+                  ]);
                 }
               }}
             >
@@ -141,6 +236,17 @@ const styles = StyleSheet.create({
   scrollContent: {
     padding: 20,
     paddingBottom: 120,
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  loadingText: {
+    marginTop: 12,
+    color: '#888',
+    fontSize: 14,
+    fontWeight: '500',
   },
 
   // 프로필

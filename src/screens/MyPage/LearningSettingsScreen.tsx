@@ -16,9 +16,10 @@ import { theme } from '../../constants/theme';
 const { colors, fonts } = theme;
 import { ScreenWrapper } from '../../components/layout/ScreenWrapper';
 import { Header } from '../../components/layout/Header';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 // 💡 백엔드 기본 서버 주소 (환경에 맞게 수정해주세요)
-const BASE_URL = 'https://api.your-qring-server.com';
+const BASE_URL = 'https://q-ring.app/api/v1';
 
 interface LevelOption {
   level: number;
@@ -35,28 +36,40 @@ const LEVELS: LevelOption[] = [
 const LANGUAGES = ['일본어', '중국어', '영어', '스페인어'];
 
 // 💡 네비게이션 param으로 이미 로드된 정보를 전달받을 수 있도록 route를 추가합니다.
-export const LearningSettingsScreen = ({ navigation, route }: any) => {
+const LearningSettingsScreen = ({ navigation, route }: any) => {
   // ─── 상태 관리 (State) ───
-  // [1] 현재 학습 설정: route.params에 값이 있으면 그것을 사용하고, 없으면 기본값('영어', 2) 사용
   const [currentLang, setCurrentLang] = useState(route?.params?.userLang || '영어');
   const [currentLevel, setCurrentLevel] = useState(route?.params?.userLevel || 2);
 
-  // [2] 변경할 새로운 학습 설정 (기존 설정으로 초기화)
   const [selectedNewLang, setSelectedNewLang] = useState(currentLang);
   const [selectedNewLevel, setSelectedNewLevel] = useState(currentLevel);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // 💡 [임시 토큰 조회 함수] : 실제 운영 시에는 AsyncStorage 나 전역 상태에서 가져옵니다.
   const getAuthToken = async () => {
-    return 'your-auth-token-example';
+    const token = await AsyncStorage.getItem('accessToken');
+    return token || '';
   };
 
   // ─── 초기 로드 시 파라미터 체크 ───
   useEffect(() => {
-    // 만약 마이페이지에서 넘어올 때 파라미터가 있었다면 상단 '현재 학습 설정'에 바로 반영
-    if (route?.params?.userLang) setCurrentLang(route.params.userLang);
-    if (route?.params?.userLevel) setCurrentLevel(route.params.userLevel);
+    if (route?.params?.userLang) {
+      setCurrentLang(route.params.userLang);
+      setSelectedNewLang(route.params.userLang);
+    }
+    if (route?.params?.userLevel) {
+      setCurrentLevel(route.params.userLevel);
+      setSelectedNewLevel(route.params.userLevel);
+    }
   }, [route?.params]);
+
+  // ─── API: 학습 설정 저장 함수 ───
+  // ─── 백엔드 언어 이름 -> 코드 변환 맵 ───
+  const LANGUAGE_CODE_MAP: { [key: string]: string } = {
+    '일본어': 'JA',
+    '중국어': 'ZH',
+    '영어': 'EN',
+    '스페인어': 'ES',
+  };
 
   // ─── API: 학습 설정 저장 함수 ───
   const handleSaveSettings = async () => {
@@ -64,26 +77,28 @@ export const LearningSettingsScreen = ({ navigation, route }: any) => {
       setIsSubmitting(true);
       const token = await getAuthToken();
 
-      // 명세 반영: /mypage/learning 엔드포인트로 POST 요청하며 JSON 형식으로 데이터 전송
+      // 🌟 핵심 수정: 백엔드 명세에 맞게 코드값과 levelCode 필드 사용
       const payload = {
-        token: token,
-        language: selectedNewLang,
-        level: selectedNewLevel,
+        language: LANGUAGE_CODE_MAP[selectedNewLang] || 'EN', // 한글을 코드로 변환
+        levelCode: selectedNewLevel,                          // level -> levelCode
       };
 
-      const response = await axios.post(`${BASE_URL}/mypage/learning`, payload);
+      const response = await axios.post(
+        `${BASE_URL}/mypage/learning`,
+        payload,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
 
-      // 백엔드 요청 성공 시 처리
-      if (response.status === 200 || response.status === 201 || response.data) {
-        // 현재 설정 상태도 업데이트해 줍니다.
+      if (response.status >= 200 && response.status < 300) {
         setCurrentLang(selectedNewLang);
         setCurrentLevel(selectedNewLevel);
 
-        Alert.alert(
-          '설정 저장 성공 🎉',
-          `${selectedNewLang} (Lv.${selectedNewLevel}) 학습 설정이 변경되었습니다.`,
-          [{ text: '확인', onPress: () => navigation?.goBack() }]
-        );
+        // 즉시 대시보드(MainTab)로 이동
+        navigation.navigate('MainTab');
       }
     } catch (error) {
       console.error('학습 설정 저장 에러:', error);
@@ -103,7 +118,7 @@ export const LearningSettingsScreen = ({ navigation, route }: any) => {
 
       <ScrollView style={styles.scroll} contentContainerStyle={styles.content}>
         
-        {/* 1. 현재 학습 설정 카드 (프론트 데이터 바인딩 완료) */}
+        {/* 1. 현재 학습 설정 카드 */}
         <View style={styles.card}>
           <View style={styles.cardHeaderRow}>
             <View style={styles.headerTitleWrap}>
@@ -125,7 +140,6 @@ export const LearningSettingsScreen = ({ navigation, route }: any) => {
                 <TouchableOpacity
                   key={`cur-${item.level}`}
                   style={[styles.levelCard, isSelected ? styles.levelCardSelected : styles.levelCardDefault]}
-                  // 상단 카드 클릭 시 바로 변경할 설정값으로 반영되도록 편의성 추가
                   onPress={() => {
                     setCurrentLevel(item.level);
                     setSelectedNewLevel(item.level);
@@ -236,3 +250,5 @@ const styles = StyleSheet.create({
   saveButtonDisabled: { backgroundColor: '#A0A89C' },
   saveButtonText: { color: '#FFFFFF', fontSize: 16, fontWeight: '700', fontFamily: fonts.headline },
 });
+
+export default LearningSettingsScreen;
