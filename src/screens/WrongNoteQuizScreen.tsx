@@ -98,7 +98,7 @@ const WrongNoteQuizScreen = () => {
         <View style={styles.bottomBar}>
           <TouchableOpacity
             style={styles.submitButton}
-            onPress={() => navigation.goBack()}
+            onPress={() => navigation.navigate('MainTab')}
             activeOpacity={0.8}
           >
             <Text style={styles.submitButtonText}>돌아가기</Text>
