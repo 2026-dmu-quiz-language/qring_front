@@ -6,6 +6,7 @@ import { Ionicons } from '@expo/vector-icons';
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { theme } from '../../constants/theme';
+import { switchLanguage } from '../../api/language';
 
 interface HeaderProps {
   title?: string;
@@ -58,6 +59,15 @@ export const Header = ({
     };
     fetchAndSaveName();
   }, [userName]);
+
+  const handleLangSwitch = async (code: string) => {
+    try {
+      await switchLanguage(code);
+      setActiveLang(code);
+    } catch (err: any) {
+      console.error('언어 전환 실패:', err.message);
+    }
+  };
 
   // 🌟 오른쪽 버튼 클릭 핸들러 (profile일 때는 메뉴를 띄우고, 아니면 부모가 넘겨준 함수 실행)
   const handleRightPress = () => {
@@ -199,7 +209,7 @@ export const Header = ({
                     isActive && styles.langChipActive,
                     !isEnabled && styles.langChipDisabled,
                   ]}
-                  onPress={() => isEnabled && setActiveLang(lang.code)}
+                  onPress={() => isEnabled && handleLangSwitch(lang.code)}
                   disabled={!isEnabled}
                   activeOpacity={0.7}
                 >
