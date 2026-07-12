@@ -3,32 +3,39 @@ import client from './client';
 // ─── 타입 ───
 export interface Script {
   scriptId: number;
-  characterName: string;
+  characterName: string | null; 
   scriptContent: string;
   hasOptions: boolean;
 }
 
+export interface SubmitResultResponse {
+  totalScore: number;
+  correctCount: number;
+}
+
+
 export interface Quiz {
   quizId: number;
-  scriptId: number;
+  scriptId: number; // 🌟 이 scriptId와 대사의 scriptId가 같으면 퀴즈 출현!
   quizType: string;
   question: string;
-  options: string;
+  options: string[];
   correctAnswer: string;
   explanation: string;
   hint: string;
 }
 
 export interface ChatData {
-  scripts: Script[];
+  scripts: Script[]; 
   quizzes: Quiz[];
 }
 
 export interface QuizResultItem {
   quizId: number;
-  tryCount: number;
+  attemptCount: number;    // tryCount → attemptCount
   correct: boolean;
-  hintOpened: boolean;
+  lastAnswer: string;      // 추가
+  hintUsed: boolean;       // hintOpened → hintUsed
 }
 
 // 컨텐츠 목록
@@ -37,20 +44,26 @@ export const getContentList = async () => {
   return res.data;
 };
 
-// 학습 페이지 (채팅 + 퀴즈)
-export const getChatData = async (episodeId: number, language: string): Promise<ChatData> => {
+/// 학습 페이지 (채팅 + 퀴즈)
+export const getChatData = async (episodeId: number): Promise<ChatData> => {
+  console.log(`📤 [요청: /chat] 파라미터로 전송할 contentId:`, episodeId);
+  
   const res = await client.post('/chat', null, { 
-    // 🌟 백엔드 설정에 따라 변수명(lang, language 등)이 다를 수 있습니다!
-    params: { contentId: episodeId, language: language } 
+    params: { contentId: episodeId } 
   });
+  
   return res.data;
 };
 
-// 학습 결과 제출
-export const submitResult = async (data: { episodeId: number; language: string; result: QuizResultItem[]; }) => {
-  const res = await client.post('/questionResult', data.result, {
-    params: { contentId: data.episodeId, language: data.language } 
-  });
+export const submitResult = async (data: {
+  episodeId: number;
+  result: QuizResultItem[];
+}): Promise<SubmitResultResponse> => {
+  const requestBody = {
+    contentId: data.episodeId,
+    results: data.result,  
+  };
+  
+  const res = await client.post('/questionResult', requestBody);
   return res.data;
-  // 응답: { 정답횟수, score }
 };

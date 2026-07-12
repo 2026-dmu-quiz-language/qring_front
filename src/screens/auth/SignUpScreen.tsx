@@ -11,7 +11,7 @@ import { CustomButton } from '../../components/common/Button';
 import { theme } from '../../constants/theme';
 
 // 백엔드 주소 (환경에 맞게 수정하세요)
-const API_BASE_URL = 'http://localhost:8080/api/v1/auth';
+const API_BASE_URL = 'https://q-ring.app/api/v1/auth';
 
 const SignUpScreen = ({ navigation }: any) => {
   // 🌟 명세서에 맞게 id 대신 email로 상태명 변경
@@ -73,6 +73,18 @@ const SignUpScreen = ({ navigation }: any) => {
 
   // 🌟 3. 회원가입 및 메일 전송 API (POST)
   const handleSignUp = async () => {
+    const languageMap: { [key: string]: string } = {
+      '일본어': 'JA',
+      '영어': 'EN',
+      '중국어': 'ZH'
+    };
+
+    // (옵션) 유저가 언어를 선택 안 하고 넘어가려 할 때 방어하기
+    if (!selectedLang) {
+      Alert.alert('알림', '학습할 언어를 선택해주세요!');
+      return;
+    }
+
     if (!email || !password || !nickname) {
       return Alert.alert('알림', '모든 정보를 입력해 주세요.');
     }
@@ -89,25 +101,19 @@ const SignUpScreen = ({ navigation }: any) => {
         email: email,
         password: password,
         nickname: nickname,
-        language: selectedLang,
+        language: languageMap[selectedLang],
         levelCode: levelCode,
       });
 
-      // 백엔드 명세의 emailsSent가 true면 메일 전송 성공으로 판단
-      if (response.data.emailsSent) {
-        Alert.alert('메일 발송 완료', response.data.message || '인증 코드를 이메일로 전송했습니다.', [
-          { 
-            text: '인증하러 가기', 
-            // 🌟 성공 시 새로 만든 이메일 인증 페이지로 이메일을 들고 이동
-            onPress: () => navigation.navigate('EmailVerify', { email: email }) 
-          }
-        ]);
-      } else {
-        Alert.alert('오류', '메일 발송에 실패했습니다. 다시 시도해주세요.');
-      }
+      // 🌟 조건문(if)을 아예 없앴습니다! 에러가 안 났다면 무조건 성공한 것입니다.
+      Alert.alert('메일 발송 완료', '인증 코드를 이메일로 전송했습니다.');
+      navigation.navigate('EmailVerify', { email: email });
+        
     } catch (error: any) {
+      // 실패하면 알아서 이쪽으로 빠집니다.
       const errorMessage = error.response?.data?.message || '회원가입에 실패했습니다.';
       Alert.alert('회원가입 실패', errorMessage);
+      console.log('🚫 회원가입 실패 상세 사유:', error.response?.data);
     }
   };
 
@@ -161,22 +167,41 @@ const SignUpScreen = ({ navigation }: any) => {
 
           {/* 비밀번호 영역 */}
           <Text style={[styles.label, { marginTop: 10 }]}>비밀번호</Text>
-          <CustomInput 
-            iconName="lock-closed-outline" 
-            placeholder="비밀번호를 입력해 주세요." 
-            secureTextEntry 
+          <CustomInput
+            iconName="lock-closed-outline"
+            placeholder="비밀번호를 입력해 주세요."
+            secureTextEntry
             value={password}
             onChangeText={setPassword}
           />
-          
+          <View style={styles.passwordRulesWrap}>
+            {password.length > 0 && password.length < 8 && (
+              <Text style={styles.passwordRuleError}>8자 이상 입력해 주세요.</Text>
+            )}
+            {password.length >= 8 && !/[a-zA-Z]/.test(password) && (
+              <Text style={styles.passwordRuleError}>영문자를 포함해 주세요.</Text>
+            )}
+            {password.length >= 8 && !/[0-9]/.test(password) && (
+              <Text style={styles.passwordRuleError}>숫자를 포함해 주세요.</Text>
+            )}
+            {password.length >= 8 && /[a-zA-Z]/.test(password) && /[0-9]/.test(password) && !/[A-Z]/.test(password) && !/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password) && (
+              <Text style={styles.passwordRuleError}>대문자 또는 특수기호를 포함해 주세요.</Text>
+            )}
+          </View>
+
           <Text style={styles.label}>비밀번호 확인</Text>
-          <CustomInput 
-            iconName="checkmark-circle-outline" 
-            placeholder="비밀번호를 한 번 더 입력해 주세요." 
-            secureTextEntry 
+          <CustomInput
+            iconName="checkmark-circle-outline"
+            placeholder="비밀번호를 한 번 더 입력해 주세요."
+            secureTextEntry
             value={passwordConfirm}
             onChangeText={setPasswordConfirm}
           />
+          <View style={styles.passwordMismatchWrap}>
+            {passwordConfirm.length > 0 && password !== passwordConfirm && (
+              <Text style={styles.passwordMismatch}>비밀번호가 일치하지 않습니다.</Text>
+            )}
+          </View>
         </View>
 
         {/* --- 학습 설정 및 약관 동의 (기존 코드와 동일) --- */}
@@ -261,6 +286,10 @@ const styles = StyleSheet.create({
   agreeText: { fontSize: 14, color: '#555', marginLeft: 10 },
   detailText: { fontSize: 13, color: '#888', textDecorationLine: 'underline' },
   divider: { height: 1, backgroundColor: '#D8D8CA', marginBottom: 15 },
+  passwordRulesWrap: { height: 15, marginTop: -8, alignItems: 'flex-end' },
+  passwordRuleError: { color: '#E74C3C', fontSize: 12, marginRight: 5 },
+  passwordMismatchWrap: { height: 18, marginTop: -8, alignItems: 'flex-end' },
+  passwordMismatch: { color: '#E74C3C', fontSize: 12, marginRight: 5 },
 });
 
 export default SignUpScreen;

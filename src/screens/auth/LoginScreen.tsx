@@ -7,7 +7,19 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { ScreenWrapper } from '../../components/layout/ScreenWrapper';
 import { CustomInput } from '../../components/common/Input';
 import { CustomButton } from '../../components/common/Button';
-import { Ionicons } from '@expo/vector-icons';
+
+import * as WebBrowser from 'expo-web-browser';
+import * as AuthSession from 'expo-auth-session';
+import * as Google from 'expo-auth-session/providers/google';
+import { OAUTH_CONFIG } from '../../constants/oauth';
+
+WebBrowser.maybeCompleteAuthSession();
+
+// 백엔드 기본 주소
+const API_BASE_URL = 'https://q-ring.app/api/v1/auth'; 
+
+const kakaoDiscovery = { authorizationEndpoint: 'https://kauth.kakao.com/oauth/authorize' };
+const lineDiscovery = { authorizationEndpoint: 'https://access.line.me/oauth2/v2.1/authorize' };
 
 import * as WebBrowser from 'expo-web-browser';
 import * as AuthSession from 'expo-auth-session';
@@ -95,7 +107,7 @@ const LoginScreen = ({ navigation }: any) => {
   // ==========================================
   // 3. 구글 로그인 Hook
   // ==========================================
-  const [googleRequest, googleResponse, promptGoogleAsync] = Google.useAuthRequest({
+  /*const [googleRequest, googleResponse, promptGoogleAsync] = Google.useAuthRequest({
     webClientId: '472758554338-hvjco2n0okeqsfe8uv7d8ecm1ih8qlb6.apps.googleusercontent.com',
   });
 
@@ -104,11 +116,11 @@ const LoginScreen = ({ navigation }: any) => {
       sendSocialTokenToBackend('google', googleResponse.params.id_token);
     }
   }, [googleResponse]);
-
+  */
   // ==========================================
   // 4. 카카오 로그인 Hook
   // ==========================================
-  const [kakaoRequest, kakaoResponse, promptKakaoAsync] = AuthSession.useAuthRequest(
+  /*const [kakaoRequest, kakaoResponse, promptKakaoAsync] = AuthSession.useAuthRequest(
     {
       clientId: '34ef02f3d1f4df166ecdfea02aa21bd1', 
       redirectUri,
@@ -142,7 +154,7 @@ const LoginScreen = ({ navigation }: any) => {
       sendSocialTokenToBackend('line', lineResponse.params.code);
     }
   }, [lineResponse]);
-
+  */
   return (
     <ScreenWrapper>
       <View style={styles.container}>
@@ -163,41 +175,46 @@ const LoginScreen = ({ navigation }: any) => {
         </View>
 
         <CustomButton title="로그인 ➔" onPress={handleLogin} />
+        {/* 
+        <View style={styles.dividerContainer}>
+          <View style={styles.line} /><Text style={styles.orText}>OR</Text><View style={styles.line} />
+        </View>
 
+        {/* 주석 시작: 소셜 로그인 UI 숨기기
         <View style={styles.dividerContainer}>
           <View style={styles.line} /><Text style={styles.orText}>OR</Text><View style={styles.line} />
         </View>
 
         {/* 🌟 소셜 아이콘 브랜드 스타일 적용 */}
         <View style={styles.socialContainer}>
-          {/* 구글 */}
-          <TouchableOpacity 
-            style={[styles.socialCircle, { backgroundColor: '#FFFFFF', borderColor: '#E5E5E5', borderWidth: 1 }]} 
+          <TouchableOpacity
+            style={styles.socialCircle}
             onPress={() => promptGoogleAsync()} disabled={!googleRequest}
           >
-            <Ionicons name="logo-google" size={22} color="#EA4335" />
+            <Image source={require('../../../assets/google.png')} style={styles.socialIcon} />
           </TouchableOpacity>
 
-          {/* 카카오 */}
-          <TouchableOpacity 
-            style={[styles.socialCircle, { backgroundColor: '#FEE500', borderWidth: 0 }]} 
+          <TouchableOpacity
+            style={styles.socialCircle}
             onPress={() => promptKakaoAsync()} disabled={!kakaoRequest}
           >
-            <Ionicons name="chatbubble-sharp" size={22} color="#000000" />
+            <Image source={require('../../../assets/kakaoTalk-Flaticon.png')} style={styles.socialIcon} />
           </TouchableOpacity>
 
-          {/* 라인 */}
-          <TouchableOpacity 
-            style={[styles.socialCircle, { backgroundColor: '#06C755', borderWidth: 0 }]} 
+          <TouchableOpacity
+            style={styles.socialCircle}
             onPress={() => promptLineAsync()} disabled={!lineRequest}
           >
-            <Ionicons name="chatbubbles" size={24} color="#FFFFFF" />
+            <Image source={require('../../../assets/line.png')} style={styles.socialIcon} />
           </TouchableOpacity>
         </View>
+        주석 끝 */}
 
         <TouchableOpacity onPress={() => navigation.navigate('SignUp')} style={styles.signUpLink}>
           <Text style={styles.signUpText}>계정이 없으신가요? <Text style={{ fontWeight: 'bold', color: '#6F9F63' }}>회원가입</Text></Text>
         </TouchableOpacity>
+
+        <Text style={styles.attributionText}>Icon by Freepik - Flaticon</Text>
       </View>
     </ScreenWrapper>
   );
@@ -216,9 +233,11 @@ const styles = StyleSheet.create({
   line: { flex: 1, height: 1, backgroundColor: '#DDD' },
   orText: { marginHorizontal: 10, color: '#AAA', fontSize: 12 },
   socialContainer: { flexDirection: 'row', gap: 20, marginBottom: 30 },
-  socialCircle: { width: 52, height: 52, borderRadius: 26, alignItems: 'center', justifyContent: 'center', elevation: 2, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.1, shadowRadius: 3 },
+  socialCircle: { width: 52, height: 52, borderRadius: 26, alignItems: 'center', justifyContent: 'center' },
+  socialIcon: { width: 48, height: 48, resizeMode: 'contain' as const },
   signUpLink: { marginTop: 10 },
-  signUpText: { color: '#666' }
+  signUpText: { color: '#666' },
+  attributionText: { fontSize: 10, color: '#BBB', marginTop: 15 }
 });
 
 export default LoginScreen;

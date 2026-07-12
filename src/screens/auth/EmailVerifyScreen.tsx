@@ -9,7 +9,7 @@ import { Header } from '../../components/layout/Header';
 import { CustomInput } from '../../components/common/Input';
 import { CustomButton } from '../../components/common/Button';
 
-const API_BASE_URL = 'http://localhost:8080/api/v1/auth';
+const API_BASE_URL = 'https://q-ring.app/api/v1/auth';
 
 const EmailVerifyScreen = ({ route, navigation }: any) => {
   // SignUpScreen에서 넘겨받은 이메일 주소

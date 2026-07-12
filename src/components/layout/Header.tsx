@@ -17,20 +17,47 @@ interface HeaderProps {
 }
 
 // 환경 변수 또는 상수 파일에서 백엔드 주소 가져오기 (임시 하드코딩)
-const API_BASE_URL = 'http://localhost:8080/api/v1/auth';
+const API_BASE_URL = 'https://q-ring.app/api/v1/auth';
 
-export const Header = ({ 
-  title, 
-  leftType = 'back', 
-  rightType = 'none', 
-  onRightPress, 
-  showLogo = false, 
-  userName = '박수현' 
+const LANGUAGES = [
+  { code: 'EN', label: '영어', flag: '🇺🇸' },
+  { code: 'JA', label: '일본어', flag: '🇯🇵' },
+  { code: 'ZH', label: '중국어', flag: '🇨🇳' },
+];
+
+export const Header = ({
+  title,
+  leftType = 'back',
+  rightType = 'none',
+  onRightPress,
+  showLogo = false,
+  userName
 }: HeaderProps) => {
   const navigation = useNavigation<any>();
-  
-  // 🌟 프로필 메뉴(모달) 노출 여부 상태
   const [isProfileMenuVisible, setProfileMenuVisible] = useState(false);
+  const [activeLang, setActiveLang] = useState('EN');
+  const [enabledLangs, setEnabledLangs] = useState(['EN']);
+
+  // 🌟 1. 화면에 보여줄 이름을 담을 그릇 (처음엔 '학습자'로 둠)
+  const [displayName, setDisplayName] = useState('학습자');
+
+  // 🌟 2. 닉네임 자동 저장 & 불러오기 로직
+  React.useEffect(() => {
+    const fetchAndSaveName = async () => {
+      if (userName) {
+        // 대시보드처럼 이름을 직접 넘겨준 경우: 화면에 띄우고 메모장에 저장!
+        setDisplayName(userName);
+        await AsyncStorage.setItem('savedUserName', userName);
+      } else {
+        // 스토리홈처럼 이름을 안 넘겨준 경우: 메모장에서 꺼내오기!
+        const saved = await AsyncStorage.getItem('savedUserName');
+        if (saved) {
+          setDisplayName(saved);
+        }
+      }
+    };
+    fetchAndSaveName();
+  }, [userName]);
 
   // 🌟 오른쪽 버튼 클릭 핸들러 (profile일 때는 메뉴를 띄우고, 아니면 부모가 넘겨준 함수 실행)
   const handleRightPress = () => {
@@ -79,7 +106,7 @@ export const Header = ({
         
         {showLogo ? (
           <View style={styles.logoSection}>
-            <Text style={styles.greetingText}>안녕하세요, {userName}님!</Text>
+            <Text style={styles.greetingText}>안녕하세요, {displayName}님!</Text>
             <Image 
               source={require('../../../assets/quring_logo.png')} 
               style={styles.headerLogo} 
@@ -133,27 +160,69 @@ export const Header = ({
         animationType="fade"
         onRequestClose={() => setProfileMenuVisible(false)}
       >
-        {/* 모달 바깥 영역(어두운 배경)을 누르면 모달이 닫히도록 설정 */}
+        {/* 🌟 1. 모달 배경 (메뉴 박스를 감싸지 않고 따로 둡니다!) */}
         <TouchableOpacity 
           style={styles.modalOverlay} 
           activeOpacity={1} 
           onPress={() => setProfileMenuVisible(false)}
-        >
-          {/* 실제 메뉴 컨테이너 (우측 상단에 위치) */}
-          <View style={styles.menuContainer}>
-            <View style={styles.menuHeader}>
-              <Ionicons name="person-circle" size={32} color="#CCC" />
-              <Text style={styles.menuUserName}>{userName} 님</Text>
-            </View>
-            
-            <View style={styles.menuDivider} />
-
-            <TouchableOpacity style={styles.menuItem} onPress={handleLogout}>
-              <Ionicons name="log-out-outline" size={20} color="#dc3545" />
-              <Text style={styles.menuLogoutText}>로그아웃</Text>
-            </TouchableOpacity>
+        />
+          
+        {/* 🌟 2. 실제 메뉴 컨테이너 (배경과 겹치지 않게 밖으로 꺼냄) */}
+        <View style={styles.menuContainer}>
+          <View style={styles.menuHeader}>
+            <Ionicons name="person-circle" size={32} color="#CCC" />
+            <Text style={styles.menuUserName}>{displayName} 님</Text>
           </View>
-        </TouchableOpacity>
+          
+          <View style={styles.menuDivider} />
+
+          <TouchableOpacity style={styles.menuItem} onPress={() => {
+            setProfileMenuVisible(false);
+            navigation.navigate('MyPage');
+          }}>
+            <Ionicons name="person-outline" size={20} color={theme.colors.primary} />
+            <Text style={styles.menuItemText}>마이페이지</Text>
+          </TouchableOpacity>
+
+          <View style={styles.menuDivider} />
+
+          <Text style={styles.langSectionLabel}>학습 언어 전환</Text>
+          <View style={styles.langRow}>
+            {LANGUAGES.map((lang) => {
+              const isEnabled = enabledLangs.includes(lang.code);
+              const isActive = activeLang === lang.code;
+              return (
+                <TouchableOpacity
+                  key={lang.code}
+                  style={[
+                    styles.langChip,
+                    isActive && styles.langChipActive,
+                    !isEnabled && styles.langChipDisabled,
+                  ]}
+                  onPress={() => isEnabled && setActiveLang(lang.code)}
+                  disabled={!isEnabled}
+                  activeOpacity={0.7}
+                >
+                  <Text style={styles.langFlag}>{lang.flag}</Text>
+                  <Text style={[
+                    styles.langLabel,
+                    isActive && styles.langLabelActive,
+                    !isEnabled && styles.langLabelDisabled,
+                  ]}>
+                    {lang.label}
+                  </Text>
+                </TouchableOpacity>
+              );
+            })}
+          </View>
+
+          <View style={styles.menuDivider} />
+
+          <TouchableOpacity style={styles.menuItem} onPress={handleLogout}>
+            <Ionicons name="log-out-outline" size={20} color="#dc3545" />
+            <Text style={styles.menuLogoutText}>로그아웃</Text>
+          </TouchableOpacity>
+        </View>
       </Modal>
 
     </View>
@@ -232,9 +301,57 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     gap: 8,
   },
+  menuItemText: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: '#333',
+  },
   menuLogoutText: {
     fontSize: 15,
     fontWeight: '600',
-    color: '#dc3545', // 빨간색으로 경고/탈출 느낌 강조
+    color: '#dc3545',
+  },
+  langSectionLabel: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#999',
+    marginBottom: 8,
+  },
+  langRow: {
+    flexDirection: 'row',
+    gap: 6,
+    marginBottom: 4,
+  },
+  langChip: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 4,
+    paddingVertical: 8,
+    borderRadius: 12,
+    backgroundColor: '#F3F4EB',
+  },
+  langChipActive: {
+    backgroundColor: theme.colors.secondary,
+  },
+  langChipDisabled: {
+    backgroundColor: '#F0F0F0',
+    opacity: 0.5,
+  },
+  langFlag: {
+    fontSize: 14,
+  },
+  langLabel: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#555',
+  },
+  langLabelActive: {
+    color: '#fff',
+    fontWeight: 'bold',
+  },
+  langLabelDisabled: {
+    color: '#bbb',
   },
 });

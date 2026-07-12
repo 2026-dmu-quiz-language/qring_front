@@ -20,27 +20,39 @@ import { Header } from '../components/layout/Header';
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
+// ─── API 응답 데이터 타입 정의 ───
 interface ContentItem {
-  content_id: number;
-  category_name: string;
-  thumbnail_url: string;
+  contentId: number;
+  categoryName: string;
+  thumbnailUrl: string;
   title: string;
-  quiz_count: number;
-  is_completed: boolean;
+  quizCount: number;
+  isCompleted: boolean;
   status?: string;
-  required_points?: number; 
+  requiredPoints?: number; 
 }
 
+// ─── 메인 컴포넌트 ───
 const StoryHomeScreen = () => {
   const navigation = useNavigation<NativeStackNavigationProp<LearnStackParamList>>();
   
   const [contents, setContents] = useState<ContentItem[]>([]);
   const [categories, setCategories] = useState<{id: string, label: string, emoji: string}[]>([]);
-  const [activeCategory, setActiveCategory] = useState('');
+  const [activeCategory, setActiveCategory] = useState('ALL'); // 🌟 기본값을 '전체'로 설정
   const [isLoading, setIsLoading] = useState(true);
-  
-  // 🌟 추가: 유저의 현재 언어 설정을 저장할 상태 (기본값 'en')
-  const [userLanguage, setUserLanguage] = useState<string>('en');
+
+  // 🌟 카테고리 이름에 맞는 이모지를 반환하는 헬퍼 함수
+  const getCategoryEmoji = (name: string) => {
+    if (!name) return '📚';
+    if (name.includes('짝사랑')) return '💘';
+    if (name.includes('드라마')) return '📺';
+    if (name.includes('스릴러')) return '😱';
+    if (name.includes('추리')) return '🕵️‍♂️';
+    if (name.includes('특이한연애')) return '💬';
+    if (name.includes('연애갈등')) return '💔';
+    if (name.includes('로맨스')) return '💕';
+    return '📚'; // 위 조건에 안 맞을 때의 기본 이모지
+  };
 
   useEffect(() => {
     const fetchContentList = async () => {
@@ -51,36 +63,33 @@ const StoryHomeScreen = () => {
           return;
         }
 
-        // 🌟 추가: 유저가 설정한 언어 정보를 AsyncStorage에서 가져옵니다.
-        // 만약 아직 설정된 언어가 없다면 기본값으로 'en'을 사용합니다.
-        const storedLanguage = await AsyncStorage.getItem('userLanguage');
-        if (storedLanguage) {
-          setUserLanguage(storedLanguage);
-        }
-
-        const response = await axios.post('http://localhost:8080/contentList', {
+        const response = await axios.post('https://q-ring.app/contentList', {
           token: token 
         }, {
-          headers: { Authorization: `Bearer ${token}` } 
+          headers: { Authorization: `Bearer ${token}` }
         });
 
-        const data: ContentItem[] = response.data; 
+        const data: ContentItem[] = response.data;
         setContents(data);
 
-        const uniqueCategories = Array.from(new Set(data.map(item => item.category_name)));
+        // 중복 제거된 카테고리 목록 추출
+        const uniqueCategories = Array.from(new Set(data.map(item => item.categoryName).filter(Boolean)));
         
+        // 동적 카테고리 매핑
         const mappedCategories = uniqueCategories.map(name => ({
           id: name,
           label: name,
-          emoji: name.includes('로맨스') ? '💕' : (name.includes('스토리') ? '🎬' : '📚'),
+          emoji: getCategoryEmoji(name),
         }));
 
-        setCategories(mappedCategories);
-        
-        if (mappedCategories.length > 0) {
-          setActiveCategory(mappedCategories[0].id);
-        }
+        // 🌟 '전체' 카테고리를 배열 맨 앞에 추가
+        const finalCategories = [
+          { id: 'ALL', label: '전체', emoji: '✨' },
+          ...mappedCategories
+        ];
 
+        setCategories(finalCategories);
+        
       } catch (error) {
         console.error('Content List API Error:', error);
         setContents([]);
@@ -92,7 +101,10 @@ const StoryHomeScreen = () => {
     fetchContentList();
   }, []);
 
-  const filteredContents = contents.filter(item => item.category_name === activeCategory);
+  // 🌟 선택된 카테고리가 'ALL'이면 전체 데이터를, 아니면 해당 카테고리만 필터링
+  const filteredContents = activeCategory === 'ALL' 
+    ? contents 
+    : contents.filter(item => item.categoryName === activeCategory);
 
   return (
     <ScreenWrapper style={{ paddingHorizontal: 0 }}>
@@ -142,17 +154,16 @@ const StoryHomeScreen = () => {
 
             {filteredContents.map((ep) => (
               <TouchableOpacity
-                key={ep.content_id}
+                key={ep.contentId} 
                 style={styles.card}
                 activeOpacity={0.8}
                 onPress={() => navigation.navigate('ChatLearn', {
-                  episodeId: ep.content_id,
+                  episodeId: ep.contentId, 
                   episodeTitle: ep.title,
-                  language: userLanguage, // 🌟 수정: 언어 정보를 파라미터로 함께 넘겨줍니다.
                 })}
               >
-                {ep.thumbnail_url ? (
-                  <Image source={{ uri: ep.thumbnail_url }} style={styles.cardImage} resizeMode="cover" />
+                {ep.thumbnailUrl ? (
+                  <Image source={{ uri: ep.thumbnailUrl }} style={styles.cardImage} resizeMode="cover" />
                 ) : (
                   <View style={[styles.cardImage, { backgroundColor: '#EFEFE1' }]} />
                 )}
@@ -162,10 +173,10 @@ const StoryHomeScreen = () => {
                   <View style={styles.cardMeta}>
                     <View style={styles.badgeWrap}>
                       <View style={styles.badge}>
-                        <Text style={styles.badgeText}>퀴즈 {ep.quiz_count || 0}개</Text>
+                        <Text style={styles.badgeText}>퀴즈 {ep.quizCount || 0}개</Text>
                       </View>
                       
-                      {ep.is_completed && (
+                      {ep.isCompleted && (
                         <View style={styles.badgeCompleted}>
                           <Text style={styles.badgeTextCompleted}>✅ 학습 완료</Text>
                         </View>
@@ -215,7 +226,7 @@ const styles = StyleSheet.create({
     elevation: 3,
   },
   cardImage: {
-    height: 140, 
+    height: 140,
     width: '100%',
   },
   cardInfo: { padding: 20 },

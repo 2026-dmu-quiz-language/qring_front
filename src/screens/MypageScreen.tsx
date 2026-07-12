@@ -35,8 +35,8 @@ interface MenuItem {
 
 const MENU_ITEMS: MenuItem[] = [
   { id: 'account', label: '계정 관리', icon: 'person-outline' },
-  { id: 'alarm', label: '알림 설정', icon: 'notifications-outline', hasNotification: true },
-  { id: 'notice', label: '공지사항', icon: 'document-text-outline' },
+  { id: 'sound', label: '소리 설정', icon: 'volume-high-outline' },
+  { id: 'levelLang', label: '레벨 / 언어 변경', icon: 'options-outline' },
   { id: 'logout', label: '로그아웃', icon: 'log-out-outline', isLogout: true },
 ];
 
@@ -56,7 +56,7 @@ const MenuIcon = ({ name, isLogout }: { name: keyof typeof Ionicons.glyphMap; is
 const MyPageScreen = () => {
   return (
     <ScreenWrapper style={{ paddingHorizontal: 0 }}>
-      <Header title="마이페이지" leftType="none" rightType="none" />
+      <Header title="마이페이지" leftType="back" rightType="none" />
 
       <ScrollView
         style={styles.scroll}

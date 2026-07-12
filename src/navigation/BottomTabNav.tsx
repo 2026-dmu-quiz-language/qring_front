@@ -1,50 +1,60 @@
 import React from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { View, Text, StyleSheet } from 'react-native';
+import { View, Text, StyleSheet, Platform } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { theme } from '../constants/theme';
-import { ScreenWrapper } from '../components/layout/ScreenWrapper';
-import { Header } from '../components/layout/Header';
 import StoryHomeScreen from '../screens/StoryHomeScreen';
 import DashboardScreen from '../screens/DashboardScreen';
-import MyPageScreen from '../screens/MypageScreen';
+import WrongNoteScreen from '../screens/WrongNoteScreen';
 
 const Tab = createBottomTabNavigator();
 
 export const BottomTabNav = () => {
   return (
     <Tab.Navigator
+      initialRouteName="Dashboard"
       screenOptions={({ route }) => ({
         headerShown: false,
         tabBarStyle: styles.tabBar,
-        tabBarShowLabel: false, // 기본 라벨 숨김 (우리가 커스텀으로 그림)
-        tabBarItemStyle: {
-            height: 75, 
-            justifyContent: 'center',
-            alignItems: 'center',
+        tabBarShowLabel: false,
+        safeAreaInsets: { bottom: 0 }, // 아이폰 기본 하단 여백 제거
+        
+        // 🌟 [핵심 해결책 1] 작게 고정되어 있던 아이콘 상자 자체를 탭바 전체 높이로 늘립니다.
+        tabBarIconStyle: {
+          width: '100%',
+          height: '100%',
+          justifyContent: 'center',
+          alignItems: 'center',
         },
+        
+        // 🌟 [핵심 해결책 2] 터치 영역 전체를 수직/수평 정중앙 정렬합니다.
+        tabBarItemStyle: {
+          height: 72, // 탭바 높이와 일치시켜 쏠림 방지
+          justifyContent: 'center',
+          alignItems: 'center',
+        },
+        
         tabBarIcon: ({ focused }) => {
           let iconName: keyof typeof Ionicons.glyphMap = 'help';
           let label = '';
 
           if (route.name === 'Content') {
-            iconName = 'trending-up'; 
+            iconName = focused ? 'trending-up' : 'trending-up-outline';
             label = '학습';
           } else if (route.name === 'Dashboard') {
-            iconName = 'book-outline'; 
+            iconName = focused ? 'book' : 'book-outline';
             label = '홈';
-          } else if (route.name === 'MyPage') {
-            iconName = 'person-outline'; 
-            label = '마이페이지';
+          } else if (route.name === 'WrongNote') {
+            iconName = focused ? 'document-text' : 'document-text-outline';
+            label = '오답노트';
           }
 
-          // 활성화 시 아이콘 색상 및 둥근 배경 적용
           return (
             <View style={[styles.tabItem, focused && styles.tabItemActive]}>
-              <Ionicons 
-                name={iconName} 
-                size={20} 
-                color={focused ? theme.colors.primary : '#555'} 
+              <Ionicons
+                name={iconName}
+                size={20}
+                color={focused ? theme.colors.primary : '#888'}
               />
               <Text style={[styles.tabLabel, focused && styles.tabLabelActive]}>
                 {label}
@@ -55,8 +65,8 @@ export const BottomTabNav = () => {
       })}
     >
       <Tab.Screen name="Content" component={StoryHomeScreen} />
-      <Tab.Screen name="Dashboard"  component={DashboardScreen}/>
-      <Tab.Screen name="MyPage" component={MyPageScreen} />
+      <Tab.Screen name="Dashboard" component={DashboardScreen} />
+      <Tab.Screen name="WrongNote" component={WrongNoteScreen} />
     </Tab.Navigator>
   );
 };
@@ -64,42 +74,40 @@ export const BottomTabNav = () => {
 const styles = StyleSheet.create({
   tabBar: {
     position: 'absolute',
-    bottom: 30, // 아이폰 홈 바 위로 적당히 띄움
+    bottom: Platform.OS === 'ios' ? 32 : 22, // 화면 바닥에서 띄우는 높이
     left: 20,
     right: 20,
-    elevation: 0,
-    backgroundColor: '#FAFAF5',
-    borderRadius: 35, // 좀 더 둥글게 처리
-    height: 75, // 탭바 높이를 조금 더 확보
-    width: 330,
-    marginLeft: 15,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 35,
+    height: 72, // 🌟 전체 푸터 바의 명확한 고정 높이
+    elevation: 5,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.1,
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.08,
     shadowRadius: 10,
     borderTopWidth: 0,
-    paddingBottom: 0, // 중요: 내부 기본 패딩 제거
+    paddingBottom: 0, 
+    paddingTop: 0,
   },
   tabItem: {
-    // 🌟 배경(Pill)과 아이콘을 한 몸으로 묶어 중앙 정렬
+    flexDirection: 'column',
     alignItems: 'center',
     justifyContent: 'center',
-    width: 65, // 활성화 배경의 가로 길이
-    height: 50, // 활성화 배경의 세로 길이
-    borderRadius: 16, // 알약 모양 유지
-    marginTop: 40, // 탭바 내부에서 아이콘 세트를 중앙으로 내림
+    width: 76, 
+    height: 52, // 🌟 전체 높이 72 안에서 위아래 정확히 10px씩 대칭 여백이 남도록 설정
+    borderRadius: 18,
   },
   tabItemActive: {
-    backgroundColor: theme.colors.secondary, // #AAB87B (연두색 배경)
+    backgroundColor: theme.colors.secondary, // 연두색 배경
   },
   tabLabel: {
-    fontSize: 11,
-    color: '#555',
+    fontSize: 10,
+    color: '#888',
     marginTop: 2,
-    fontWeight: '500',
+    fontWeight: '600',
   },
   tabLabelActive: {
-    color: theme.colors.primary, // #6F9F63
+    color: theme.colors.primary, 
     fontWeight: 'bold',
   }
 });

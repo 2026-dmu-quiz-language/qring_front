@@ -6,7 +6,8 @@ import {
   Text,
   TouchableOpacity,
   StyleSheet,
-  ScrollView, 
+  ScrollView,
+  Image,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation, useRoute } from '@react-navigation/native';
@@ -65,28 +66,28 @@ const LearningResultScreen = () => {
           </View>
         </View>
 
-        <View style={styles.streakCard}>
-          <View style={styles.streakIconWrap}>
-            <Ionicons name="flag" size={20} color="#B7A07A" />
+        <View style={styles.feedbackCard}>
+          <Image
+            source={
+              score >= 70
+                ? require('../../assets/Qring-emoji1.png')
+                : score >= 40
+                  ? require('../../assets/Qring-emoji2.png')
+                  : require('../../assets/Qring-emoji3.png')
+            }
+            style={styles.feedbackImage}
+            resizeMode="contain"
+          />
+          <View style={styles.feedbackBubble}>
+            <View style={styles.feedbackTail} />
+            <Text style={styles.feedbackText}>
+              {score >= 70
+                ? '대단해요!\n오늘 완벽하게 해냈어요!'
+                : score >= 40
+                  ? '좋아요!\n조금만 더 하면 완벽해요!'
+                  : '괜찮아요!\n다시 도전하면 더 잘할 수 있어요!'}
+            </Text>
           </View>
-          <View style={styles.streakContent}>
-            <View style={styles.streakTextRow}>
-              <Text style={styles.streakText}>연속 정답 달성!</Text>
-              <Text style={styles.streakPercent}>100%</Text>
-            </View>
-            <View style={styles.progressBarBg}>
-              <View style={[styles.progressBarFill, { width: '100%' }]} />
-            </View>
-          </View>
-        </View>
-
-        <View style={styles.summaryCard}>
-          <View style={styles.summaryHeader}>
-            <Ionicons name="bulb" size={18} color="#B7A07A" />
-            <Text style={styles.summaryTitle}>오늘의 핵심 표현</Text>
-          </View>
-          <Text style={styles.summaryEn}>Caught red-handed</Text>
-          <Text style={styles.summaryKo}>현장범으로 딱 걸리다</Text>
         </View>
 
         <View style={{ marginTop: 32 }} />
@@ -128,19 +129,35 @@ const styles = StyleSheet.create({
   statValueCount: { fontSize: 32, fontWeight: '900', color: theme.colors.secondary },
   statUnitEXP: { fontSize: 18, fontWeight: '800', color: theme.colors.secondary, marginTop: -2 },
   statLabel: { marginTop: 12, fontSize: 13, color: '#555', fontWeight: '600' },
-  streakCard: { backgroundColor: theme.colors.white, borderRadius: 24, flexDirection: 'row', alignItems: 'center', paddingHorizontal: 20, paddingVertical: 24, marginTop: 20, shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.05, shadowRadius: 15, elevation: 3 },
-  streakIconWrap: { width: 46, height: 46, borderRadius: 23, backgroundColor: '#F5E6DC', justifyContent: 'center', alignItems: 'center' },
-  streakContent: { flex: 1, marginLeft: 16 },
-  streakTextRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 },
-  streakText: { fontSize: 15, fontWeight: 'bold', color: '#1a1a1a' },
-  streakPercent: { fontSize: 16, fontWeight: '800', color: theme.colors.primary },
-  progressBarBg: { height: 10, backgroundColor: '#EAEAEA', borderRadius: 5 },
-  progressBarFill: { height: 10, backgroundColor: theme.colors.primary, borderRadius: 5 },
-  summaryCard: { backgroundColor: '#F3F4EB', borderRadius: 24, padding: 30, marginTop: 24, alignItems: 'center' },
-  summaryHeader: { flexDirection: 'row', alignItems: 'center', marginBottom: 10, gap: 8 },
-  summaryTitle: { fontSize: 15, fontWeight: 'bold', color: '#B7A07A' },
-  summaryEn: { fontSize: 24, fontWeight: '900', color: theme.colors.primary, marginBottom: 10 },
-  summaryKo: { fontSize: 17, fontWeight: '500', color: '#555' },
+  feedbackCard: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', marginTop: 24, marginBottom: 8 },
+  feedbackImage: { width: 110, height: 110 },
+  feedbackBubble: {
+    flexShrink: 1,
+    backgroundColor: theme.colors.white,
+    borderRadius: 16,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    marginLeft: 12,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
+    elevation: 2,
+  },
+  feedbackTail: {
+    position: 'absolute',
+    left: -6,
+    top: '40%' as any,
+    width: 0,
+    height: 0,
+    borderRightWidth: 8,
+    borderTopWidth: 6,
+    borderBottomWidth: 6,
+    borderRightColor: theme.colors.white,
+    borderTopColor: 'transparent',
+    borderBottomColor: 'transparent',
+  },
+  feedbackText: { fontSize: 15, fontWeight: '700', color: '#333', lineHeight: 22 },
   homeButton: { backgroundColor: theme.colors.primary, borderRadius: 20, paddingVertical: 20, alignItems: 'center', marginBottom: 5 },
   homeButtonText: { fontSize: 18, fontWeight: 'bold', color: '#fff' },
   reviewButton: { alignItems: 'center', paddingVertical: 15 },

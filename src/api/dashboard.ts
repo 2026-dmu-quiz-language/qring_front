@@ -1,16 +1,17 @@
 import client from './client';
 
-interface DashboardResponse {
+export interface DashboardResponse {
   name: string;
-  level: string;
-  content_days: string;
-  content_percent: string;
-  clear_story: string;
-  content_phrase: string;
-  weekly_done: boolean[];
+  levelCode: number;
+  levelDesc: string;
+  consecutiveDays: number;
+  progressRate: number;
+  completedStoryCount: number;
+  commentText: string;
+  weeklyStudy: boolean[];
 }
 
 export const getDashboard = async (): Promise<DashboardResponse> => {
-  const res = await client.post('/dash');
+  const res = await client.post('/api/v1/dash');
   return res.data;
 };
