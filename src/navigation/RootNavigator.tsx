@@ -10,6 +10,8 @@ import ChatLearnScreen from '../screens/ChatLearnScreen';
 import LearningResultScreen from '../screens/LearningResultScreen';
 import EmailVerifyScreen from '../screens/auth/EmailVerifyScreen';
 import MyPageScreen from '../screens/MypageScreen';
+import AccountManagementScreen from '../screens/MyPage/AccountManagementScreen';
+import LearningSettingsScreen from '../screens/MyPage/LearningSettingsScreen';
 import WrongNoteQuizScreen from '../screens/WrongNoteQuizScreen';
 
 const Stack = createNativeStackNavigator();
@@ -37,6 +39,9 @@ export const RootNavigator = () => {
       <Stack.Screen name="ChatLearn" component={ChatLearnScreen} />
       <Stack.Screen name="LearningResult" component={LearningResultScreen} />
       <Stack.Screen name="MyPage" component={MyPageScreen} />
+
+      <Stack.Screen name="AccountManagementScreen" component={AccountManagementScreen} />
+      <Stack.Screen name="LearningSettingsScreen" component={LearningSettingsScreen} />
       <Stack.Screen name="WrongNoteQuiz" component={WrongNoteQuizScreen} />
     </Stack.Navigator>
   );

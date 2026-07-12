@@ -1,6 +1,6 @@
 // screens/auth/LoginScreen.tsx
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { View, Text, StyleSheet, Image, TouchableOpacity, Alert } from 'react-native';
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -8,25 +8,26 @@ import { ScreenWrapper } from '../../components/layout/ScreenWrapper';
 import { CustomInput } from '../../components/common/Input';
 import { CustomButton } from '../../components/common/Button';
 
-import * as WebBrowser from 'expo-web-browser';
-import * as AuthSession from 'expo-auth-session';
-import * as Google from 'expo-auth-session/providers/google';
-import { OAUTH_CONFIG } from '../../constants/oauth';
+// 🌟 [소셜 로그인 임시 주석 처리] 필요할 때 주석을 해제하세요.
+// import * as WebBrowser from 'expo-web-browser';
+// import * as AuthSession from 'expo-auth-session';
+// import * as Google from 'expo-auth-session/providers/google';
+// import { OAUTH_CONFIG } from '../../constants/oauth';
 
-WebBrowser.maybeCompleteAuthSession();
+// WebBrowser.maybeCompleteAuthSession();
 
 // 백엔드 기본 주소
 const API_BASE_URL = 'https://q-ring.app/api/v1/auth'; 
 
-const kakaoDiscovery = { authorizationEndpoint: 'https://kauth.kakao.com/oauth/authorize' };
-const lineDiscovery = { authorizationEndpoint: 'https://access.line.me/oauth2/v2.1/authorize' };
+// const kakaoDiscovery = { authorizationEndpoint: 'https://kauth.kakao.com/oauth/authorize' };
+// const lineDiscovery = { authorizationEndpoint: 'https://access.line.me/oauth2/v2.1/authorize' };
 
 const LoginScreen = ({ navigation }: any) => {
   const [id, setId] = useState('');
   const [password, setPassword] = useState('');
 
-  // 공통 리다이렉트 URI 생성
-  const redirectUri = AuthSession.makeRedirectUri();
+  // 공통 리다이렉트 URI 생성 (소셜 로그인용 - 임시 주석)
+  // const redirectUri = AuthSession.makeRedirectUri();
 
   // ==========================================
   // 1. 일반 (로컬) 로그인
@@ -55,94 +56,14 @@ const LoginScreen = ({ navigation }: any) => {
   };
 
   // ==========================================
-  // 2. 소셜 로그인 백엔드 전송 (/oauth/...)
+  // 2. 소셜 로그인 백엔드 전송 및 Hook (임시 주석 처리)
   // ==========================================
-  const sendSocialTokenToBackend = async (provider: string, tokenVal: string) => {
-    try {
-      // 명세서 Request: token, redirectUri
-      const payload = {
-        token: tokenVal,
-        redirectUri: redirectUri
-      };
-
-      const response = await axios.post(`${API_BASE_URL}/oauth/${provider}`, payload);
-      
-      const { accessToken, refreshToken, newUser } = response.data;
-
-      // 🌟 신규 유저든 기존 유저든 일단 발급받은 토큰은 저장합니다.
-      if (accessToken) {
-        await AsyncStorage.setItem('accessToken', accessToken);
-        if (refreshToken) {
-          await AsyncStorage.setItem('refreshToken', refreshToken);
-        }
-        
-        // 🌟 명세서 Response: newUser가 true면 학습 설정 페이지로!
-        if (newUser) {
-          navigation.navigate('SocialSignUp');
-        } else {
-          navigation.navigate('MainTab');
-        }
-      } else {
-        Alert.alert('오류', '토큰을 발급받지 못했습니다.');
-      }
-      
-    } catch (error: any) {
-      console.error(`${provider} Login Error:`, error);
-      Alert.alert('로그인 실패', error.response?.data?.message || '서버 연동에 실패했습니다.');
-    }
-  };
-
-  // ==========================================
-  // 3. 구글 로그인 Hook
-  // ==========================================
-  /*const [googleRequest, googleResponse, promptGoogleAsync] = Google.useAuthRequest({
-    webClientId: '472758554338-hvjco2n0okeqsfe8uv7d8ecm1ih8qlb6.apps.googleusercontent.com',
-  });
-
-  useEffect(() => {
-    if (googleResponse?.type === 'success' && googleResponse.params?.id_token) {
-      sendSocialTokenToBackend('google', googleResponse.params.id_token);
-    }
-  }, [googleResponse]);
+  /* const sendSocialTokenToBackend = async (provider: string, tokenVal: string) => { ... }
+  const [googleRequest, googleResponse, promptGoogleAsync] = Google.useAuthRequest({ ... });
+  const [kakaoRequest, kakaoResponse, promptKakaoAsync] = AuthSession.useAuthRequest({ ... });
+  const [lineRequest, lineResponse, promptLineAsync] = AuthSession.useAuthRequest({ ... });
   */
-  // ==========================================
-  // 4. 카카오 로그인 Hook
-  // ==========================================
-  /*const [kakaoRequest, kakaoResponse, promptKakaoAsync] = AuthSession.useAuthRequest(
-    {
-      clientId: '34ef02f3d1f4df166ecdfea02aa21bd1', 
-      redirectUri,
-      responseType: AuthSession.ResponseType.Code,
-    },
-    kakaoDiscovery
-  );
 
-  useEffect(() => {
-    if (kakaoResponse?.type === 'success' && kakaoResponse.params?.code) {
-      sendSocialTokenToBackend('kakao', kakaoResponse.params.code);
-    }
-  }, [kakaoResponse]);
-
-  // ==========================================
-  // 5. 라인 로그인 Hook
-  // ==========================================
-  const [lineRequest, lineResponse, promptLineAsync] = AuthSession.useAuthRequest(
-    {
-      clientId: '2009845869', 
-      redirectUri,
-      scopes: ['profile', 'openid', 'email'],
-      responseType: AuthSession.ResponseType.Code,
-      extraParams: { state: 'login' }
-    },
-    lineDiscovery
-  );
-
-  useEffect(() => {
-    if (lineResponse?.type === 'success' && lineResponse.params?.code) {
-      sendSocialTokenToBackend('line', lineResponse.params.code);
-    }
-  }, [lineResponse]);
-  */
   return (
     <ScreenWrapper>
       <View style={styles.container}>
@@ -163,13 +84,9 @@ const LoginScreen = ({ navigation }: any) => {
         </View>
 
         <CustomButton title="로그인 ➔" onPress={handleLogin} />
-        {/* 
-        <View style={styles.dividerContainer}>
-          <View style={styles.line} /><Text style={styles.orText}>OR</Text><View style={styles.line} />
-        </View>
 
-        {/* 주석 시작: 소셜 로그인 UI 숨기기
-        <View style={styles.dividerContainer}>
+        {/* 🌟 소셜 로그인 UI 임시 주석 처리 시작 */}
+        {/* <View style={styles.dividerContainer}>
           <View style={styles.line} /><Text style={styles.orText}>OR</Text><View style={styles.line} />
         </View>
 
@@ -194,8 +111,9 @@ const LoginScreen = ({ navigation }: any) => {
           >
             <Image source={require('../../../assets/line.png')} style={styles.socialIcon} />
           </TouchableOpacity>
-        </View>
-        주석 끝 */}
+        </View> 
+        */}
+        {/* 🌟 소셜 로그인 UI 임시 주석 처리 끝 */}
 
         <TouchableOpacity onPress={() => navigation.navigate('SignUp')} style={styles.signUpLink}>
           <Text style={styles.signUpText}>계정이 없으신가요? <Text style={{ fontWeight: 'bold', color: '#6F9F63' }}>회원가입</Text></Text>

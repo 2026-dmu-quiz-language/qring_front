@@ -1,3 +1,5 @@
+// screens/ChatLearn/ChatLearnScreen.tsx
+
 import React, { useState, useEffect, useRef } from 'react';
 import {
   View,
@@ -315,7 +317,7 @@ const ChatLearnScreen = () => {
       }
     };
     fetchData();
-  }, [episodeId]);
+  }, [episodeId, language]); // language가 변경될 때도 데이터를 다시 불러오도록 의존성 배열에 추가
 
   const handleTap = () => {
     if (episodeComplete) return;
@@ -366,6 +368,7 @@ const ChatLearnScreen = () => {
     setShowResultModal(false);
     const totalQuizCount = messages.filter(m => m.type === 'quiz').length;
     try {
+      // 🌟 수정: submitResult 호출 시 언어 정보도 함께 넘겨줍니다.
       const response = await submitResult({
         episodeId: episodeId,
         result: resultRef.current,
