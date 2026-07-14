@@ -6,7 +6,7 @@ import { Ionicons } from '@expo/vector-icons';
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { theme } from '../../constants/theme';
-import { switchLanguage } from '../../api/language';
+import { switchLanguage, checkLanguage } from '../../api/language';
 
 interface HeaderProps {
   title?: string;
@@ -36,8 +36,8 @@ export const Header = ({
 }: HeaderProps) => {
   const navigation = useNavigation<any>();
   const [isProfileMenuVisible, setProfileMenuVisible] = useState(false);
-  const [activeLang, setActiveLang] = useState('EN');
-  const [enabledLangs, setEnabledLangs] = useState(['EN']);
+  const [activeLang, setActiveLang] = useState('');
+  const [enabledLangs, setEnabledLangs] = useState<string[]>([]);
 
   // 🌟 1. 화면에 보여줄 이름을 담을 그릇 (처음엔 '학습자'로 둠)
   const [displayName, setDisplayName] = useState('학습자');
@@ -60,10 +60,42 @@ export const Header = ({
     fetchAndSaveName();
   }, [userName]);
 
+  const fetchLangStatus = async () => {
+    console.log('🔥 [fetchLangStatus] 호출됨');
+    try {
+      const saved = await AsyncStorage.getItem('activeLang');
+      if (saved) setActiveLang(saved);
+
+      const checks = await Promise.all(
+        LANGUAGES.map(async (lang) => {
+          try {
+            const res = await checkLanguage(lang.code);
+            console.log(`📤 [langcheck] ${lang.code} →`, res);
+            return { code: lang.code, enabled: res };
+          } catch (e: any) {
+            console.error(`❌ [langcheck] ${lang.code} 실패:`, e.message, e.response?.data);
+            return { code: lang.code, enabled: false };
+          }
+        }),
+      );
+      const enabled = checks.filter((c) => c.enabled).map((c) => c.code);
+      setEnabledLangs(enabled);
+
+      if (!saved && enabled.length > 0) {
+        setActiveLang(enabled[0]);
+      }
+    } catch (err: any) {
+      console.error('언어 상태 조회 실패:', err.message);
+    }
+  };
+
   const handleLangSwitch = async (code: string) => {
     try {
       await switchLanguage(code);
       setActiveLang(code);
+      await AsyncStorage.setItem('activeLang', code);
+      setProfileMenuVisible(false);
+      navigation.reset({ index: 0, routes: [{ name: 'MainTab' }] });
     } catch (err: any) {
       console.error('언어 전환 실패:', err.message);
     }
@@ -73,6 +105,7 @@ export const Header = ({
   const handleRightPress = () => {
     if (rightType === 'profile') {
       setProfileMenuVisible(true);
+      fetchLangStatus();
     } else if (onRightPress) {
       onRightPress();
     }

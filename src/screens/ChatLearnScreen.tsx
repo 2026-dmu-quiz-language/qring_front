@@ -317,7 +317,7 @@ const ChatLearnScreen = () => {
       }
     };
     fetchData();
-  }, [episodeId, language]); // language가 변경될 때도 데이터를 다시 불러오도록 의존성 배열에 추가
+  }, [episodeId]); // language가 변경될 때도 데이터를 다시 불러오도록 의존성 배열에 추가
 
   const handleTap = () => {
     if (episodeComplete) return;
