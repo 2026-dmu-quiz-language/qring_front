@@ -33,15 +33,16 @@ const LEVELS: LevelOption[] = [
   { level: 3, label: 'Lv.3', subLabel: '고급' },
 ];
 
-const LANGUAGES = ['일본어', '중국어', '영어', '스페인어'];
+// 🌟 수정 1: 스페인어 제거
+const LANGUAGES = ['일본어', '중국어', '영어'];
 
-// 💡 네비게이션 param으로 이미 로드된 정보를 전달받을 수 있도록 route를 추가합니다.
 const LearningSettingsScreen = ({ navigation, route }: any) => {
   // ─── 상태 관리 (State) ───
   const [currentLang, setCurrentLang] = useState(route?.params?.userLang || '영어');
   const [currentLevel, setCurrentLevel] = useState(route?.params?.userLevel || 2);
 
-  const [selectedNewLang, setSelectedNewLang] = useState(currentLang);
+  // 🌟 수정 2: 초기값을 빈 문자열로 두어, 사용자가 하단에서 '새 언어'를 직접 선택했는지 구분
+  const [selectedNewLang, setSelectedNewLang] = useState('');
   const [selectedNewLevel, setSelectedNewLevel] = useState(currentLevel);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -54,7 +55,6 @@ const LearningSettingsScreen = ({ navigation, route }: any) => {
   useEffect(() => {
     if (route?.params?.userLang) {
       setCurrentLang(route.params.userLang);
-      setSelectedNewLang(route.params.userLang);
     }
     if (route?.params?.userLevel) {
       setCurrentLevel(route.params.userLevel);
@@ -62,13 +62,11 @@ const LearningSettingsScreen = ({ navigation, route }: any) => {
     }
   }, [route?.params]);
 
-  // ─── API: 학습 설정 저장 함수 ───
-  // ─── 백엔드 언어 이름 -> 코드 변환 맵 ───
+  // ─── 백엔드 언어 이름 -> 코드 변환 맵 (스페인어 제거) ───
   const LANGUAGE_CODE_MAP: { [key: string]: string } = {
     '일본어': 'JA',
     '중국어': 'ZH',
     '영어': 'EN',
-    '스페인어': 'ES',
   };
 
   // ─── API: 학습 설정 저장 함수 ───
@@ -77,10 +75,13 @@ const LearningSettingsScreen = ({ navigation, route }: any) => {
       setIsSubmitting(true);
       const token = await getAuthToken();
 
-      // 🌟 핵심 수정: 백엔드 명세에 맞게 코드값과 levelCode 필드 사용
+      // 🌟 수정 3: 하단에서 새 언어를 선택했다면 하단 설정 저장, 아니면 상단(현재 언어)의 변경된 레벨 저장
+      const targetLang = selectedNewLang ? selectedNewLang : currentLang;
+      const targetLevel = selectedNewLang ? selectedNewLevel : currentLevel;
+
       const payload = {
-        language: LANGUAGE_CODE_MAP[selectedNewLang] || 'EN', // 한글을 코드로 변환
-        levelCode: selectedNewLevel,                          // level -> levelCode
+        language: LANGUAGE_CODE_MAP[targetLang] || 'EN',
+        levelCode: targetLevel,
       };
 
       const response = await axios.post(
@@ -94,8 +95,8 @@ const LearningSettingsScreen = ({ navigation, route }: any) => {
       );
 
       if (response.status >= 200 && response.status < 300) {
-        setCurrentLang(selectedNewLang);
-        setCurrentLevel(selectedNewLevel);
+        setCurrentLang(targetLang);
+        setCurrentLevel(targetLevel);
 
         // 즉시 대시보드(MainTab)로 이동
         navigation.navigate('MainTab');
@@ -141,8 +142,9 @@ const LearningSettingsScreen = ({ navigation, route }: any) => {
                   key={`cur-${item.level}`}
                   style={[styles.levelCard, isSelected ? styles.levelCardSelected : styles.levelCardDefault]}
                   onPress={() => {
+                    // 🌟 수정 4: 상단 레벨 클릭 시 하단 동기화(setSelectedNewLevel) 제거
                     setCurrentLevel(item.level);
-                    setSelectedNewLevel(item.level);
+                    setSelectedNewLang(''); // 상단을 조작하면 하단 새 언어 선택 상태 해제
                   }}
                   activeOpacity={0.8}
                 >
@@ -165,7 +167,8 @@ const LearningSettingsScreen = ({ navigation, route }: any) => {
 
           {/* 언어 칩 리스트 */}
           <View style={styles.langChipContainer}>
-            {LANGUAGES.map((lang) => {
+            {/* 🌟 수정 5: 현재 설정된 언어(currentLang)를 필터링하여 목록에서 제외 */}
+            {LANGUAGES.filter(lang => lang !== currentLang).map((lang) => {
               const isSelected = selectedNewLang === lang;
               return (
                 <TouchableOpacity
@@ -190,7 +193,14 @@ const LearningSettingsScreen = ({ navigation, route }: any) => {
                 <TouchableOpacity
                   key={`new-${item.level}`}
                   style={[styles.levelCard, isSelected ? styles.levelCardSelected : styles.levelCardDefault]}
-                  onPress={() => setSelectedNewLevel(item.level)}
+                  onPress={() => {
+                    setSelectedNewLevel(item.level);
+                    // 만약 언어 칩을 선택하지 않고 하단 레벨만 눌렀다면, 남아있는 새 언어 중 첫 번째를 자동 지정
+                    if (!selectedNewLang) {
+                      const availableLangs = LANGUAGES.filter(l => l !== currentLang);
+                      if (availableLangs.length > 0) setSelectedNewLang(availableLangs[0]);
+                    }
+                  }}
                   activeOpacity={0.8}
                 >
                   <Text style={[styles.levelText, isSelected && styles.textWhite]}>{item.label}</Text>

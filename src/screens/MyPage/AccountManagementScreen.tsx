@@ -26,6 +26,10 @@ const BASE_URL = 'https://q-ring.app/api/v1';
 const AccountManagementScreen = ({ navigation, route }: any) => {
   const [userId, setUserId] = useState('');
   const [nickname, setNickname] = useState(route.params?.nickname || '');
+  
+  // 🌟 [추가] 닉네임 변경 여부를 감지하기 위해 초기 기존 닉네임을 기억하는 상태
+  const [originalNickname, setOriginalNickname] = useState(route.params?.nickname || '');
+
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -33,6 +37,7 @@ const AccountManagementScreen = ({ navigation, route }: any) => {
   const [isLoading, setIsLoading] = useState(true);
 
   const [isNicknameChecked, setIsNicknameChecked] = useState(false);
+  const [isPasswordSectionOpen, setIsPasswordSectionOpen] = useState(false);
 
   const getAuthToken = async () => {
     const token = await AsyncStorage.getItem('accessToken');
@@ -53,8 +58,13 @@ const AccountManagementScreen = ({ navigation, route }: any) => {
 
       if (response.data) {
         setUserId(response.data.id || response.data.userId || '');
-        if (!nickname) {
-            setNickname(response.data.nickname || '');
+        const serverNick = response.data.nickname || '';
+        if (!nickname && serverNick) {
+          setNickname(serverNick);
+        }
+        // 🌟 서버에서 받아온 기존 닉네임 저장
+        if (serverNick) {
+          setOriginalNickname(serverNick);
         }
         setIsPushEnabled(Boolean(response.data.pushEnabled || response.data.isPushEnabled));
       }
@@ -77,7 +87,6 @@ const AccountManagementScreen = ({ navigation, route }: any) => {
       return;
     }
     try {
-      // 🌟 수정: 헤더(토큰) 제거, nickname 파라미터만 전송
       const response = await axios.get(`${BASE_URL}/auth/check-nickname`, {
         params: { nickname: nickname.trim() },
       });
@@ -98,6 +107,18 @@ const AccountManagementScreen = ({ navigation, route }: any) => {
 
   // ─── [3] API: 계정 정보 및 비밀번호 수정 ───
   const handleUpdateAccount = async () => {
+    // 🌟 [추가 1] 닉네임 입력란이 비어있는지 검증
+    if (!nickname.trim()) {
+      Alert.alert('알림', '닉네임을 입력해주세요.');
+      return;
+    }
+
+    // 🌟 [추가 2] 닉네임이 기존과 다르게 변경되었는데, 중복 확인을 거치지 않은 경우 차단
+    if (nickname.trim() !== originalNickname.trim() && !isNicknameChecked) {
+      Alert.alert('알림', '닉네임 중복 확인을 진행해주세요.');
+      return;
+    }
+
     // 1. 사용자가 비밀번호를 수정하려고 시도했는지 확인
     const isChangingPassword = currentPassword || newPassword || confirmPassword;
 
@@ -116,13 +137,11 @@ const AccountManagementScreen = ({ navigation, route }: any) => {
     try {
       const token = await getAuthToken();
 
-      // 3. payload 동적 생성
       const payload: any = {
         nickname: nickname.trim(),
         pushEnabled: isPushEnabled,
       };
 
-      // 비밀번호를 변경하는 경우에만 password 필드 추가
       if (isChangingPassword) {
         payload.password = newPassword;
       }
@@ -134,7 +153,6 @@ const AccountManagementScreen = ({ navigation, route }: any) => {
         },
       });
 
-      // 변경 성공 처리
       Alert.alert('성공', '정보가 성공적으로 변경되었습니다.');
       setCurrentPassword('');
       setNewPassword('');
@@ -196,12 +214,11 @@ const AccountManagementScreen = ({ navigation, route }: any) => {
                 value={nickname} 
                 onChangeText={(text) => {
                     setNickname(text);
-                    setIsNicknameChecked(false); // 🌟 입력 수정 시 확인 상태 해제
+                    setIsNicknameChecked(false);
                 }} 
                 placeholder="닉네임" 
                 placeholderTextColor="#A0A89C" 
               />
-              {/* 🌟 확인 상태에 따라 스타일 적용 */}
               <TouchableOpacity 
                 style={[styles.smallButton, isNicknameChecked && styles.smallButtonChecked]} 
                 onPress={handleCheckNickname}
@@ -210,10 +227,37 @@ const AccountManagementScreen = ({ navigation, route }: any) => {
               </TouchableOpacity>
             </View>
             <View style={styles.divider} />
-            <Text style={styles.label}>비밀번호 변경</Text>
-            <TextInput style={styles.input} value={currentPassword} onChangeText={setCurrentPassword} placeholder="현재 비밀번호" placeholderTextColor="#A0A89C" secureTextEntry />
-            <TextInput style={[styles.input, styles.marginTop]} value={newPassword} onChangeText={setNewPassword} placeholder="새 비밀번호" placeholderTextColor="#A0A89C" secureTextEntry />
-            <TextInput style={[styles.input, styles.marginTop]} value={confirmPassword} onChangeText={setConfirmPassword} placeholder="비밀번호 확인" placeholderTextColor="#A0A89C" secureTextEntry />
+            
+            {/* 비밀번호 변경 드롭다운 헤더 */}
+            <TouchableOpacity 
+              style={styles.dropdownHeader} 
+              onPress={() => {
+                if (isPasswordSectionOpen) {
+                  setCurrentPassword('');
+                  setNewPassword('');
+                  setConfirmPassword('');
+                }
+                setIsPasswordSectionOpen(!isPasswordSectionOpen);
+              }}
+              activeOpacity={0.7}
+            >
+              <Text style={[styles.label, { marginTop: 0, marginBottom: 0 }]}>비밀번호 변경</Text>
+              <Ionicons 
+                name={isPasswordSectionOpen ? "chevron-up" : "chevron-down"} 
+                size={20} 
+                color="#4E5E43" 
+              />
+            </TouchableOpacity>
+
+            {/* 드롭다운 열렸을 때만 비밀번호 입력 폼 노출 */}
+            {isPasswordSectionOpen && (
+              <View style={styles.dropdownContent}>
+                <TextInput style={styles.input} value={currentPassword} onChangeText={setCurrentPassword} placeholder="현재 비밀번호" placeholderTextColor="#A0A89C" secureTextEntry />
+                <TextInput style={[styles.input, styles.marginTop]} value={newPassword} onChangeText={setNewPassword} placeholder="새 비밀번호" placeholderTextColor="#A0A89C" secureTextEntry />
+                <TextInput style={[styles.input, styles.marginTop]} value={confirmPassword} onChangeText={setConfirmPassword} placeholder="비밀번호 확인" placeholderTextColor="#A0A89C" secureTextEntry />
+              </View>
+            )}
+
             <TouchableOpacity style={styles.fullButton} onPress={handleUpdateAccount}>
               <Text style={styles.fullButtonText}>변경 완료</Text>
             </TouchableOpacity>
@@ -259,6 +303,10 @@ const styles = StyleSheet.create({
   smallButtonChecked: { backgroundColor: '#6B7A68' },
   smallButtonText: { color: '#FFFFFF', fontSize: 14, fontWeight: '700', fontFamily: fonts.label },
   divider: { height: 1, backgroundColor: '#E9E9DB', marginVertical: 20 },
+  
+  dropdownHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 4 },
+  dropdownContent: { marginTop: 12 },
+
   fullButton: { backgroundColor: colors.primary, height: 50, borderRadius: 25, justifyContent: 'center', alignItems: 'center', marginTop: 16 },
   fullButtonText: { color: '#FFFFFF', fontSize: 15, fontWeight: '700', fontFamily: fonts.headline },
   textContainer: { flex: 1 },
