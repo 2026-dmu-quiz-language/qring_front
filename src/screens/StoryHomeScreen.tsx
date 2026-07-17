@@ -21,7 +21,6 @@ import { Header } from '../components/layout/Header';
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-// ─── API 응답 데이터 타입 정의 ───
 interface ContentItem {
   contentId: number;
   categoryName: string;
