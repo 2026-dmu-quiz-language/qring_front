@@ -1,17 +1,24 @@
 // src/screens/auth/SplashScreen.tsx
 import React, { useEffect } from 'react';
-import { View, Text, Image, StyleSheet, StatusBar } from 'react-native';
+import { View, Text, Image, StyleSheet, StatusBar, Platform } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
 import { theme } from '../../constants/theme';
 
-// 🌟 백엔드 기본 주소 (환경에 맞게 수정)
+// 🌟 백엔드 기본 주소
 const API_BASE_URL = 'https://q-ring.app/api/v1/auth';
 
 const SplashScreen = ({ navigation }: any) => {
 
   useEffect(() => {
     const checkAuthAndNavigate = async () => {
+      // 🌟 웹 소셜 로그인 복귀 중(URL에 code/id_token 존재)이면 자동 로그인을 건너뛰고
+      // 로그인 화면으로 바로 이동해 인증 코드를 처리하게 한다.
+      if (Platform.OS === 'web' && /[?&#](code|id_token)=/.test(window.location.search + window.location.hash)) {
+        navigation.replace('Login');
+        return;
+      }
+
       // 🌟 시작 시간 기록 (최소 2초 대기 UX를 위함)
       const startTime = Date.now();
       let isAuthSuccess = false;

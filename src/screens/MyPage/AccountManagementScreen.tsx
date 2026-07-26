@@ -91,7 +91,7 @@ const AccountManagementScreen = ({ navigation, route }: any) => {
         params: { nickname: nickname.trim() },
       });
 
-      const isAvailable = response.data.isAvailable !== undefined ? response.data.isAvailable : response.data;
+      const isAvailable = response.data.available;
 
       if (isAvailable) {
         setIsNicknameChecked(true);

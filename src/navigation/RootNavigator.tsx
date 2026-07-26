@@ -9,6 +9,7 @@ import SignUpScreen from '../screens/auth/SignUpScreen';
 import ChatLearnScreen from '../screens/ChatLearnScreen';
 import LearningResultScreen from '../screens/LearningResultScreen';
 import EmailVerifyScreen from '../screens/auth/EmailVerifyScreen';
+import SocialSignUpScreen from '../screens/auth/SocialSignUpScreen';
 import MyPageScreen from '../screens/MypageScreen';
 import AccountManagementScreen from '../screens/MyPage/AccountManagementScreen';
 import LearningSettingsScreen from '../screens/MyPage/LearningSettingsScreen';
@@ -31,6 +32,7 @@ export const RootNavigator = () => {
       <Stack.Screen name="Login" component={LoginScreen} />
       <Stack.Screen name="SignUp" component={SignUpScreen} />
       <Stack.Screen name="EmailVerify" component={EmailVerifyScreen} />
+      <Stack.Screen name="SocialSignUp" component={SocialSignUpScreen} />
       
       {/* Main Tab Flow (하단 탭이 있는 화면들) */}
       <Stack.Screen name="MainTab" component={BottomTabNav} />

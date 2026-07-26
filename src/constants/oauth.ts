@@ -1,26 +1,25 @@
 // src/constants/oauth.ts
 
-// 백엔드 또는 인증을 처리할 기준 도메인
+// 소셜 로그인 브릿지 페이지(백엔드)가 서비스되는 기준 도메인
 const AUTH_BASE_URL = 'https://q-ring.app/oauth';
 
+// 클라이언트 ID들은 qring_front-main/.env 의 EXPO_PUBLIC_* 값을 사용한다.
 export const OAUTH_CONFIG = {
-  // 1. 카카오 로그인 설정
+  // 1. 카카오 로그인 설정 (REST API 키)
   KAKAO: {
-    // 발급받은 REST API 키 (카카오 디벨로퍼스에서 확인 가능)
-    CLIENT_ID: '카카오_REST_API_키를_여기에_넣어주세요', 
-    // 🌟 에러의 원인이었던 바로 그 주소!
-    REDIRECT_URI: `${AUTH_BASE_URL}/kakao`, 
+    CLIENT_ID: process.env.EXPO_PUBLIC_KAKAO_APP_KEY ?? '',
+    REDIRECT_URI: `${AUTH_BASE_URL}/kakao`,
   },
-  
-  // 2. 구글 로그인 설정 (추후 작업용 미리 세팅)
+
+  // 2. 구글 로그인 설정 (웹 클라이언트 ID)
   GOOGLE: {
-    CLIENT_ID: '구글_클라이언트_ID를_여기에_넣어주세요',
+    CLIENT_ID: process.env.EXPO_PUBLIC_GOOGLE_CLIENT_ID ?? '',
     REDIRECT_URI: `${AUTH_BASE_URL}/google`,
   },
-  
-  // 3. 라인 로그인 설정 (추후 작업용 미리 세팅)
+
+  // 3. 라인 로그인 설정 (채널 ID)
   LINE: {
-    CLIENT_ID: '라인_채널_ID를_여기에_넣어주세요',
+    CLIENT_ID: process.env.EXPO_PUBLIC_LINE_CHANNEL_ID ?? '',
     REDIRECT_URI: `${AUTH_BASE_URL}/line`,
-  }
+  },
 };
