@@ -8,6 +8,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { ScreenWrapper } from '../../components/layout/ScreenWrapper';
 import { Header } from '../../components/layout/Header';
 import { CustomButton } from '../../components/common/Button';
+import { CustomInput } from '../../components/common/Input'; // 🌟 CustomInput 임포트 추가
 import { theme } from '../../constants/theme';
 
 const API_BASE_URL = 'https://q-ring.app/api/v1/auth'; 
@@ -20,6 +21,10 @@ const LANG_MAP: Record<string, string> = {
 };
 
 const SocialSignUpScreen = ({ navigation }: any) => {
+  // 🌟 닉네임 상태 추가
+  const [nickname, setNickname] = useState('');
+  const [isNicknameAvailable, setIsNicknameAvailable] = useState(false);
+
   const [selectedLang, setSelectedLang] = useState('영어'); 
   const [selectedLevel, setSelectedLevel] = useState('Lv.1');
 
@@ -32,7 +37,40 @@ const SocialSignUpScreen = ({ navigation }: any) => {
     setAgreedPrivacy(!isAllAgreed);
   };
 
+  // 🌟 닉네임 중복 확인 API (GET) 추가
+  const handleCheckNickname = async () => {
+    if (!nickname.trim()) {
+      Alert.alert('알림', '닉네임을 입력해 주세요.');
+      return;
+    }
+    try {
+      const response = await axios.get(`${API_BASE_URL}/check-nickname`, { 
+        params: { nickname: nickname.trim() } 
+      });
+      
+      const isAvailable = response.data.available; // 백엔드 응답 양식 맞춤
+
+      if (isAvailable) {
+        setIsNicknameAvailable(true);
+        Alert.alert('확인', '사용 가능한 닉네임입니다.');
+      } else {
+        setIsNicknameAvailable(false);
+        Alert.alert('불가', '이미 사용 중인 닉네임입니다.');
+      }
+    } catch (error) {
+      console.error('닉네임 확인 에러:', error);
+      Alert.alert('에러', '중복 확인에 실패했습니다.');
+    }
+  };
+
+  // 🌟 설정 저장 및 닉네임 함께 전송 (PUT)
   const handlePreferencesSubmit = async () => {
+    if (!nickname.trim()) {
+      return Alert.alert('알림', '닉네임을 입력해 주세요.');
+    }
+    if (!isNicknameAvailable) {
+      return Alert.alert('알림', '닉네임 중복 확인을 진행해 주세요.');
+    }
     if (!agreedTerms || !agreedPrivacy) {
       return Alert.alert('알림', '필수 약관에 모두 동의해 주세요.');
     }
@@ -45,13 +83,14 @@ const SocialSignUpScreen = ({ navigation }: any) => {
       const levelCode = parseInt(selectedLevel.replace('Lv.', ''), 10);
       const languageCode = LANG_MAP[selectedLang];
 
-      // 🌟 명세서의 /preferences (PUT 방식) 적용
+      // 🌟 명세서의 /preferences (PUT 방식) - 닉네임 추가 적용
       const response = await axios.put(`${API_BASE_URL}/preferences`, {
+        nickname: nickname.trim(), // 닉네임 바디에 추가!
         language: languageCode,
         levelCode: levelCode,
       }, {
         headers: {
-          Authorization: `Bearer ${token}` // 토큰을 헤더에 담아 인증
+          Authorization: `Bearer ${token}` 
         }
       });
 
@@ -79,6 +118,31 @@ const SocialSignUpScreen = ({ navigation }: any) => {
         <Image source={require('../../../assets/quring_logo.png')} style={styles.logoImage} resizeMode="contain" />
         <Text style={styles.title}>거의 다 왔어요!{'\n'}맞춤 학습을 위해 설정해 주세요.</Text>
 
+        {/* 🌟 닉네임 입력 섹션 추가 */}
+        <View style={styles.inputSection}>
+          <Text style={styles.label}>닉네임</Text>
+          <View style={styles.idInputRow}>
+            <View style={styles.idInputWrap}>
+              <CustomInput 
+                iconName="person-outline" 
+                placeholder="사용할 닉네임을 입력해 주세요." 
+                value={nickname}
+                onChangeText={(text) => { 
+                  setNickname(text); 
+                  setIsNicknameAvailable(false); // 입력값이 바뀌면 다시 중복확인하도록 false 전환
+                }}
+              />
+            </View>
+            <TouchableOpacity 
+              style={[styles.idCheckButton, isNicknameAvailable && { backgroundColor: theme.colors.secondary }]} 
+              onPress={handleCheckNickname}
+            >
+              <Text style={styles.idCheckText}>{isNicknameAvailable ? '확인완료' : '중복확인'}</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+
+        {/* 학습 설정 */}
         <View style={styles.settingBox}>
           <Text style={styles.settingTitle}>⚙️ 나만의 맞춤 학습 설정</Text>
           
@@ -110,6 +174,7 @@ const SocialSignUpScreen = ({ navigation }: any) => {
           </View>
         </View>
 
+        {/* 약관 동의 */}
         <View style={styles.agreementSection}>
           <TouchableOpacity style={styles.agreeRowAll} onPress={toggleAllAgreements}>
             <Ionicons name={agreedTerms && agreedPrivacy ? "checkmark-circle" : "checkmark-circle-outline"} size={24} color={agreedTerms && agreedPrivacy ? theme.colors.primary : "#CCC"} />
@@ -138,10 +203,19 @@ const SocialSignUpScreen = ({ navigation }: any) => {
   );
 };
 
+// 🌟 스타일 하단 닉네임 입력란 관련 스타일(SignUpScreen과 동일하게) 추가
 const styles = StyleSheet.create({
   scrollContainer: { padding: 20, paddingBottom: 100 },
   logoImage: { width: 120, height: 40, marginBottom: 10, alignSelf: 'flex-start' },
-  title: { fontSize: 18, color: '#333', lineHeight: 26, marginBottom: 30, fontWeight: '500' },
+  title: { fontSize: 18, color: '#333', lineHeight: 26, marginBottom: 20, fontWeight: '500' },
+  
+  inputSection: { marginBottom: 20 },
+  label: { fontSize: 14, fontWeight: 'bold', color: '#333', marginBottom: 8 },
+  idInputRow: { flexDirection: 'row', alignItems: 'flex-start', gap: 10 },
+  idInputWrap: { flex: 1 },
+  idCheckButton: { height: 50, backgroundColor: theme.colors.primary, paddingHorizontal: 15, borderRadius: 15, justifyContent: 'center', alignItems: 'center' },
+  idCheckText: { color: theme.colors.white, fontWeight: 'bold', fontSize: 13 },
+
   settingBox: { backgroundColor: '#F3F4EB', borderRadius: 30, padding: 25, marginBottom: 20 },
   settingTitle: { fontSize: 16, fontWeight: 'bold', marginBottom: 20, color: '#333' },
   subLabel: { fontSize: 14, color: '#555', marginBottom: 12, marginTop: 10, fontWeight: '600' },
@@ -156,6 +230,7 @@ const styles = StyleSheet.create({
   levelTagActive: { color: 'rgba(255, 255, 255, 0.9)' }, 
   levelText: { fontSize: 18, fontWeight: 'bold', color: '#333' },
   levelTextActive: { color: theme.colors.white },
+  
   agreementSection: { marginBottom: 30, paddingHorizontal: 5 },
   agreeRowAll: { flexDirection: 'row', alignItems: 'center', marginBottom: 15 },
   agreeRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 },
