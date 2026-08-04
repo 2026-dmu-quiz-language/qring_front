@@ -36,7 +36,7 @@ interface MyPageData {
   nickname: string;
   levelCode: number;
   levelDesc: string;
-  language: string; // 'ko', 'en', 'ja', 'zh', 'es' 등
+  language: string; // 'ko', 'en', 'ja', 'zh' 등
   points: number;
   consecutiveDays: number;
 }
@@ -47,7 +47,6 @@ const LANGUAGE_MAP: { [key: string]: string } = {
   en: '영어',
   ja: '일본어',
   zh: '중국어',
-  es: '스페인어',
 };
 
 // ─── 메뉴 아이템 타입 ───

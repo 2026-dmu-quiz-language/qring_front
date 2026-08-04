@@ -1,6 +1,6 @@
 // screens/StoryHome/StoryHomeScreen.tsx
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useCallback } from 'react';
 import {
   View,
   Text,
@@ -12,6 +12,7 @@ import {
   Alert,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
+import { useFocusEffect } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { LearnStackParamList } from '../constants/navigation';
 import { theme } from '../constants/theme';
@@ -20,7 +21,6 @@ import { Header } from '../components/layout/Header';
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-// ─── API 응답 데이터 타입 정의 ───
 interface ContentItem {
   contentId: number;
   categoryName: string;
@@ -32,16 +32,14 @@ interface ContentItem {
   requiredPoints?: number; 
 }
 
-// ─── 메인 컴포넌트 ───
 const StoryHomeScreen = () => {
   const navigation = useNavigation<NativeStackNavigationProp<LearnStackParamList>>();
   
   const [contents, setContents] = useState<ContentItem[]>([]);
   const [categories, setCategories] = useState<{id: string, label: string, emoji: string}[]>([]);
-  const [activeCategory, setActiveCategory] = useState('ALL'); // 🌟 기본값을 '전체'로 설정
+  const [activeCategory, setActiveCategory] = useState('ALL');
   const [isLoading, setIsLoading] = useState(true);
 
-  // 🌟 카테고리 이름에 맞는 이모지를 반환하는 헬퍼 함수
   const getCategoryEmoji = (name: string) => {
     if (!name) return '📚';
     if (name.includes('짝사랑')) return '💘';
@@ -51,57 +49,57 @@ const StoryHomeScreen = () => {
     if (name.includes('특이한연애')) return '💬';
     if (name.includes('연애갈등')) return '💔';
     if (name.includes('로맨스')) return '💕';
-    return '📚'; // 위 조건에 안 맞을 때의 기본 이모지
+    return '📚';
   };
 
-  useEffect(() => {
-    const fetchContentList = async () => {
-      try {
-        const token = await AsyncStorage.getItem('accessToken');
-        if (!token) {
-          Alert.alert('로그인 만료', '다시 로그인해 주세요.');
-          return;
-        }
-
-        const response = await axios.post('https://q-ring.app/contentList', {
-          token: token 
-        }, {
-          headers: { Authorization: `Bearer ${token}` }
-        });
-
-        const data: ContentItem[] = response.data;
-        setContents(data);
-
-        // 중복 제거된 카테고리 목록 추출
-        const uniqueCategories = Array.from(new Set(data.map(item => item.categoryName).filter(Boolean)));
-        
-        // 동적 카테고리 매핑
-        const mappedCategories = uniqueCategories.map(name => ({
-          id: name,
-          label: name,
-          emoji: getCategoryEmoji(name),
-        }));
-
-        // 🌟 '전체' 카테고리를 배열 맨 앞에 추가
-        const finalCategories = [
-          { id: 'ALL', label: '전체', emoji: '✨' },
-          ...mappedCategories
-        ];
-
-        setCategories(finalCategories);
-        
-      } catch (error) {
-        console.error('Content List API Error:', error);
-        setContents([]);
-      } finally {
-        setIsLoading(false);
+  const fetchContentList = async () => {
+    try {
+      setIsLoading(true);
+      const token = await AsyncStorage.getItem('accessToken');
+      if (!token) {
+        Alert.alert('로그인 만료', '다시 로그인해 주세요.');
+        return;
       }
-    };
 
-    fetchContentList();
-  }, []);
+      const response = await axios.post('https://q-ring.app/contentList', {
+        token: token 
+      }, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
 
-  // 🌟 선택된 카테고리가 'ALL'이면 전체 데이터를, 아니면 해당 카테고리만 필터링
+      const data: ContentItem[] = response.data;
+      setContents(data);
+
+      const uniqueCategories = Array.from(new Set(data.map(item => item.categoryName).filter(Boolean)));
+      
+      const mappedCategories = uniqueCategories.map(name => ({
+        id: name,
+        label: name,
+        emoji: getCategoryEmoji(name),
+      }));
+
+      const finalCategories = [
+        { id: 'ALL', label: '전체', emoji: '✨' },
+        ...mappedCategories
+      ];
+
+      setCategories(finalCategories);
+      
+    } catch (error) {
+      console.error('Content List API Error:', error);
+      setContents([]);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // 화면 포커스될 때마다 API 재호출
+  useFocusEffect(
+    useCallback(() => {
+      fetchContentList();
+    }, [])
+  );
+
   const filteredContents = activeCategory === 'ALL' 
     ? contents 
     : contents.filter(item => item.categoryName === activeCategory);

@@ -2,6 +2,7 @@
   "expo": {
     "name": "qring_front",
     "slug": "qring_front",
+    "scheme": "qring",
     "version": "1.0.1",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -32,7 +33,7 @@
     ],
     "extra": {
       "eas": {
-        "projectId": "3f6138f7-d1cf-405a-a4b5-351fa145457d"
+        "projectId": "b188473b-4b29-477d-ace9-7bfd772411b0"
       }
     }
   }
