@@ -27,6 +27,23 @@ export interface BotMatchStartResponse {
   remainingPoints: number; // entryCost 차감 후 잔여 포인트
 }
 
+export interface BotMatchAnswer {
+  sourceType: 'STORY' | 'COMPETITION'; // /bot/level에서 받은 값 그대로
+  sourceQuizContentId: number; // /bot/level에서 받은 값 그대로
+  roundNo: number; // 문제 순번 (1~21)
+  userAnswer: string;
+  userIsCorrect: boolean;
+  botIsCorrect: boolean; // /bot/level 값 echo
+}
+
+export interface BotMatchResultResponse {
+  matchId: number;
+  correctCount: number;
+  wrongCount: number;
+  rewardPoint: number;
+  balanceAfter: number;
+}
+
 export interface BotPauseResponse {
   matchId: number;
   status: string; // 'PAUSED' | 'IN_PROGRESS' 등 서버 상태값
@@ -40,6 +57,15 @@ export const startBotMatch = async (
   entryCost: number,
 ): Promise<BotMatchStartResponse> => {
   const res = await client.post('/bot/level', { botLevel, entryCost });
+  return res.data;
+};
+
+// 결과 제출: 21개 답안 전체 + 매치 중 최대 연속 정답 수
+export const submitBotMatchResult = async (data: {
+  answers: BotMatchAnswer[];
+  streakCount: number;
+}): Promise<BotMatchResultResponse> => {
+  const res = await client.post('/bot/result', data);
   return res.data;
 };
 
