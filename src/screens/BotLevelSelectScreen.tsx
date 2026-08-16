@@ -37,6 +37,7 @@ const BotLevelSelectScreen = () => {
   const [selected, setSelected] = useState<BotLevel | null>(null);
   const [points, setPoints] = useState<number | null>(null);
   const [starting, setStarting] = useState(false);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchPoints = async () => {
@@ -58,6 +59,7 @@ const BotLevelSelectScreen = () => {
   const handleStart = async () => {
     if (!selected || !canStart) return;
     setStarting(true);
+    setErrorMsg(null);
     try {
       console.log('📤 [봇컴피티션] 매치 시작: POST /bot/level,', selected, cost);
       const res = await startBotMatch(selected, cost);
@@ -69,7 +71,14 @@ const BotLevelSelectScreen = () => {
         botLevel: selected,
       });
     } catch (err: any) {
-      console.error('❌ [봇컴피티션] 매치 시작 실패:', err.message, err.response?.data);
+      console.error(
+        '❌ [봇컴피티션] 매치 시작 실패:',
+        err.message,
+        'status:', err.response?.status,
+        'data:', JSON.stringify(err.response?.data),
+      );
+      const status = err.response?.status ? ` (${err.response.status})` : '';
+      setErrorMsg(`${getErrorMessage(err)}${status}`);
       Alert.alert('매치 시작 실패', getErrorMessage(err));
     } finally {
       setStarting(false);
@@ -148,6 +157,7 @@ const BotLevelSelectScreen = () => {
 
       {/* 시작 버튼 */}
       <View style={styles.bottomBar}>
+        {errorMsg && <Text style={styles.startErrorText}>{errorMsg}</Text>}
         <TouchableOpacity
           style={[styles.startButton, !canStart && styles.startButtonDisabled]}
           onPress={handleStart}
@@ -271,6 +281,13 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: 10,
     right: 10,
+  },
+  startErrorText: {
+    textAlign: 'center',
+    fontSize: 13,
+    fontWeight: '700',
+    color: '#dc3545',
+    marginBottom: 10,
   },
   notEnoughText: {
     marginTop: 14,

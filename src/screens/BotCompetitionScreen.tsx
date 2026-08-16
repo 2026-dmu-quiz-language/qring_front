@@ -66,7 +66,7 @@ const toBotQuizType = (quizType: BotQuestion['quizType']): QuizType => {
 
 const normalize = (s: string) => s.trim().toLowerCase();
 
-type RoundWinner = 'user' | 'bot' | 'none';
+type RoundWinner = 'user' | 'bot';
 
 type MatchPhase = 'playing' | 'submitting' | 'done' | 'submitError';
 
@@ -92,20 +92,20 @@ const BotCompetitionScreen = () => {
 
   const answersRef = useRef<BotMatchAnswer[]>([]);
   const streakRef = useRef({ current: 0, max: 0 });
-  const penaltyRef = useRef(0); // 유저 오답 누적으로 봇이 빨라진 초
   const myWinsRef = useRef(0);
   const botWinsRef = useRef(0);
 
   // ─── 라운드 상태 ───
   const [roundWinner, setRoundWinner] = useState<RoundWinner | null>(null);
-  const [userFailed, setUserFailed] = useState(false); // 유저가 오답 제출 후 봇을 기다리는 중
-  const [botFailed, setBotFailed] = useState(false); // 봇이 먼저 끝났는데 틀림
+  const [userFailed, setUserFailed] = useState(false); // 객관식 오답(기회 1번 소진) 후 봇을 기다리는 중
+  const [wrongFlash, setWrongFlash] = useState(false); // 재도전 유형 오답 직후 피드백
   const [botProgress, setBotProgress] = useState(0);
   const [paused, setPaused] = useState(false);
 
   const pausedRef = useRef(false);
   const resolvedRef = useRef(false);
-  const userFailedRef = useRef(false);
+  const roundRemainRef = useRef(0); // 현재 라운드 봇의 남은 시간 (오답 페널티로 차감됨)
+  const roundTotalRef = useRef(0);
   const lastUserAnswerRef = useRef('');
 
   // ─── 입력 상태 ───
@@ -201,50 +201,33 @@ const BotCompetitionScreen = () => {
   useEffect(() => {
     if (!quiz || phase !== 'playing') return;
 
-    const solveTime = getBotSolveTime(
-      toBotQuizType(quiz.quizType),
-      section,
-      penaltyRef.current,
-    );
-    let remain = solveTime;
-    let botDone = false;
+    const solveTime = getBotSolveTime(toBotQuizType(quiz.quizType), section);
+    roundTotalRef.current = solveTime;
+    roundRemainRef.current = solveTime;
 
     // 라운드 상태 초기화
     resolvedRef.current = false;
-    userFailedRef.current = false;
     lastUserAnswerRef.current = '';
     setRoundWinner(null);
     setUserFailed(false);
-    setBotFailed(false);
+    setWrongFlash(false);
     setBotProgress(0);
     setSelected(null);
     setAnswerText('');
     setPlaced([]);
 
     const timer = setInterval(() => {
-      if (pausedRef.current || resolvedRef.current || botDone) return;
-      remain -= 0.1;
-      setBotProgress(Math.min(1 - remain / solveTime, 1));
-      if (remain <= 0) {
-        botDone = true;
-        if (quiz.botIsCorrect) {
-          resolveRound('bot');
-        } else if (userFailedRef.current) {
-          resolveRound('none'); // 둘 다 틀림
-        } else {
-          setBotFailed(true); // 봇은 틀렸고 유저는 계속 도전 가능
-        }
+      if (pausedRef.current || resolvedRef.current) return;
+      roundRemainRef.current -= 0.1;
+      setBotProgress(Math.min(1 - roundRemainRef.current / roundTotalRef.current, 1));
+      if (roundRemainRef.current <= 0) {
+        resolveRound('bot'); // 시간이 다 되면 봇은 무조건 정답
       }
     }, 100);
 
     return () => clearInterval(timer);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [index, phase]);
-
-  const botFailedRef = useRef(false);
-  useEffect(() => {
-    botFailedRef.current = botFailed;
-  }, [botFailed]);
 
   // ─── 유저 제출 ───
   const checkUserAnswer = (): { userAnswer: string; correct: boolean } => {
@@ -297,14 +280,21 @@ const BotCompetitionScreen = () => {
       return;
     }
 
-    // 오답: 봇이 다음 문제부터 빨라지는 페널티
-    penaltyRef.current += BOT_CONFIG.wrongPenalty;
-    userFailedRef.current = true;
-    setUserFailed(true);
-
-    if (botFailedRef.current) {
-      resolveRound('none'); // 봇도 이미 틀린 상태면 무승부 라운드
+    if (quiz?.quizType === 'multiple_choice') {
+      // 객관식은 기회 1번: 오답이면 봇이 다 풀 때까지 기다렸다가 라운드를 내준다
+      setUserFailed(true);
+      return;
     }
+
+    // 주관식/단어조합은 재도전 가능, 대신 현재 라운드 봇 남은 시간 차감
+    roundRemainRef.current -= BOT_CONFIG.wrongPenalty;
+    if (roundRemainRef.current <= 0) {
+      resolveRound('bot');
+      return;
+    }
+    setBotProgress(Math.min(1 - roundRemainRef.current / roundTotalRef.current, 1));
+    setWrongFlash(true);
+    setTimeout(() => setWrongFlash(false), 1500);
   };
 
   // ─── 일시정지 ───
@@ -324,8 +314,15 @@ const BotCompetitionScreen = () => {
       .catch((err) => console.error('❌ [봇컴피티션] 재개 실패:', err.message));
   };
 
+  // 그만두기: 확인 후 메인으로. 입장 포인트는 환불되지 않는다.
+  // Alert.alert는 웹에서 표시되지 않으므로 웹은 window.confirm으로 대체.
   const handleQuit = () => {
-    Alert.alert('대결 그만두기', '지금 나가면 진행 상황이 사라져요. 정말 나갈까요?', [
+    const message = '지금 나가면 진행 상황이 사라지고 포인트는 돌려받을 수 없어요. 정말 나갈까요?';
+    if (Platform.OS === 'web') {
+      if (window.confirm(message)) navigation.navigate('MainTab');
+      return;
+    }
+    Alert.alert('대결 그만두기', message, [
       { text: '계속하기', style: 'cancel' },
       {
         text: '나가기',
@@ -354,8 +351,7 @@ const BotCompetitionScreen = () => {
 
   // ─── 결과 화면 ───
   if (phase !== 'playing') {
-    const isWin = botWinsRef.current < winTarget && myWinsRef.current >= botWinsRef.current;
-    const isDraw = myWinsRef.current === botWinsRef.current && botWinsRef.current < winTarget;
+    const isWin = myWinsRef.current > botWinsRef.current;
     return (
       <ScreenWrapper style={{ paddingHorizontal: 0 }}>
         <View style={styles.centerWrap}>
@@ -366,12 +362,8 @@ const BotCompetitionScreen = () => {
             </>
           ) : (
             <>
-              <Text style={styles.resultEmoji}>
-                {isDraw ? '🤝' : isWin ? '🏆' : '😢'}
-              </Text>
-              <Text style={styles.resultTitle}>
-                {isDraw ? '무승부!' : isWin ? '승리!' : '패배...'}
-              </Text>
+              <Text style={styles.resultEmoji}>{isWin ? '🏆' : '😢'}</Text>
+              <Text style={styles.resultTitle}>{isWin ? '승리!' : '패배...'}</Text>
               <Text style={styles.resultScore}>
                 나 {myWinsRef.current} : {botWinsRef.current} Q-Bot
               </Text>
@@ -431,10 +423,8 @@ const BotCompetitionScreen = () => {
     roundWinner === 'user'
       ? '정답! 라운드 획득 🎉'
       : roundWinner === 'bot'
-        ? `Q-Bot이 먼저 맞췄어요 😱 (정답: ${quiz.answer})`
-        : roundWinner === 'none'
-          ? `둘 다 놓쳤어요 😅 (정답: ${quiz.answer})`
-          : null;
+        ? `Q-Bot이 먼저 풀었어요 ⏰ (정답: ${quiz.answer})`
+        : null;
 
   const myPercent = Math.round((myWins / winTarget) * 100);
   const botPercent = Math.round((botWins / winTarget) * 100);
@@ -510,15 +500,12 @@ const BotCompetitionScreen = () => {
           <View style={styles.questionCard}>
             {/* 봇 풀이 진행 */}
             <View style={styles.botTimerRow}>
-              <Text style={styles.botTimerLabel}>
-                {botFailed ? '🤖 Q-Bot이 틀렸어요!' : '🤖 Q-Bot 풀이 중...'}
-              </Text>
+              <Text style={styles.botTimerLabel}>🤖 Q-Bot 풀이 중...</Text>
               <View style={styles.botTimerTrack}>
                 <View
                   style={[
                     styles.botTimerFill,
                     { width: `${Math.round(botProgress * 100)}%` },
-                    botFailed && { backgroundColor: C.usedChipText },
                   ]}
                 />
               </View>
@@ -541,8 +528,7 @@ const BotCompetitionScreen = () => {
                 style={[
                   styles.answerArea,
                   roundWinner === 'user' && styles.answerAreaCorrect,
-                  (userFailed || roundWinner === 'bot' || roundWinner === 'none') &&
-                    styles.answerAreaWrong,
+                  (wrongFlash || roundWinner === 'bot') && styles.answerAreaWrong,
                 ]}
               >
                 {placed.map((wordIndex, orderIndex) => (
@@ -550,7 +536,7 @@ const BotCompetitionScreen = () => {
                     key={`${wordIndex}-${orderIndex}`}
                     style={styles.placedChip}
                     onPress={() => {
-                      if (roundWinner !== null || userFailed) return;
+                      if (roundWinner !== null) return;
                       setPlaced((prev) => prev.filter((_, i) => i !== orderIndex));
                     }}
                     activeOpacity={0.8}
@@ -590,14 +576,13 @@ const BotCompetitionScreen = () => {
                 style={[
                   styles.textInput,
                   roundWinner === 'user' && styles.textInputCorrect,
-                  (userFailed || roundWinner === 'bot' || roundWinner === 'none') &&
-                    styles.textInputWrong,
+                  (wrongFlash || roundWinner === 'bot') && styles.textInputWrong,
                 ]}
                 placeholder="답을 입력하세요"
                 placeholderTextColor="#aaa"
                 value={answerText}
                 onChangeText={setAnswerText}
-                editable={roundWinner === null && !userFailed && !paused}
+                editable={roundWinner === null && !paused}
                 autoCapitalize="none"
                 autoCorrect={false}
               />
@@ -616,7 +601,12 @@ const BotCompetitionScreen = () => {
             )}
             {userFailed && roundWinner === null && (
               <Text style={[styles.feedbackText, styles.feedbackWrong]}>
-                아쉬워요! Q-Bot이 다 풀 때까지 기다려요...
+                아쉬워요! 이번 라운드는 Q-Bot이 가져가요...
+              </Text>
+            )}
+            {wrongFlash && roundWinner === null && (
+              <Text style={[styles.feedbackText, styles.feedbackWrong]}>
+                오답! Q-Bot이 {BOT_CONFIG.wrongPenalty}초 앞서갔어요 ⚡
               </Text>
             )}
           </View>
@@ -631,7 +621,7 @@ const BotCompetitionScreen = () => {
                     key={i}
                     style={[styles.bankChip, used && styles.bankChipUsed]}
                     onPress={() => {
-                      if (roundWinner !== null || userFailed || used) return;
+                      if (roundWinner !== null || used) return;
                       setPlaced((prev) => [...prev, i]);
                     }}
                     disabled={used}
