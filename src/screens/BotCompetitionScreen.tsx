@@ -97,7 +97,7 @@ const BotCompetitionScreen = () => {
 
   // ─── 라운드 상태 ───
   const [roundWinner, setRoundWinner] = useState<RoundWinner | null>(null);
-  const [userFailed, setUserFailed] = useState(false); // 객관식 오답(기회 1번 소진) 후 봇을 기다리는 중
+  const [lostByWrong, setLostByWrong] = useState(false); // 오답 때문에 라운드를 내준 경우 (봇 완주와 구분)
   const [wrongFlash, setWrongFlash] = useState(false); // 재도전 유형 오답 직후 피드백
   const [botProgress, setBotProgress] = useState(0);
   const [paused, setPaused] = useState(false);
@@ -209,7 +209,7 @@ const BotCompetitionScreen = () => {
     resolvedRef.current = false;
     lastUserAnswerRef.current = '';
     setRoundWinner(null);
-    setUserFailed(false);
+    setLostByWrong(false);
     setWrongFlash(false);
     setBotProgress(0);
     setSelected(null);
@@ -262,7 +262,7 @@ const BotCompetitionScreen = () => {
   };
 
   const canSubmit = (() => {
-    if (!quiz || roundWinner !== null || userFailed || paused) return false;
+    if (!quiz || roundWinner !== null || paused) return false;
     if (quiz.quizType === 'multiple_choice') return selected !== null;
     if (quiz.quizType === 'subjective') return answerText.trim().length > 0;
     return answerTiles.length > 0
@@ -281,14 +281,16 @@ const BotCompetitionScreen = () => {
     }
 
     if (quiz?.quizType === 'multiple_choice') {
-      // 객관식은 기회 1번: 오답이면 봇이 다 풀 때까지 기다렸다가 라운드를 내준다
-      setUserFailed(true);
+      // 객관식은 기회 1번: 오답이면 기다릴 것 없이 바로 라운드를 내준다
+      setLostByWrong(true);
+      resolveRound('bot');
       return;
     }
 
     // 주관식/단어조합은 재도전 가능, 대신 현재 라운드 봇 남은 시간 차감
     roundRemainRef.current -= BOT_CONFIG.wrongPenalty;
     if (roundRemainRef.current <= 0) {
+      setLostByWrong(true);
       resolveRound('bot');
       return;
     }
@@ -423,7 +425,9 @@ const BotCompetitionScreen = () => {
     roundWinner === 'user'
       ? '정답! 라운드 획득 🎉'
       : roundWinner === 'bot'
-        ? `Q-Bot이 먼저 풀었어요 ⏰ (정답: ${quiz.answer})`
+        ? lostByWrong
+          ? `오답! Q-Bot이 라운드를 가져갔어요 😢 (정답: ${quiz.answer})`
+          : `Q-Bot이 먼저 풀었어요 ⏰ (정답: ${quiz.answer})`
         : null;
 
   const myPercent = Math.round((myWins / winTarget) * 100);
@@ -560,7 +564,7 @@ const BotCompetitionScreen = () => {
                         styles.optionCorrect,
                     ]}
                     onPress={() => {
-                      if (roundWinner !== null || userFailed) return;
+                      if (roundWinner !== null) return;
                       setSelected(i);
                     }}
                     activeOpacity={0.7}
@@ -597,11 +601,6 @@ const BotCompetitionScreen = () => {
                 ]}
               >
                 {bannerText}
-              </Text>
-            )}
-            {userFailed && roundWinner === null && (
-              <Text style={[styles.feedbackText, styles.feedbackWrong]}>
-                아쉬워요! 이번 라운드는 Q-Bot이 가져가요...
               </Text>
             )}
             {wrongFlash && roundWinner === null && (
