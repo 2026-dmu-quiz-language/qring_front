@@ -151,6 +151,16 @@ const DashboardScreen = () => {
           <Text style={styles.ctaSub}>▶ 약 5분 소요</Text>
         </TouchableOpacity>
 
+        {/* 봇 컴피티션 임시 진입 버튼 (UI 확인용) */}
+        <TouchableOpacity
+          style={styles.botCompButton}
+          activeOpacity={0.85}
+          onPress={() => navigation.navigate('BotLevelSelect')}
+        >
+          <Text style={styles.botCompTitle}>🤖 봇 컴피티션</Text>
+          <Text style={styles.botCompSub}>Q-Bot과 스피드 대결!</Text>
+        </TouchableOpacity>
+
         {/* 마스코트 말풍선 */}
         <View style={styles.mascotSection}>
           <Image
@@ -268,6 +278,22 @@ const styles = StyleSheet.create({
   },
   ctaTitle: { fontSize: 17, fontWeight: '800', color: '#fff' },
   ctaSub: { fontSize: 11, fontWeight: '500', color: 'rgba(255,255,255,0.7)', marginTop: 3 },
+
+  // 봇 컴피티션 진입 버튼
+  botCompButton: {
+    backgroundColor: theme.colors.tertiary,
+    borderRadius: 20,
+    paddingVertical: 15,
+    alignItems: 'center',
+    marginBottom: 20,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.05,
+    shadowRadius: 15,
+    elevation: 3,
+  },
+  botCompTitle: { fontSize: 17, fontWeight: '800', color: '#fff' },
+  botCompSub: { fontSize: 11, fontWeight: '500', color: 'rgba(255,255,255,0.7)', marginTop: 3 },
 
   // 마스코트 말풍선
   mascotSection: {

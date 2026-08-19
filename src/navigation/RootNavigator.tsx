@@ -14,6 +14,8 @@ import MyPageScreen from '../screens/MypageScreen';
 import AccountManagementScreen from '../screens/MyPage/AccountManagementScreen';
 import LearningSettingsScreen from '../screens/MyPage/LearningSettingsScreen';
 import WrongNoteQuizScreen from '../screens/WrongNoteQuizScreen';
+import BotCompetitionScreen from '../screens/BotCompetitionScreen';
+import BotLevelSelectScreen from '../screens/BotLevelSelectScreen';
 
 const Stack = createNativeStackNavigator();
 
@@ -45,6 +47,8 @@ export const RootNavigator = () => {
       <Stack.Screen name="AccountManagementScreen" component={AccountManagementScreen} />
       <Stack.Screen name="LearningSettingsScreen" component={LearningSettingsScreen} />
       <Stack.Screen name="WrongNoteQuiz" component={WrongNoteQuizScreen} />
+      <Stack.Screen name="BotLevelSelect" component={BotLevelSelectScreen} />
+      <Stack.Screen name="BotCompetition" component={BotCompetitionScreen} />
     </Stack.Navigator>
   );
 };
