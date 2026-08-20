@@ -30,7 +30,7 @@ export interface BotMatchStartResponse {
 export interface BotMatchAnswer {
   sourceType: 'STORY' | 'COMPETITION'; // /bot/level에서 받은 값 그대로
   sourceQuizContentId: number; // /bot/level에서 받은 값 그대로
-  roundNo: number; // 문제 순번 (1~21)
+  roundNo: number; // 문제 순번 (1~21) - 서버가 이 순서로 연속 정답 구간을 계산하므로 정확해야 함
   userAnswer: string;
   userIsCorrect: boolean;
   botIsCorrect: boolean; // /bot/level 값 echo
@@ -60,10 +60,9 @@ export const startBotMatch = async (
   return res.data;
 };
 
-// 결과 제출: 21개 답안 전체 + 매치 중 최대 연속 정답 수
+// 결과 제출: 21개 답안 전체 (roundNo 순서로 서버가 연속 정답 구간을 직접 계산함)
 export const submitBotMatchResult = async (data: {
   answers: BotMatchAnswer[];
-  streakCount: number;
 }): Promise<BotMatchResultResponse> => {
   const res = await client.post('/bot/result', data);
   return res.data;
