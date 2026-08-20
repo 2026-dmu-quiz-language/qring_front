@@ -91,7 +91,6 @@ const BotCompetitionScreen = () => {
   const [result, setResult] = useState<BotMatchResultResponse | null>(null);
 
   const answersRef = useRef<BotMatchAnswer[]>([]);
-  const streakRef = useRef({ current: 0, max: 0 });
   const myWinsRef = useRef(0);
   const botWinsRef = useRef(0);
 
@@ -154,14 +153,6 @@ const BotCompetitionScreen = () => {
       botIsCorrect: quiz.botIsCorrect,
     });
 
-    // 최대 연속 정답 추적
-    if (userIsCorrect) {
-      streakRef.current.current += 1;
-      streakRef.current.max = Math.max(streakRef.current.max, streakRef.current.current);
-    } else {
-      streakRef.current.current = 0;
-    }
-
     if (winner === 'user') {
       myWinsRef.current += 1;
       setMyWins(myWinsRef.current);
@@ -186,7 +177,6 @@ const BotCompetitionScreen = () => {
       console.log('📤 [봇컴피티션] 결과 제출: POST /bot/result, answers:', answersRef.current.length);
       const res = await submitBotMatchResult({
         answers: answersRef.current,
-        streakCount: streakRef.current.max,
       });
       console.log('✅ [봇컴피티션] 결과 제출 성공:', JSON.stringify(res));
       setResult(res);
