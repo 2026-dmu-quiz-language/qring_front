@@ -6,6 +6,7 @@ import { theme } from '../constants/theme';
 import StoryHomeScreen from '../screens/StoryHomeScreen';
 import DashboardScreen from '../screens/DashboardScreen';
 import WrongNoteScreen from '../screens/WrongNoteScreen';
+import StoryMainScreen from '../screens/StoryMainScreen';
 
 const Tab = createBottomTabNavigator();
 
@@ -47,6 +48,9 @@ export const BottomTabNav = () => {
           } else if (route.name === 'WrongNote') {
             iconName = focused ? 'document-text' : 'document-text-outline';
             label = '오답노트';
+          } else if (route.name === 'Story') {
+            iconName = focused ? 'sparkles' : 'sparkles-outline'; 
+            label = '스토리';
           }
 
           return (
@@ -66,6 +70,7 @@ export const BottomTabNav = () => {
     >
       <Tab.Screen name="Content" component={StoryHomeScreen} />
       <Tab.Screen name="Dashboard" component={DashboardScreen} />
+      <Tab.Screen name="Story" component={StoryMainScreen} />
       <Tab.Screen name="WrongNote" component={WrongNoteScreen} />
     </Tab.Navigator>
   );
