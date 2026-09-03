@@ -131,3 +131,31 @@ export interface StoryDiscardRequest {
 export const discardStorySession = async (request: StoryDiscardRequest): Promise<void> => {
   await client.post('/api/v1/story/discard', request);
 };
+
+export interface TimelineEvent {
+  type: 'message' | 'quiz' | 'quiz_result';
+  role?: 'user' | 'assistant';
+  content?: string;
+  translation?: string;
+  quiz?: StoryChatQuiz; // 기존에 선언해둔 StoryChatQuiz 타입 사용
+  quiz_number?: number;
+  user_answer?: string;
+  result?: 'correct' | 'incorrect' | 'none';
+}
+
+export interface StoryResumeResponse {
+  has_session: boolean;
+  session_id?: string;
+  character_name?: string;
+  situation?: string;
+  tone?: string;
+  target_language?: string;
+  current_quiz_count?: number;
+  is_completed?: boolean;
+  timeline?: TimelineEvent[];
+}
+
+export const resumeStory = async (): Promise<StoryResumeResponse> => {
+  const res = await client.post('/api/v1/story/resume');
+  return res.data;
+};

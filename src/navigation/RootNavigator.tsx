@@ -16,6 +16,9 @@ import LearningSettingsScreen from '../screens/MyPage/LearningSettingsScreen';
 import WrongNoteQuizScreen from '../screens/WrongNoteQuizScreen';
 import BotCompetitionScreen from '../screens/BotCompetitionScreen';
 import BotLevelSelectScreen from '../screens/BotLevelSelectScreen';
+import StoryCreateScreen from '../screens/StoryCreateScreen';
+import StoryChatScreen from '../screens/StoryChatScreen';
+import StoryRecordScreen from '../screens/StoryRecordScreen';
 
 const Stack = createNativeStackNavigator();
 
@@ -49,6 +52,10 @@ export const RootNavigator = () => {
       <Stack.Screen name="WrongNoteQuiz" component={WrongNoteQuizScreen} />
       <Stack.Screen name="BotLevelSelect" component={BotLevelSelectScreen} />
       <Stack.Screen name="BotCompetition" component={BotCompetitionScreen} />
+
+      <Stack.Screen name="StoryCreateScreen" component={StoryCreateScreen} />
+      <Stack.Screen name="StoryChat" component={StoryChatScreen} />
+      <Stack.Screen name="StoryRecord" component={StoryRecordScreen} />
     </Stack.Navigator>
   );
 };
