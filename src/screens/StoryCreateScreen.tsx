@@ -9,7 +9,8 @@ import {
   ActivityIndicator,
   KeyboardAvoidingView,
   Platform,
-  ScrollView
+  ScrollView,
+  Alert // 🌟 Alert 컴포넌트 추가
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { startStorySession } from '../api/story';
@@ -25,33 +26,49 @@ export default function StoryCreateScreen({ navigation }: any) {
   const [tone, setTone] = useState('다정하게');
   const [loading, setLoading] = useState(false);
 
-  const handleCreateStory = async () => {
+  const handleCreateStory = () => {
     if (!characterName.trim() || !situationDescription.trim()) {
-      alert('이름과 상황을 모두 입력해주세요.');
+      Alert.alert('알림', '이름과 상황을 모두 입력해주세요.');
       return;
     }
 
-    try {
-      setLoading(true);
-      // targetLanguage는 앱 내 유저 정보나 전역 상태에서 가져오는 것을 가정하여 임시 하드코딩
-      const userTargetLanguage = "English"; 
-      
-      const response = await startStorySession({
-        characterName,
-        situationDescription,
-        tone,
-        targetLanguage: userTargetLanguage,
-      });
+    // 🌟 포인트 차감 알림창 추가
+    Alert.alert(
+      '포인트 차감 안내',
+      '스토리 생성 버튼을 클릭하면 300포인트가 차감됩니다.\n계속하시겠습니까?',
+      [
+        {
+          text: '취소',
+          style: 'cancel',
+        },
+        {
+          text: '확인',
+          // 🌟 확인 버튼을 눌렀을 때 API 호출되도록 기존 로직 이동
+          onPress: async () => {
+            try {
+              setLoading(true);
+              const userTargetLanguage = "English"; 
+              
+              const response = await startStorySession({
+                characterName,
+                situationDescription,
+                tone,
+                targetLanguage: userTargetLanguage,
+              });
 
-      // 🌟 응답 데이터를 들고 학습(채팅) 화면으로 이동
-      navigation.replace('StoryChat', { storyData: response });
-      
-    } catch (error) {
-      console.error('스토리 생성 실패:', error);
-      alert('스토리 생성에 실패했습니다. 다시 시도해주세요.');
-    } finally {
-      setLoading(false);
-    }
+              navigation.replace('StoryChat', { storyData: response });
+              
+            } catch (error) {
+              console.error('스토리 생성 실패:', error);
+              Alert.alert('오류', '스토리 생성에 실패했습니다. 다시 시도해주세요.');
+            } finally {
+              setLoading(false);
+            }
+          },
+        },
+      ],
+      { cancelable: false }
+    );
   };
 
   return (
@@ -158,7 +175,7 @@ const styles = StyleSheet.create({
   textArea: { height: 100, paddingTop: 14 },
   chipContainer: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
   chip: { backgroundColor: '#F0F0E8', paddingVertical: 10, paddingHorizontal: 16, borderRadius: 20 },
-  chipActive: { backgroundColor: '#5D7341' }, // 진한 올리브색 (활성화)
+  chipActive: { backgroundColor: '#5D7341' },
   chipText: { color: '#666', fontSize: 14, fontWeight: '500' },
   chipTextActive: { color: '#FFF', fontWeight: 'bold' },
   footer: { paddingHorizontal: 20, paddingBottom: 30, paddingTop: 10 },

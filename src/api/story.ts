@@ -109,3 +109,25 @@ export const sendStoryChatMessage = async (request: StoryChatRequest): Promise<S
   const response = await client.post<StoryChatResponse>('/api/v1/story/chat', request);
   return response.data;
 };
+
+export interface StoryArchiveRequest {
+  session_id: string;
+}
+
+export interface StoryArchiveResponse {
+  session_id: string;
+  user_remaining_points: number;
+}
+
+export const archiveStorySession = async (request: StoryArchiveRequest): Promise<StoryArchiveResponse> => {
+  const response = await client.post<StoryArchiveResponse>('/api/v1/story/archive', request);
+  return response.data;
+};
+
+export interface StoryDiscardRequest {
+  session_id: string;
+}
+
+export const discardStorySession = async (request: StoryDiscardRequest): Promise<void> => {
+  await client.post('/api/v1/story/discard', request);
+};
