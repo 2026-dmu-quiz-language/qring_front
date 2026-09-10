@@ -11,8 +11,6 @@ import {
   Platform,
   Alert
 } from 'react-native';
-// 🌟 취소선 경고 해결을 위해 안전 영역은 별도 라이브러리에서 가져옵니다.
-import { SafeAreaView } from 'react-native-safe-area-context'; 
 import { Ionicons } from '@expo/vector-icons';
 import { 
   StartStoryResponse, 
@@ -236,7 +234,7 @@ export default function StoryChatScreen({ route, navigation }: any) {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
+    <View style={styles.container}>
       <KeyboardAvoidingView 
         style={{ flex: 1 }} 
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
@@ -296,7 +294,7 @@ export default function StoryChatScreen({ route, navigation }: any) {
           </TouchableOpacity>
         </View>
       </KeyboardAvoidingView>
-    </SafeAreaView>
+    </View>
   );
 }
 

@@ -9,7 +9,6 @@ import {
   ScrollView,
   Image,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Ionicons } from '@expo/vector-icons';
@@ -23,7 +22,7 @@ const LearningResultScreen = () => {
   const { score = 0, correctCount = 0, totalQuestions = 6 } = route.params || {};
 
   return (
-    <SafeAreaView style={styles.safeArea} edges={['top']}>
+    <View style={styles.safeArea}>
 
       {/* Header */}
       <View style={styles.header}>
@@ -108,7 +107,7 @@ const LearningResultScreen = () => {
         </TouchableOpacity>
       </ScrollView>
 
-    </SafeAreaView>
+    </View>
   );
 };
 
