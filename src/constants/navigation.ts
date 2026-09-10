@@ -8,7 +8,7 @@ export type BottomTabParamList = {
 // 학습 탭 내부 스택 파라미터
 export type LearnStackParamList = {
   StoryHome: undefined;
-  ChatLearn: { episodeId: number; episodeTitle: string };
+  ChatLearn: { episodeId: number; episodeTitle: string; status?: string; };
   LearningResult: { // 🌟 여기서 정의해줘야 합니다!
     score: number;
     correctCount: number;
