@@ -16,6 +16,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { theme } from '../constants/theme'
 import { ScreenWrapper } from '../components/layout/ScreenWrapper';
 import { Header } from '../components/layout/Header';
+import { playSfx } from '../utils/sfx';
 
 // 💡 백엔드 기본 서버 주소 (본인 환경에 맞게 확인해주세요)
 const API_BASE_URL = 'https://q-ring.app/api/v1';
@@ -185,6 +186,7 @@ const MyPageScreen = ({ navigation }: any) => {
               ]}
               activeOpacity={0.7}
               onPress={() => {
+                playSfx('touch');
                 if (item.id === 'account') {
                   navigation.navigate('AccountManagementScreen', { nickname: nickname });
                 } else if (item.id === 'levelLang') {

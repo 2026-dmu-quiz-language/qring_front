@@ -15,6 +15,7 @@ import { Header } from '../components/layout/Header';
 import { useNavigation } from '@react-navigation/native';
 import { getDashboard, type DashboardResponse } from '../api/dashboard';
 import { getErrorMessage } from '../utils/errorMessage';
+import { playSfx } from '../utils/sfx';
 
 // ─── 색상 ───
 const C = {
@@ -146,7 +147,14 @@ const DashboardScreen = () => {
         </View>
 
         {/* CTA 버튼 */}
-        <TouchableOpacity style={styles.ctaButton} activeOpacity={0.85} onPress={() => navigation.navigate('Content')}>
+        <TouchableOpacity
+          style={styles.ctaButton}
+          activeOpacity={0.85}
+          onPress={() => {
+            playSfx('touch');
+            navigation.navigate('Content');
+          }}
+        >
           <Text style={styles.ctaTitle}>🚀 오늘의 썰 풀기 시작!</Text>
           <Text style={styles.ctaSub}>▶ 약 5분 소요</Text>
         </TouchableOpacity>
@@ -155,7 +163,10 @@ const DashboardScreen = () => {
         <TouchableOpacity
           style={styles.botCompButton}
           activeOpacity={0.85}
-          onPress={() => navigation.navigate('BotLevelSelect')}
+          onPress={() => {
+            playSfx('touch');
+            navigation.navigate('BotLevelSelect');
+          }}
         >
           <Text style={styles.botCompTitle}>🤖 봇 컴피티션</Text>
           <Text style={styles.botCompSub}>Q-Bot과 스피드 대결!</Text>
