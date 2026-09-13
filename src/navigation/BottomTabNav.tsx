@@ -25,9 +25,10 @@ export const BottomTabNav = () => {
           backgroundColor: '#FFFFFF',
           borderTopWidth: 1,
           borderTopColor: '#EFEFEF',
-          height: Platform.OS === 'ios' ? 60 + insets.bottom : 65,
-          paddingBottom: Platform.OS === 'ios' ? insets.bottom : 5,
-          paddingTop: 5,
+          // 🌟 핵심 수정: 아이폰이든 갤럭시든 상관없이 기기 하단 시스템 바 높이(insets.bottom)를 똑같이 더해줍니다.
+          height: 55 + (insets.bottom > 0 ? insets.bottom : 15),
+          paddingBottom: insets.bottom > 0 ? insets.bottom : 8,
+          paddingTop: 8,
         },
         
         tabBarItemStyle: {
@@ -57,7 +58,7 @@ export const BottomTabNav = () => {
             <View style={[styles.tabItem, focused && styles.tabItemActive]}>
               <Ionicons
                 name={iconName}
-                size={24} 
+                size={22} 
                 color={focused ? theme.colors.primary : '#888'}
               />
               <Text style={[styles.tabLabel, focused && styles.tabLabelActive]}>
@@ -68,7 +69,7 @@ export const BottomTabNav = () => {
         },
       })}
     >
-      <Tab.Screen name="Content" component={StoryHomeScreen} />
+      <Tab.Screen name="Content" component= {StoryHomeScreen} />
       <Tab.Screen name="Dashboard" component={DashboardScreen} />
       <Tab.Screen name="Story" component={StoryMainScreen} />
       <Tab.Screen name="WrongNote" component={WrongNoteScreen} />
@@ -82,7 +83,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     width: 68, 
-    height: 48, 
+    height: 42, 
   },
   tabItemActive: {
     backgroundColor: 'transparent', 
@@ -90,7 +91,7 @@ const styles = StyleSheet.create({
   tabLabel: {
     fontSize: 10,
     color: '#888',
-    marginTop: 4, 
+    marginTop: 2, 
     fontWeight: '600',
   },
   tabLabelActive: {
