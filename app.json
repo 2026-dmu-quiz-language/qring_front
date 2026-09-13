@@ -2,46 +2,23 @@
   "expo": {
     "name": "qring_front",
     "slug": "qring_front",
-    "scheme": "qring",
-    "version": "1.0.1",
-    "orientation": "portrait",
-    "icon": "./assets/icon.png",
-    "userInterfaceStyle": "light",
-    "newArchEnabled": true,
-    "splash": {
-      "image": "./assets/splash-icon.png",
-      "resizeMode": "contain",
-      "backgroundColor": "#ffffff"
-    },
+    "version": "1.0.0",
+    "backgroundColor": "#F0F2EE", 
+    
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "backgroundColor": "#F0F2EE" 
     },
+    
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
-        "backgroundColor": "#ffffff"
-      },
-      "edgeToEdgeEnabled": true,
-      "predictiveBackGestureEnabled": false,
-      "package": "com.qring.app"
-    },
-    "web": {
-      "favicon": "./assets/favicon.png"
-    },
-    "plugins": [
-      "expo-web-browser",
-      [
-        "expo-audio",
-        {
-          "microphonePermission": false,
-          "recordAudioAndroid": false
-        }
-      ]
-    ],
-    "extra": {
-      "eas": {
-        "projectId": "b188473b-4b29-477d-ace9-7bfd772411b0"
+        "backgroundColor": "#F0F2EE"
       }
-    }
+    },
+    
+    "plugins": [
+      "expo-audio"
+    ]
   }
 }

@@ -62,7 +62,7 @@ export default function StoryMainScreen({ navigation }: any) {
       <ScrollView contentContainerStyle={styles.scrollContent}>
         
         <View style={styles.header}>
-          <Text style={styles.headerText}>보관함</Text>
+          <Text style={styles.headerText}>AI 인터렉티브 스토리</Text>
           <View style={styles.profilePlaceholder}></View>
         </View>
 
