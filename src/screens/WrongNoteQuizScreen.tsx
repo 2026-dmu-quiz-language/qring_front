@@ -21,6 +21,7 @@ import {
   submitIncorrectResult,
   type IncorrectQuiz,
 } from '../api/incorrect';
+import { playSfx } from '../utils/sfx';
 
 const WrongNoteQuizScreen = () => {
   const navigation = useNavigation<any>();
@@ -127,6 +128,11 @@ const WrongNoteQuizScreen = () => {
   const handleSubmit = () => {
     if (!canSubmit) return;
     setSubmitted(true);
+    if (isCorrect) {
+      playSfx('correct');
+    } else {
+      // 오답음 파일이 준비되면 여기에 playSfx('incorrect')를 넣으면 된다.
+    }
     setResults((prev) => [
       ...prev,
       { quizContentId: quiz.quizContentId, correct: isCorrect },

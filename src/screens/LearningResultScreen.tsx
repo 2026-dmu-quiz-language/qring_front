@@ -1,6 +1,6 @@
 // screens/ChatLearn/LearningResultScreen.tsx
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import {
   View,
   Text,
@@ -13,6 +13,7 @@ import { useNavigation, useRoute } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Ionicons } from '@expo/vector-icons';
 import { theme } from '../constants/theme';
+import { playSfx } from '../utils/sfx';
 
 const LearningResultScreen = () => {
   const navigation = useNavigation<NativeStackNavigationProp<any>>();
@@ -20,6 +21,11 @@ const LearningResultScreen = () => {
 
   // 🌟 이전 화면(ChatLearnScreen)에서 API 호출 후 넘겨준 데이터
   const { score = 0, correctCount = 0, totalQuestions = 6 } = route.params || {};
+
+  // 결과 화면에 들어오는 순간 한 번만 울린다.
+  useEffect(() => {
+    playSfx('result');
+  }, []);
 
   return (
     <View style={styles.safeArea}>

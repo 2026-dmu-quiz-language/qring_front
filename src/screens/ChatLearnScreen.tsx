@@ -26,6 +26,7 @@ import type { Script, Quiz, QuizResultItem } from '../api/content';
 import { getErrorMessage } from '../utils/errorMessage';
 import { Ionicons } from '@expo/vector-icons';
 import WordBreakText from '../components/common/WordBreakText';
+import { playSfx } from '../utils/sfx';
 
 interface DisplayMessage {
   type: 'script' | 'quiz';
@@ -70,6 +71,11 @@ const ChoiceQuiz = ({ quiz, hint, onComplete }: { quiz: Quiz; hint: string; onCo
     const correct = answer === quiz.correctAnswer;
     setSubmitted(true);
     setIsCorrect(correct);
+    if (correct) {
+      playSfx('correct');
+    } else {
+      // 오답음 파일이 준비되면 여기에 playSfx('incorrect')를 넣으면 된다.
+    }
     setModalVisible(true);
   };
 
@@ -189,6 +195,11 @@ const SubjectiveQuiz = ({ quiz, hint, onComplete }: { quiz: Quiz; hint: string; 
     const correct = trimmed === quiz.correctAnswer.toLowerCase();
     setSubmitted(true);
     setIsCorrect(correct);
+    if (correct) {
+      playSfx('correct');
+    } else {
+      // 오답음 파일이 준비되면 여기에 playSfx('incorrect')를 넣으면 된다.
+    }
     setModalVisible(true);
   };
 
@@ -328,6 +339,8 @@ const ChatLearnScreen = () => {
 
     const nextCount = visibleCount + 1;
     setVisibleCount(nextCount);
+    // 다음에 열리는 게 퀴즈면 퀴즈 등장 소리, 대사면 채팅 소리를 낸다.
+    playSfx(messages[nextCount - 1]?.type === 'quiz' ? 'quiz' : 'receiveChat');
 
     setTimeout(() => {
       scrollRef.current?.scrollToEnd({ animated: true });

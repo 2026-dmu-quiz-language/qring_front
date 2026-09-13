@@ -26,6 +26,7 @@ import {
   type BotMatchAnswer,
   type BotMatchResultResponse,
 } from '../api/competition';
+import { playSfx, playLoopSfx, stopSfx } from '../utils/sfx';
 
 // ─── 색상 ───
 const C = {
@@ -143,6 +144,15 @@ const BotCompetitionScreen = () => {
     resolvedRef.current = true;
     setRoundWinner(winner);
 
+    // 흐르던 타이머 소리를 멈추고 승패 소리를 낸다.
+    // 다음 문제로 넘어가면 라운드 타이머 useEffect가 타이머 소리를 다시 켠다.
+    stopSfx('timer');
+    if (winner === 'user') {
+      playSfx('correct');
+    } else {
+      // 오답음 파일이 준비되면 여기에 playSfx('incorrect')를 넣으면 된다.
+    }
+
     const userIsCorrect = winner === 'user';
     answersRef.current.push({
       sourceType: quiz.sourceType,
@@ -181,6 +191,7 @@ const BotCompetitionScreen = () => {
       console.log('✅ [봇컴피티션] 결과 제출 성공:', JSON.stringify(res));
       setResult(res);
       setPhase('done');
+      playSfx('result');
     } catch (err: any) {
       console.error('❌ [봇컴피티션] 결과 제출 실패:', err.message, err.response?.data);
       setPhase('submitError');
@@ -206,6 +217,9 @@ const BotCompetitionScreen = () => {
     setAnswerText('');
     setPlaced([]);
 
+    // 새 라운드가 시작되면 타이머 소리를 다시 켠다.
+    playLoopSfx('timer');
+
     const timer = setInterval(() => {
       if (pausedRef.current || resolvedRef.current) return;
       roundRemainRef.current -= 0.1;
@@ -215,7 +229,11 @@ const BotCompetitionScreen = () => {
       }
     }, 100);
 
-    return () => clearInterval(timer);
+    return () => {
+      clearInterval(timer);
+      // 화면을 벗어나거나 라운드가 바뀌면 타이머 소리가 남지 않도록 정리한다.
+      stopSfx('timer');
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [index, phase]);
 
@@ -293,6 +311,7 @@ const BotCompetitionScreen = () => {
   const handlePause = () => {
     pausedRef.current = true;
     setPaused(true);
+    stopSfx('timer');
     pauseBotMatch(true)
       .then((res) => console.log('✅ [봇컴피티션] 일시정지:', JSON.stringify(res)))
       .catch((err) => console.error('❌ [봇컴피티션] 일시정지 실패:', err.message));
@@ -301,6 +320,8 @@ const BotCompetitionScreen = () => {
   const handleResume = () => {
     pausedRef.current = false;
     setPaused(false);
+    // 라운드가 아직 안 끝났을 때만 타이머 소리를 되살린다.
+    if (!resolvedRef.current) playLoopSfx('timer');
     pauseBotMatch(false)
       .then((res) => console.log('✅ [봇컴피티션] 재개:', JSON.stringify(res)))
       .catch((err) => console.error('❌ [봇컴피티션] 재개 실패:', err.message));
@@ -611,6 +632,7 @@ const BotCompetitionScreen = () => {
                     style={[styles.bankChip, used && styles.bankChipUsed]}
                     onPress={() => {
                       if (roundWinner !== null || used) return;
+                      playSfx('combine');
                       setPlaced((prev) => [...prev, i]);
                     }}
                     disabled={used}

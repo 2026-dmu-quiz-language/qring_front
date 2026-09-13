@@ -16,6 +16,8 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { theme } from '../constants/theme'
 import { ScreenWrapper } from '../components/layout/ScreenWrapper';
 import { Header } from '../components/layout/Header';
+import { playSfx, isSfxEnabled, setSfxEnabled } from '../utils/sfx';
+import { Toggle } from '../components/common/Toggle';
 
 // 💡 백엔드 기본 서버 주소 (본인 환경에 맞게 확인해주세요)
 const API_BASE_URL = 'https://q-ring.app/api/v1';
@@ -81,6 +83,16 @@ const MenuIcon = ({ name, isLogout }: { name: keyof typeof Ionicons.glyphMap; is
 const MyPageScreen = ({ navigation }: any) => {
   const [userData, setUserData] = useState<MyPageData | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
+
+  // 효과음 설정은 서버가 아니라 기기에 저장된다. 모듈이 들고 있는 값을 화면 상태로 옮겨 온다.
+  const [sfxOn, setSfxOn] = useState(isSfxEnabled());
+
+  const handleToggleSfx = (next: boolean) => {
+    setSfxOn(next);
+    setSfxEnabled(next);
+    // 켤 때만 들려줘서 바로 확인할 수 있게 한다.
+    if (next) playSfx('touch');
+  };
 
   // 🌟 마이페이지 API 호출 함수
   const fetchMyPageData = async () => {
@@ -185,6 +197,12 @@ const MyPageScreen = ({ navigation }: any) => {
               ]}
               activeOpacity={0.7}
               onPress={() => {
+                // 소리 설정 줄은 누르면 바로 켜고 끈다. 끌 때 터치음이 나지 않도록 따로 처리한다.
+                if (item.id === 'sound') {
+                  handleToggleSfx(!sfxOn);
+                  return;
+                }
+                playSfx('touch');
                 if (item.id === 'account') {
                   navigation.navigate('AccountManagementScreen', { nickname: nickname });
                 } else if (item.id === 'levelLang') {
@@ -215,8 +233,12 @@ const MyPageScreen = ({ navigation }: any) => {
               </View>
               <View style={styles.menuRight}>
                 {item.hasNotification && <View style={styles.notificationDot} />}
-                {!item.isLogout && (
-                  <Ionicons name="chevron-forward" size={18} color="#bbb" />
+                {item.id === 'sound' ? (
+                  <Toggle value={sfxOn} onChange={handleToggleSfx} />
+                ) : (
+                  !item.isLogout && (
+                    <Ionicons name="chevron-forward" size={18} color="#bbb" />
+                  )
                 )}
               </View>
             </TouchableOpacity>
