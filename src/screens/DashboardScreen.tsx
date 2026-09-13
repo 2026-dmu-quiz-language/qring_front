@@ -15,6 +15,8 @@ import { Header } from '../components/layout/Header';
 import { useNavigation } from '@react-navigation/native';
 import { getDashboard, type DashboardResponse } from '../api/dashboard';
 import { getErrorMessage } from '../utils/errorMessage';
+import { playSfx } from '../utils/sfx';
+import { TAB_BAR_SPACE } from '../constants/layout';
 
 // ─── 색상 ───
 const C = {
@@ -112,7 +114,12 @@ const DashboardScreen = () => {
         userName={data.name}
       />
 
-      <ScrollView style={styles.bodyContainer} showsVerticalScrollIndicator={false}>
+      <ScrollView
+        style={styles.bodyContainer}
+        // 떠 있는 탭바 뒤로 마지막 카드가 숨지 않도록 탭바 높이만큼 비워둔다.
+        contentContainerStyle={{ paddingBottom: TAB_BAR_SPACE }}
+        showsVerticalScrollIndicator={false}
+      >
 
         {/* 연속 학습 달성 카드 */}
         <View style={styles.streakCard}>
@@ -146,7 +153,14 @@ const DashboardScreen = () => {
         </View>
 
         {/* CTA 버튼 */}
-        <TouchableOpacity style={styles.ctaButton} activeOpacity={0.85} onPress={() => navigation.navigate('Content')}>
+        <TouchableOpacity
+          style={styles.ctaButton}
+          activeOpacity={0.85}
+          onPress={() => {
+            playSfx('touch');
+            navigation.navigate('Content');
+          }}
+        >
           <Text style={styles.ctaTitle}>🚀 오늘의 썰 풀기 시작!</Text>
           <Text style={styles.ctaSub}>▶ 약 5분 소요</Text>
         </TouchableOpacity>
@@ -155,7 +169,10 @@ const DashboardScreen = () => {
         <TouchableOpacity
           style={styles.botCompButton}
           activeOpacity={0.85}
-          onPress={() => navigation.navigate('BotLevelSelect')}
+          onPress={() => {
+            playSfx('touch');
+            navigation.navigate('BotLevelSelect');
+          }}
         >
           <Text style={styles.botCompTitle}>🤖 봇 컴피티션</Text>
           <Text style={styles.botCompSub}>Q-Bot과 스피드 대결!</Text>
@@ -342,7 +359,6 @@ const styles = StyleSheet.create({
   statsRowLast: {
     flexDirection: 'row',
     gap: 12,
-    marginBottom: 105,
   },
   statCard: {
     flex: 1,

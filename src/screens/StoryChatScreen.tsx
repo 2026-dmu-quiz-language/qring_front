@@ -11,10 +11,10 @@ import {
   Platform,
   Alert
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context'; 
 import { Ionicons } from '@expo/vector-icons';
-import { 
-  StartStoryResponse, 
+import { playSfx } from '../utils/sfx';
+import {
+  StartStoryResponse,
   sendStoryChatMessage, 
   StoryChatResponse,
   archiveStorySession,
@@ -101,6 +101,7 @@ export default function StoryChatScreen({ route, navigation }: any) {
   const handleArchive = async () => {
     try {
       const response = await archiveStorySession({ session_id: sessionId });
+      playSfx('usePoints'); // 보관하면서 포인트가 차감된 시점
       if (Platform.OS === 'web') {
         window.alert(`스토리가 저장되었습니다.\n남은 포인트: ${response.user_remaining_points}`);
         navigation.navigate('StoryMain');
@@ -172,6 +173,7 @@ export default function StoryChatScreen({ route, navigation }: any) {
       content: userMessage,
     };
     setMessages((prev) => [...prev, newUserMsg]);
+    playSfx('sendChat');
     setIsSending(true);
 
     try {
@@ -184,6 +186,11 @@ export default function StoryChatScreen({ route, navigation }: any) {
         setMessages((prev) => prev.map((m) =>
           m.id === newUserMsg.id ? { ...m, answerResult: response.answer_result as any } : m
         ));
+        if (response.answer_result === 'correct') {
+          playSfx('correct');
+        } else {
+          // 오답음 파일이 준비되면 여기에 playSfx('incorrect')를 넣으면 된다.
+        }
       }
 
       const newAiMsg: ChatMessage = {
@@ -195,6 +202,9 @@ export default function StoryChatScreen({ route, navigation }: any) {
         quiz: response.quiz,
       };
       setMessages((prev) => [...prev, newAiMsg]);
+
+      // 퀴즈가 딸려 온 답장이면 퀴즈 등장 소리로 대체한다.
+      playSfx(response.is_quiz ? 'quiz' : 'receiveChat');
 
       if (response.is_completed) {
         isCompletedRef.current = true;
@@ -314,7 +324,7 @@ export default function StoryChatScreen({ route, navigation }: any) {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
+    <View style={styles.container}>
       <KeyboardAvoidingView 
         style={{ flex: 1 }} 
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
@@ -371,7 +381,7 @@ export default function StoryChatScreen({ route, navigation }: any) {
           </TouchableOpacity>
         </View>
       </KeyboardAvoidingView>
-    </SafeAreaView>
+    </View>
   );
 }
 

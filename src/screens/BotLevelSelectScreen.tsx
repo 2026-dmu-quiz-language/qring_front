@@ -16,6 +16,7 @@ import { ScreenWrapper } from '../components/layout/ScreenWrapper';
 import { Header } from '../components/layout/Header';
 import { BOT_CONFIG } from '../constants/botConfig';
 import { startBotMatch, type BotLevel } from '../api/competition';
+import { playSfx } from '../utils/sfx';
 import { getDashboard } from '../api/dashboard';
 import { getErrorMessage } from '../utils/errorMessage';
 
@@ -64,6 +65,7 @@ const BotLevelSelectScreen = () => {
       console.log('📤 [봇컴피티션] 매치 시작: POST /bot/level,', selected, cost);
       const res = await startBotMatch(selected, cost);
       console.log('✅ [봇컴피티션] 매치 시작 성공, matchId:', res.matchId);
+      playSfx('usePoints'); // 입장료가 차감된 시점
       navigation.replace('BotCompetition', {
         matchId: res.matchId,
         questions: res.questions,

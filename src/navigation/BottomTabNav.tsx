@@ -1,8 +1,9 @@
 import React from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { View, Text, StyleSheet, Platform } from 'react-native';
+import { View, Text, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { theme } from '../constants/theme';
+import { TAB_BAR_HEIGHT, TAB_BAR_BOTTOM_OFFSET } from '../constants/layout';
 import StoryHomeScreen from '../screens/StoryHomeScreen';
 import DashboardScreen from '../screens/DashboardScreen';
 import WrongNoteScreen from '../screens/WrongNoteScreen';
@@ -30,7 +31,7 @@ export const BottomTabNav = () => {
         
         // 🌟 [핵심 해결책 2] 터치 영역 전체를 수직/수평 정중앙 정렬합니다.
         tabBarItemStyle: {
-          height: 72, // 탭바 높이와 일치시켜 쏠림 방지
+          height: TAB_BAR_HEIGHT, // 탭바 높이와 일치시켜 쏠림 방지
           justifyContent: 'center',
           alignItems: 'center',
         },
@@ -79,12 +80,12 @@ export const BottomTabNav = () => {
 const styles = StyleSheet.create({
   tabBar: {
     position: 'absolute',
-    bottom: Platform.OS === 'ios' ? 32 : 22, // 화면 바닥에서 띄우는 높이
+    bottom: TAB_BAR_BOTTOM_OFFSET, // 화면 바닥에서 띄우는 높이
     left: 20,
     right: 20,
     backgroundColor: '#FFFFFF',
     borderRadius: 35,
-    height: 72, // 🌟 전체 푸터 바의 명확한 고정 높이
+    height: TAB_BAR_HEIGHT, // 🌟 전체 푸터 바의 명확한 고정 높이
     elevation: 5,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 6 },
