@@ -25,15 +25,17 @@ export const BottomTabNav = () => {
           backgroundColor: '#FFFFFF',
           borderTopWidth: 1,
           borderTopColor: '#EFEFEF',
-          // 🌟 핵심 수정: 아이폰이든 갤럭시든 상관없이 기기 하단 시스템 바 높이(insets.bottom)를 똑같이 더해줍니다.
-          height: 55 + (insets.bottom > 0 ? insets.bottom : 15),
-          paddingBottom: insets.bottom > 0 ? insets.bottom : 8,
-          paddingTop: 8,
+          height: Platform.OS === 'ios' ? 55 + insets.bottom : 60 + (insets.bottom > 0 ? insets.bottom : 10),
+          paddingBottom: insets.bottom > 0 ? insets.bottom : 6,
+          paddingTop: 6,
+          // 🌟 핵심: 갤럭시 터치 효과(물결 원그림자)가 탭 바 바깥으로 튀어나와 짤리는 현상을 깔끔하게 잡아줍니다.
+          overflow: 'hidden', 
         },
         
         tabBarItemStyle: {
           justifyContent: 'center',
           alignItems: 'center',
+          height: 48, // 터치 영역을 탭 바 내부에 알맞게 고정
         },
         
         tabBarIcon: ({ focused }) => {
@@ -69,7 +71,7 @@ export const BottomTabNav = () => {
         },
       })}
     >
-      <Tab.Screen name="Content" component= {StoryHomeScreen} />
+      <Tab.Screen name="Content" component={StoryHomeScreen} />
       <Tab.Screen name="Dashboard" component={DashboardScreen} />
       <Tab.Screen name="Story" component={StoryMainScreen} />
       <Tab.Screen name="WrongNote" component={WrongNoteScreen} />
@@ -83,7 +85,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     width: 68, 
-    height: 42, 
+    height: 44, 
   },
   tabItemActive: {
     backgroundColor: 'transparent', 
