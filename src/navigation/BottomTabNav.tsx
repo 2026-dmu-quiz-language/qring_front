@@ -1,6 +1,6 @@
 import React from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { View, Text, StyleSheet, Platform } from 'react-native';
+import { View, Text, StyleSheet, Platform, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context'; 
 import { theme } from '../constants/theme';
@@ -21,6 +21,11 @@ export const BottomTabNav = () => {
         headerShown: false,
         tabBarShowLabel: false,
         
+        // 🌟 핵심: (props as any)를 사용해 타입 충돌 에러를 무시하고 넘깁니다.
+        tabBarButton: (props) => (
+          <TouchableOpacity {...(props as any)} activeOpacity={1} />
+        ),
+        
         tabBarStyle: {
           backgroundColor: '#FFFFFF',
           borderTopWidth: 1,
@@ -28,14 +33,13 @@ export const BottomTabNav = () => {
           height: Platform.OS === 'ios' ? 55 + insets.bottom : 60 + (insets.bottom > 0 ? insets.bottom : 10),
           paddingBottom: insets.bottom > 0 ? insets.bottom : 6,
           paddingTop: 6,
-          // 🌟 핵심: 갤럭시 터치 효과(물결 원그림자)가 탭 바 바깥으로 튀어나와 짤리는 현상을 깔끔하게 잡아줍니다.
           overflow: 'hidden', 
         },
         
         tabBarItemStyle: {
           justifyContent: 'center',
           alignItems: 'center',
-          height: 38, // 터치 영역을 탭 바 내부에 알맞게 고정
+          height: 38,
         },
         
         tabBarIcon: ({ focused }) => {
