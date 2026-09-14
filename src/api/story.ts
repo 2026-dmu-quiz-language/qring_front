@@ -159,3 +159,15 @@ export const resumeStory = async (): Promise<StoryResumeResponse> => {
   const res = await client.post('/api/v1/story/resume');
   return res.data;
 };
+
+export interface ExtendStoryResponse {
+  ai_message: string;
+  quiz_limit: number;
+  can_extend: boolean;
+  user_remaining_points: number;
+}
+
+export const extendStorySession = async (data: { session_id: string }): Promise<ExtendStoryResponse> => {
+  const res = await client.post('/api/v1/story/extend', data);
+  return res.data;
+};

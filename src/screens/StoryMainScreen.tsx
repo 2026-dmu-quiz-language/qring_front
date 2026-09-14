@@ -7,20 +7,21 @@ import {
   TouchableOpacity, 
   ActivityIndicator
 } from 'react-native';
-import { useFocusEffect } from '@react-navigation/native'; // 🌟 탭 복귀 시 새로고침을 위해 추가
+import { useFocusEffect } from '@react-navigation/native'; 
+import { Ionicons } from '@expo/vector-icons'; 
 import { 
   fetchStoryLibrary, 
   StoryArchive, 
   resumeStory, 
   StoryResumeResponse 
 } from '../api/story';
+import { ScreenWrapper } from '../components/layout/ScreenWrapper';
 
 export default function StoryMainScreen({ navigation }: any) {
   const [archives, setArchives] = useState<StoryArchive[]>([]);
   const [resume, setResume] = useState<StoryResumeResponse | null>(null);
   const [loading, setLoading] = useState(true);
 
-  // 화면 포커스 될 때마다 호출 (목록 갱신)
   useFocusEffect(
     React.useCallback(() => {
       loadData();
@@ -30,11 +31,9 @@ export default function StoryMainScreen({ navigation }: any) {
   const loadData = async () => {
     try {
       setLoading(true);
-      // 보관함 목록 호출
       const libData = await fetchStoryLibrary();
       setArchives(libData.archives);
       
-      // 이어하기 세션 확인 호출
       try {
         const resumeData = await resumeStory();
         setResume(resumeData);
@@ -58,12 +57,17 @@ export default function StoryMainScreen({ navigation }: any) {
   };
 
   return (
-    <View style={styles.container}>
+    <ScreenWrapper style={{ paddingHorizontal: 0 }}>
       <ScrollView contentContainerStyle={styles.scrollContent}>
         
         <View style={styles.header}>
-          <Text style={styles.headerText}>AI 인터렉티브 스토리</Text>
-          <View style={styles.profilePlaceholder}></View>
+          <TouchableOpacity onPress={() => navigation.navigate('Dashboard')} style={styles.iconBtn}>
+            <Ionicons name="chevron-back" size={28} color="#333" />
+          </TouchableOpacity>
+          <Text style={styles.headerTitle} numberOfLines={1}>
+            AI 인터렉티브 스토리
+          </Text>
+          <View style={{ width: 28 }} /> 
         </View>
 
         <View style={styles.titleSection}>
@@ -73,7 +77,6 @@ export default function StoryMainScreen({ navigation }: any) {
           </Text>
         </View>
 
-        {/* 🌟 이어하기 카드 렌더링 */}
         {resume?.has_session ? (
           <TouchableOpacity 
             style={styles.resumeCard}
@@ -137,26 +140,22 @@ export default function StoryMainScreen({ navigation }: any) {
           </View>
         )}
       </ScrollView>
-    </View>
+    </ScreenWrapper>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#EBEBE0' },
   scrollContent: { padding: 24, paddingBottom: 100 },
-  header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 20, marginBottom: 30 },
-  headerText: { fontSize: 16, color: '#555', fontWeight: '600' },
-  profilePlaceholder: { width: 32, height: 32, borderRadius: 16, backgroundColor: '#CCC' },
+  header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 10, marginBottom: 30 },
+  iconBtn: { padding: 4, marginLeft: -4 },
+  headerTitle: { flex: 1, textAlign: 'center', fontSize: 16, fontWeight: 'bold', color: '#333' },
   titleSection: { marginBottom: 30 },
   mainTitle: { fontSize: 28, fontWeight: 'bold', color: '#222', marginBottom: 12 },
   subTitle: { fontSize: 14, color: '#555', lineHeight: 20 },
-  
-  /* 🌟 이어하기 카드 스타일 추가 */
   resumeCard: { backgroundColor: '#5D7341', borderRadius: 20, padding: 20, marginBottom: 16, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.15, shadowRadius: 8, elevation: 4 },
   resumeTitle: { color: '#FFF', fontSize: 16, fontWeight: 'bold', marginBottom: 6 },
   resumeSub: { color: '#D5DFCA', fontSize: 13 },
   resumeLinkText: { color: '#E0E8D5', fontSize: 14, fontWeight: 'bold' },
-
   newStoryButton: { height: 140, borderWidth: 2, borderColor: '#C5D0B5', borderStyle: 'dashed', borderRadius: 24, justifyContent: 'center', alignItems: 'center', backgroundColor: 'rgba(255, 255, 255, 0.4)', marginBottom: 24 },
   plusIconCircle: { width: 40, height: 40, borderRadius: 20, backgroundColor: '#E0E8D5', justifyContent: 'center', alignItems: 'center', marginBottom: 12 },
   plusIconText: { fontSize: 24, color: '#6B8E23', fontWeight: '300' },

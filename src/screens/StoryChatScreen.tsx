@@ -11,16 +11,18 @@ import {
   Platform,
   Alert
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context'; 
 import { Ionicons } from '@expo/vector-icons';
 import { playSfx } from '../utils/sfx';
-import {
-  StartStoryResponse,
+import { 
+  StartStoryResponse, 
   sendStoryChatMessage, 
   StoryChatResponse,
   archiveStorySession,
   discardStorySession,
   StoryResumeResponse,
-  TimelineEvent
+  TimelineEvent,
+  extendStorySession // 🌟 연장 API 추가
 } from '../api/story';
 
 interface ChatMessage {
@@ -62,6 +64,9 @@ export default function StoryChatScreen({ route, navigation }: any) {
 
   const flatListRef = useRef<FlatList>(null);
   const isCompletedRef = useRef(resumeData?.is_completed ?? false);
+  
+  // 🌟 추가 연장 가능 여부 상태 (기본적으로 첫 연장은 가능하므로 true)
+  const [canExtendStory, setCanExtendStory] = useState(true);
 
   const [inputText, setInputText] = useState('');
   const [isSending, setIsSending] = useState(false);
@@ -82,10 +87,11 @@ export default function StoryChatScreen({ route, navigation }: any) {
       await discardStorySession({ session_id: sessionId });
       if (Platform.OS === 'web') {
         window.alert('대화한 스토리가 삭제됩니다.');
-        navigation.navigate('StoryMain');
+        // 🌟 수정됨: StoryMainScreen으로 이동
+        navigation.navigate('StoryMainScreen');
       } else {
         Alert.alert('알림', '대화한 스토리가 삭제됩니다.', [
-          { text: '확인', onPress: () => navigation.navigate('StoryMain') }
+          { text: '확인', onPress: () => navigation.navigate('StoryMainScreen') }
         ]);
       }
     } catch (error) {
@@ -101,15 +107,16 @@ export default function StoryChatScreen({ route, navigation }: any) {
   const handleArchive = async () => {
     try {
       const response = await archiveStorySession({ session_id: sessionId });
-      playSfx('usePoints'); // 보관하면서 포인트가 차감된 시점
+      playSfx('usePoints'); 
       if (Platform.OS === 'web') {
         window.alert(`스토리가 저장되었습니다.\n남은 포인트: ${response.user_remaining_points}`);
-        navigation.navigate('StoryMain');
+        // 🌟 수정됨: StoryMainScreen으로 이동
+        navigation.navigate('StoryMainScreen');
       } else {
         Alert.alert(
           '저장 완료', 
           `스토리가 저장되었습니다.\n남은 포인트: ${response.user_remaining_points}`, 
-          [{ text: '확인', onPress: () => navigation.navigate('StoryMain') }]
+          [{ text: '확인', onPress: () => navigation.navigate('StoryMainScreen') }]
         );
       }
     } catch (error) {
@@ -142,6 +149,43 @@ export default function StoryChatScreen({ route, navigation }: any) {
     }
   };
 
+  const handleExtend = async () => {
+    try {
+      setIsSending(true);
+      const response = await extendStorySession({ session_id: sessionId });
+      
+      playSfx('usePoints');
+      if (Platform.OS === 'web') {
+        window.alert(`스토리가 연장되었습니다!\n남은 포인트: ${response.user_remaining_points}`);
+      } else {
+        Alert.alert('연장 완료', `스토리가 연장되었습니다!\n남은 포인트: ${response.user_remaining_points}`);
+      }
+
+      setCanExtendStory(response.can_extend);
+      isCompletedRef.current = false;
+
+      const newAiMsg: ChatMessage = {
+        id: Date.now().toString() + '-ai-extend',
+        role: 'assistant',
+        content: response.ai_message,
+        isQuiz: false,
+      };
+      setMessages((prev) => [...prev, newAiMsg]);
+      playSfx('receiveChat');
+
+    } catch (error) {
+      console.error('스토리 연장 실패:', error);
+      if (Platform.OS === 'web') {
+        window.alert('연장에 실패했습니다. 스토리를 종료합니다.');
+      } else {
+        Alert.alert('오류', '연장에 실패했습니다. 스토리를 종료합니다.');
+      }
+      promptSaveStory(); 
+    } finally {
+      setIsSending(false);
+    }
+  };
+
   const handleBack = () => {
     if (isCompletedRef.current) {
       promptSaveStory();
@@ -151,12 +195,13 @@ export default function StoryChatScreen({ route, navigation }: any) {
     if (Platform.OS === 'web') {
       const isConfirmed = window.confirm('대화는 저장되어 있어요. 나중에 이어서 할 수 있습니다.\n나가시겠습니까?');
       if (isConfirmed) {
-        navigation.navigate('StoryMain');
+        // 🌟 수정됨: StoryMainScreen으로 이동
+        navigation.navigate('StoryMainScreen');
       }
     } else {
       Alert.alert('대화 나가기', '대화는 저장되어 있어요. 나중에 이어서 할 수 있습니다.', [
         { text: '취소', style: 'cancel' },
-        { text: '나가기', onPress: () => navigation.navigate('StoryMain') },
+        { text: '나가기', onPress: () => navigation.navigate('StoryMainScreen') },
       ]);
     }
   };
@@ -188,8 +233,6 @@ export default function StoryChatScreen({ route, navigation }: any) {
         ));
         if (response.answer_result === 'correct') {
           playSfx('correct');
-        } else {
-          // 오답음 파일이 준비되면 여기에 playSfx('incorrect')를 넣으면 된다.
         }
       }
 
@@ -203,30 +246,52 @@ export default function StoryChatScreen({ route, navigation }: any) {
       };
       setMessages((prev) => [...prev, newAiMsg]);
 
-      // 퀴즈가 딸려 온 답장이면 퀴즈 등장 소리로 대체한다.
       playSfx(response.is_quiz ? 'quiz' : 'receiveChat');
 
       if (response.is_completed) {
         isCompletedRef.current = true;
         setTimeout(() => {
-          if (Platform.OS === 'web') {
-            const isConfirmed = window.confirm(`퀴즈 ${response.current_quiz_count}개를 모두 풀었어요!\n이 스토리를 보관함에 저장할까요?\n확인: 저장, 취소: 삭제`);
-            if (isConfirmed) {
-              handleArchive();
+          
+          if (canExtendStory) {
+            if (Platform.OS === 'web') {
+              const isConfirmed = window.confirm(`퀴즈를 모두 풀었어요!\n100포인트를 사용하여 대화를 연장하시겠습니까?\n확인: 연장, 취소: 종료(저장/삭제 선택)`);
+              if (isConfirmed) {
+                handleExtend();
+              } else {
+                promptSaveStory();
+              }
             } else {
-              handleDiscard();
+              Alert.alert(
+                '스토리 연장',
+                '퀴즈를 모두 풀었어요!\n100포인트를 사용하여 대화를 연장하시겠습니까?',
+                [
+                  { text: '아니요 (종료)', style: 'cancel', onPress: promptSaveStory },
+                  { text: '네 (연장)', onPress: handleExtend },
+                ],
+                { cancelable: false }
+              );
             }
           } else {
-            Alert.alert(
-              '스토리 완료',
-              `퀴즈 ${response.current_quiz_count}개를 모두 풀었어요!\n이 스토리를 보관함에 저장할까요?`,
-              [
-                { text: '아니요 (삭제)', style: 'destructive', onPress: handleDiscard },
-                { text: '네 (저장)', onPress: handleArchive },
-              ],
-              { cancelable: false }
-            );
+            if (Platform.OS === 'web') {
+              const isConfirmed = window.confirm(`최대 연장 횟수에 도달하여 스토리가 종료됩니다.\n이 스토리를 보관함에 저장할까요?\n확인: 저장, 취소: 삭제`);
+              if (isConfirmed) {
+                handleArchive();
+              } else {
+                handleDiscard();
+              }
+            } else {
+              Alert.alert(
+                '스토리 종료',
+                '최대 연장 횟수에 도달하여 스토리가 종료됩니다.\n이 스토리를 보관함에 저장할까요?',
+                [
+                  { text: '아니요 (삭제)', style: 'destructive', onPress: handleDiscard },
+                  { text: '네 (저장)', onPress: handleArchive },
+                ],
+                { cancelable: false }
+              );
+            }
           }
+
         }, 500);
       }
 
@@ -324,7 +389,7 @@ export default function StoryChatScreen({ route, navigation }: any) {
   };
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container}>
       <KeyboardAvoidingView 
         style={{ flex: 1 }} 
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
@@ -381,7 +446,7 @@ export default function StoryChatScreen({ route, navigation }: any) {
           </TouchableOpacity>
         </View>
       </KeyboardAvoidingView>
-    </View>
+    </SafeAreaView>
   );
 }
 
