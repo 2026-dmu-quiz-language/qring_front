@@ -1,10 +1,11 @@
 import React from 'react';
-import { View, StyleSheet, SafeAreaView } from 'react-native';
+import { View, StyleSheet } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { theme } from '../../constants/theme';
 
 export const ScreenWrapper = ({ children, style }: any) => {
   return (
-    <SafeAreaView style={styles.safeArea}>
+    <SafeAreaView style={styles.safeArea} edges={['top']}>
       <View style={[styles.container, style]}>
         {children}
       </View>
@@ -15,10 +16,11 @@ export const ScreenWrapper = ({ children, style }: any) => {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: theme.colors.background, // 공통 배경색 적용
+    backgroundColor: theme.colors.background, 
   },
   container: {
     flex: 1,
-    paddingHorizontal: 20, // 공통 좌우 여백
+    backgroundColor: theme.colors.background, 
+    paddingHorizontal: 20,
   },
 });

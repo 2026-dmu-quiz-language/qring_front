@@ -8,7 +8,7 @@ import {
   Image,
   ActivityIndicator,
   Alert,
-  Platform, // 🌟 웹/앱 호환을 위해 Platform 추가
+  Platform, 
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { useFocusEffect } from '@react-navigation/native';
@@ -104,19 +104,16 @@ const StoryHomeScreen = () => {
     const confirmMessage = `${ep.title}을(를) 열람하시겠습니까?\n${ep.requiredPoints || 0}포인트 차감`;
 
     if (Platform.OS === 'web') {
-      // 웹 환경
       const isConfirmed = window.confirm(confirmMessage);
       if (isConfirmed) {
-        // 실제 API 연동 시 이곳에 포인트 차감 API 호출 로직을 넣습니다.
         window.alert('포인트가 차감되었습니다!');
         navigation.navigate('ChatLearn', {
           episodeId: ep.contentId, 
           episodeTitle: ep.title,
-          status: ep.status // status 값 추가
+          status: ep.status 
         });
       }
     } else {
-      // 앱 환경
       Alert.alert(
         '잠금 해제',
         confirmMessage,
@@ -125,8 +122,6 @@ const StoryHomeScreen = () => {
           { 
             text: '확인', 
             onPress: () => {
-              // 실제 API 연동 시 이곳에 포인트 차감 API 호출 로직을 넣습니다.
-              // iOS에서 Alert 연달아 띄울 때 씹히는 현상 방지를 위해 약간의 딜레이 추가
               setTimeout(() => {
                 Alert.alert(
                   '알림',
@@ -138,7 +133,7 @@ const StoryHomeScreen = () => {
                         navigation.navigate('ChatLearn', {
                           episodeId: ep.contentId, 
                           episodeTitle: ep.title,
-                          status: ep.status // status 값 추가
+                          status: ep.status 
                         });
                       }
                     }
@@ -214,7 +209,6 @@ const StoryHomeScreen = () => {
                     if (isLocked) {
                       handleUnlockPress(ep);
                     } else {
-                      // UNLOCKED 상태일 때도 status 값을 함께 전달합니다.
                       navigation.navigate('ChatLearn', {
                         episodeId: ep.contentId, 
                         episodeTitle: ep.title,
@@ -223,51 +217,47 @@ const StoryHomeScreen = () => {
                     }
                   }}
                 >
-                  {/* 기본 카드 콘텐츠 */}
-                  <View style={{ opacity: isLocked ? 0.9 : 1 }}>
+                  {/* 1. 이미지 영역 (잠금 오버레이 포함) */}
+                  <View style={styles.imageWrap}>
                     {ep.thumbnailUrl ? (
                       <Image source={{ uri: ep.thumbnailUrl }} style={styles.cardImage} resizeMode="cover" />
                     ) : (
                       <View style={[styles.cardImage, { backgroundColor: '#EFEFE1' }]} />
                     )}
 
-                    <View style={styles.cardInfo}>
-                      <Text style={styles.cardTitle}>{ep.title}</Text>
-                      <View style={styles.cardMeta}>
-                        <View style={styles.badgeWrap}>
-                          <View style={styles.badge}>
-                            <Text style={styles.badgeText}>퀴즈 {ep.quizCount || 0}개</Text>
-                          </View>
-                          
-                          {ep.isCompleted && (
-                            <View style={styles.badgeCompleted}>
-                              <Text style={styles.badgeTextCompleted}>✅ 학습 완료</Text>
-                            </View>
-                          )}
+                    {/* 잠금 화면 오버레이 (이미지 영역에만 덮임) */}
+                    {isLocked && (
+                      <View style={styles.lockedOverlay}>
+                        <View style={styles.lockIconCircle}>
+                          <Ionicons name="lock-closed" size={18} color="#FFF" />
                         </View>
+                        <Text style={styles.lockedText}>
+                          학습하려면 <Text style={styles.lockedPointsText}>{ep.requiredPoints || 0} P</Text>가 필요해요
+                        </Text>
+                        <View style={styles.unlockButton}>
+                          <Text style={styles.unlockButtonText}>포인트로 잠금해제</Text>
+                        </View>
+                      </View>
+                    )}
+                  </View>
+
+                  {/* 2. 하단 텍스트 영역 (항상 선명하게 보임) */}
+                  <View style={styles.cardInfo}>
+                    <Text style={styles.cardTitle}>{ep.title}</Text>
+                    <View style={styles.cardMeta}>
+                      <View style={styles.badgeWrap}>
+                        <View style={styles.badge}>
+                          <Text style={styles.badgeText}>퀴즈 {ep.quizCount || 0}개</Text>
+                        </View>
+                        
+                        {ep.isCompleted && (
+                          <View style={styles.badgeCompleted}>
+                            <Text style={styles.badgeTextCompleted}>✅ 학습 완료</Text>
+                          </View>
+                        )}
                       </View>
                     </View>
                   </View>
-
-                  {/* 잠금 화면 오버레이 */}
-                  {isLocked && (
-                    <View style={styles.lockedOverlay}>
-                      <View style={styles.lockIconCircle}>
-                        <Ionicons name="lock-closed" size={20} color="#FFF" />
-                      </View>
-                      <Text style={styles.lockedText}>
-                        이 스토리를 학습하려면{'\n'}
-                        <Text style={styles.lockedPointsText}>{ep.requiredPoints || 0} 포인트</Text>가 필요합니다
-                      </Text>
-                      <TouchableOpacity 
-                        style={styles.unlockButton}
-                        onPress={() => handleUnlockPress(ep)}
-                        activeOpacity={0.7}
-                      >
-                        <Text style={styles.unlockButtonText}>포인트로 잠금해제</Text>
-                      </TouchableOpacity>
-                    </View>
-                  )}
                 </TouchableOpacity>
               );
             })}
@@ -311,8 +301,15 @@ const styles = StyleSheet.create({
     elevation: 3,
     position: 'relative', 
   },
-  cardImage: {
+  
+  // 새롭게 분리된 이미지 래퍼 영역
+  imageWrap: {
     height: 140,
+    width: '100%',
+    position: 'relative', 
+  },
+  cardImage: {
+    height: '100%',
     width: '100%',
   },
   cardInfo: { padding: 20 },
@@ -326,43 +323,43 @@ const styles = StyleSheet.create({
   badgeCompleted: { backgroundColor: '#F0F0F0', paddingHorizontal: 10, paddingVertical: 4, borderRadius: 12 },
   badgeTextCompleted: { fontSize: 12, fontWeight: 'bold', color: '#666' },
 
+  // 이미지 영역 안에서만 위치하도록 absoluteFill 적용 및 사이즈 축소
   lockedOverlay: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     backgroundColor: 'rgba(0, 0, 0, 0.65)',
     justifyContent: 'center',
     alignItems: 'center',
-    padding: 20,
+    padding: 10,
     zIndex: 10,
   },
   lockIconCircle: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
+    width: 36,
+    height: 36,
+    borderRadius: 18,
     backgroundColor: 'rgba(255, 255, 255, 0.25)',
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 12,
+    marginBottom: 6,
   },
   lockedText: {
     color: '#FFFFFF',
-    fontSize: 15,
+    fontSize: 14,
     fontWeight: 'bold',
     textAlign: 'center',
-    lineHeight: 22,
-    marginBottom: 16,
+    marginBottom: 10,
   },
   lockedPointsText: {
     color: '#EDD59E', 
   },
   unlockButton: {
     backgroundColor: '#5D7341', 
-    paddingVertical: 10,
-    paddingHorizontal: 24,
+    paddingVertical: 8,
+    paddingHorizontal: 16,
     borderRadius: 20,
   },
   unlockButtonText: {
     color: '#FFFFFF',
-    fontSize: 14,
+    fontSize: 13,
     fontWeight: '600',
   },
 });

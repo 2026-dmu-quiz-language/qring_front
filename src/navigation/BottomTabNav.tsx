@@ -1,9 +1,9 @@
 import React from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { View, Text, StyleSheet } from 'react-native';
+import { View, Text, StyleSheet, Platform, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useSafeAreaInsets } from 'react-native-safe-area-context'; 
 import { theme } from '../constants/theme';
-import { TAB_BAR_HEIGHT, TAB_BAR_BOTTOM_OFFSET } from '../constants/layout';
 import StoryHomeScreen from '../screens/StoryHomeScreen';
 import DashboardScreen from '../screens/DashboardScreen';
 import WrongNoteScreen from '../screens/WrongNoteScreen';
@@ -12,28 +12,34 @@ import StoryMainScreen from '../screens/StoryMainScreen';
 const Tab = createBottomTabNavigator();
 
 export const BottomTabNav = () => {
+  const insets = useSafeAreaInsets(); 
+
   return (
     <Tab.Navigator
       initialRouteName="Dashboard"
       screenOptions={({ route }) => ({
         headerShown: false,
-        tabBarStyle: styles.tabBar,
         tabBarShowLabel: false,
-        safeAreaInsets: { bottom: 0 }, // 아이폰 기본 하단 여백 제거
         
-        // 🌟 [핵심 해결책 1] 작게 고정되어 있던 아이콘 상자 자체를 탭바 전체 높이로 늘립니다.
-        tabBarIconStyle: {
-          width: '100%',
-          height: '100%',
-          justifyContent: 'center',
-          alignItems: 'center',
+        // 🌟 핵심: (props as any)를 사용해 타입 충돌 에러를 무시하고 넘깁니다.
+        tabBarButton: (props) => (
+          <TouchableOpacity {...(props as any)} activeOpacity={1} />
+        ),
+        
+        tabBarStyle: {
+          backgroundColor: '#FFFFFF',
+          borderTopWidth: 1,
+          borderTopColor: '#EFEFEF',
+          height: Platform.OS === 'ios' ? 55 + insets.bottom : 60 + (insets.bottom > 0 ? insets.bottom : 10),
+          paddingBottom: insets.bottom > 0 ? insets.bottom : 6,
+          paddingTop: 6,
+          overflow: 'hidden', 
         },
         
-        // 🌟 [핵심 해결책 2] 터치 영역 전체를 수직/수평 정중앙 정렬합니다.
         tabBarItemStyle: {
-          height: TAB_BAR_HEIGHT, // 탭바 높이와 일치시켜 쏠림 방지
           justifyContent: 'center',
           alignItems: 'center',
+          height: 38,
         },
         
         tabBarIcon: ({ focused }) => {
@@ -58,7 +64,7 @@ export const BottomTabNav = () => {
             <View style={[styles.tabItem, focused && styles.tabItemActive]}>
               <Ionicons
                 name={iconName}
-                size={20}
+                size={22} 
                 color={focused ? theme.colors.primary : '#888'}
               />
               <Text style={[styles.tabLabel, focused && styles.tabLabelActive]}>
@@ -78,38 +84,20 @@ export const BottomTabNav = () => {
 };
 
 const styles = StyleSheet.create({
-  tabBar: {
-    position: 'absolute',
-    bottom: TAB_BAR_BOTTOM_OFFSET, // 화면 바닥에서 띄우는 높이
-    left: 20,
-    right: 20,
-    backgroundColor: '#FFFFFF',
-    borderRadius: 35,
-    height: TAB_BAR_HEIGHT, // 🌟 전체 푸터 바의 명확한 고정 높이
-    elevation: 5,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.08,
-    shadowRadius: 10,
-    borderTopWidth: 0,
-    paddingBottom: 0, 
-    paddingTop: 0,
-  },
   tabItem: {
     flexDirection: 'column',
     alignItems: 'center',
     justifyContent: 'center',
-    width: 76, 
-    height: 52, // 🌟 전체 높이 72 안에서 위아래 정확히 10px씩 대칭 여백이 남도록 설정
-    borderRadius: 18,
+    width: 68, 
+    height: 44, 
   },
   tabItemActive: {
-    backgroundColor: theme.colors.secondary, // 연두색 배경
+    backgroundColor: 'transparent', 
   },
   tabLabel: {
     fontSize: 10,
     color: '#888',
-    marginTop: 2,
+    marginTop: 2, 
     fontWeight: '600',
   },
   tabLabelActive: {
