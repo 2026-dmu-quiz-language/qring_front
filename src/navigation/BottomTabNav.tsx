@@ -35,7 +35,7 @@ export const BottomTabNav = () => {
         tabBarItemStyle: {
           justifyContent: 'center',
           alignItems: 'center',
-          height: 48, // 터치 영역을 탭 바 내부에 알맞게 고정
+          height: 38, // 터치 영역을 탭 바 내부에 알맞게 고정
         },
         
         tabBarIcon: ({ focused }) => {
