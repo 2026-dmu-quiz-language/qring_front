@@ -12,12 +12,12 @@ interface HeaderProps {
   title?: string;
   leftType?: 'back' | 'close' | 'none';
   rightType?: 'sprout' | 'menu' | 'profile' | 'none';
+  onLeftPress?: () => void; // 🌟 왼쪽 버튼 클릭 시 동작을 커스텀할 수 있도록 추가
   onRightPress?: () => void;
   showLogo?: boolean;
   userName?: string;
 }
 
-// 환경 변수 또는 상수 파일에서 백엔드 주소 가져오기 (임시 하드코딩)
 const API_BASE_URL = 'https://q-ring.app/api/v1/auth';
 
 const LANGUAGES = [
@@ -30,6 +30,7 @@ export const Header = ({
   title,
   leftType = 'back',
   rightType = 'none',
+  onLeftPress,
   onRightPress,
   showLogo = false,
   userName
@@ -39,18 +40,14 @@ export const Header = ({
   const [activeLang, setActiveLang] = useState('');
   const [enabledLangs, setEnabledLangs] = useState<string[]>([]);
 
-  // 🌟 1. 화면에 보여줄 이름을 담을 그릇 (처음엔 '학습자'로 둠)
   const [displayName, setDisplayName] = useState('학습자');
 
-  // 🌟 2. 닉네임 자동 저장 & 불러오기 로직
   React.useEffect(() => {
     const fetchAndSaveName = async () => {
       if (userName) {
-        // 대시보드처럼 이름을 직접 넘겨준 경우: 화면에 띄우고 메모장에 저장!
         setDisplayName(userName);
         await AsyncStorage.setItem('savedUserName', userName);
       } else {
-        // 스토리홈처럼 이름을 안 넘겨준 경우: 메모장에서 꺼내오기!
         const saved = await AsyncStorage.getItem('savedUserName');
         if (saved) {
           setDisplayName(saved);
@@ -61,7 +58,6 @@ export const Header = ({
   }, [userName]);
 
   const fetchLangStatus = async () => {
-    console.log('🔥 [fetchLangStatus] 호출됨');
     try {
       const saved = await AsyncStorage.getItem('activeLang');
       if (saved) setActiveLang(saved);
@@ -70,10 +66,8 @@ export const Header = ({
         LANGUAGES.map(async (lang) => {
           try {
             const res = await checkLanguage(lang.code);
-            console.log(`📤 [langcheck] ${lang.code} →`, res);
             return { code: lang.code, enabled: res };
           } catch (e: any) {
-            console.error(`❌ [langcheck] ${lang.code} 실패:`, e.message, e.response?.data);
             return { code: lang.code, enabled: false };
           }
         }),
@@ -101,9 +95,8 @@ export const Header = ({
     }
   };
 
-  // 🌟 오른쪽 버튼 클릭 핸들러 (profile일 때는 메뉴를 띄우고, 아니면 부모가 넘겨준 함수 실행)
   const handleRightPress = () => {
-    if (rightType === 'profile') {
+    if (rightType === 'profile' || rightType === 'menu') {
       setProfileMenuVisible(true);
       fetchLangStatus();
     } else if (onRightPress) {
@@ -111,12 +104,9 @@ export const Header = ({
     }
   };
 
-  // 🌟 로그아웃 API 호출 및 처리 로직
   const handleLogout = async () => {
     try {
       const token = await AsyncStorage.getItem('accessToken');
-      
-      // 토큰이 있다면 백엔드에 로그아웃 요청 (토큰 만료 처리 등)
       if (token) {
         await axios.post(`${API_BASE_URL}/logout`, {}, {
           headers: { Authorization: `Bearer ${token}` }
@@ -124,16 +114,12 @@ export const Header = ({
       }
     } catch (error) {
       console.error('Logout API Error:', error);
-      // 서버에서 에러가 나더라도 클라이언트(앱)에서는 로그아웃 처리를 진행하는 것이 일반적입니다.
     } finally {
-      // 1. 기기에 저장된 토큰 삭제
       await AsyncStorage.removeItem('accessToken');
       await AsyncStorage.removeItem('refreshToken');
       
-      // 2. 모달 닫기
       setProfileMenuVisible(false);
 
-      // 3. 네비게이션 스택을 초기화하며 로그인 화면으로 이동 (뒤로가기 방지)
       Alert.alert('로그아웃', '정상적으로 로그아웃 되었습니다.', [
         { 
           text: '확인', 
@@ -147,36 +133,40 @@ export const Header = ({
     <View style={styles.headerContainer}>
       <View style={styles.topBar}>
         
-        {showLogo ? (
-          <View style={styles.logoSection}>
-            <Text style={styles.greetingText}>안녕하세요, {displayName}님!</Text>
+        {/* 왼쪽 섹션 (뒤로가기 등) */}
+        <View style={styles.leftSection}>
+          {leftType === 'back' && (
+            <TouchableOpacity 
+              onPress={onLeftPress || (() => navigation.goBack())} 
+              style={styles.iconButton}
+            >
+              <Ionicons name="chevron-back" size={26} color="#333" />
+            </TouchableOpacity>
+          )}
+          {leftType === 'close' && (
+            <TouchableOpacity 
+              onPress={onLeftPress || (() => navigation.goBack())} 
+              style={styles.iconButton}
+            >
+              <Ionicons name="close" size={26} color="#333" />
+            </TouchableOpacity>
+          )}
+        </View>
+
+        {/* 중앙 섹션 (로고 또는 타이틀) */}
+        <View style={styles.centerSection}>
+          {showLogo ? (
             <Image 
               source={require('../../../assets/quring_logo.png')} 
-              style={styles.headerLogo} 
+              style={styles.headerLogoCentered} 
               resizeMode="contain" 
             />
-          </View>
-        ) : (
-          <>
-            <View style={styles.leftSection}>
-              {leftType === 'back' && (
-                <TouchableOpacity onPress={() => navigation.goBack()} style={styles.iconButton}>
-                  <Ionicons name="arrow-back" size={24} color={theme.colors.headerTitleText} />
-                </TouchableOpacity>
-              )}
-              {leftType === 'close' && (
-                <TouchableOpacity onPress={() => navigation.goBack()} style={styles.iconButton}>
-                  <Ionicons name="close" size={24} color={theme.colors.headerTitleText} />
-                </TouchableOpacity>
-              )}
-            </View>
+          ) : (
+            title && <Text style={styles.title} numberOfLines={1}>{title}</Text>
+          )}
+        </View>
 
-            <View style={styles.centerSection}>
-              {title && <Text style={styles.title}>{title}</Text>}
-            </View>
-          </>
-        )}
-
+        {/* 오른쪽 섹션 */}
         <View style={styles.rightSection}>
           {rightType === 'sprout' && (
             <View style={styles.sproutCircle}>
@@ -185,32 +175,30 @@ export const Header = ({
           )}
           {rightType === 'menu' && (
             <TouchableOpacity onPress={handleRightPress} style={styles.iconButton}>
-              <Ionicons name="ellipsis-vertical" size={24} color={theme.colors.primary} />
+              <Ionicons name="menu" size={30} color="#333" />
             </TouchableOpacity>
           )}
           {rightType === 'profile' && (
             <TouchableOpacity onPress={handleRightPress} style={styles.iconButton}>
-              <Ionicons name="person-circle" size={28} color="#2C3E50" />
+              <Ionicons name="person-circle" size={28} color="#333" />
             </TouchableOpacity>
           )}
         </View>
+
       </View>
 
-      {/* 🌟 프로필 메뉴 팝업 (Modal) */}
       <Modal
         visible={isProfileMenuVisible}
         transparent={true}
         animationType="fade"
         onRequestClose={() => setProfileMenuVisible(false)}
       >
-        {/* 🌟 1. 모달 배경 (메뉴 박스를 감싸지 않고 따로 둡니다!) */}
         <TouchableOpacity 
           style={styles.modalOverlay} 
           activeOpacity={1} 
           onPress={() => setProfileMenuVisible(false)}
         />
           
-        {/* 🌟 2. 실제 메뉴 컨테이너 (배경과 겹치지 않게 밖으로 꺼냄) */}
         <View style={styles.menuContainer}>
           <View style={styles.menuHeader}>
             <Ionicons name="person-circle" size={32} color="#CCC" />
@@ -230,7 +218,6 @@ export const Header = ({
           <View style={styles.menuDivider} />
 
           <Text style={styles.langSectionLabel}>학습 언어 전환</Text>
-          {/* 세그먼트 컨트롤: 연한 틀 안에서 선택된 언어 칸만 흰 카드로 떠오른다 */}
           <View style={styles.langTrack}>
             {LANGUAGES.map((lang) => {
               const isEnabled = enabledLangs.includes(lang.code);
@@ -266,7 +253,6 @@ export const Header = ({
           </TouchableOpacity>
         </View>
       </Modal>
-
     </View>
   );
 };
@@ -274,7 +260,7 @@ export const Header = ({
 const styles = StyleSheet.create({
   headerContainer: {
     width: '100%',
-    backgroundColor: 'rgba(233, 233, 219, 0.8)',
+    backgroundColor: 'transparent',
     paddingBottom: 10,
     paddingTop: 10,
   },
@@ -283,33 +269,31 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: 10,
-    backgroundColor: 'rgba(250, 250, 236, 0.8)',
+    paddingHorizontal: 16, 
+    backgroundColor: 'transparent', 
   },
   leftSection: { width: 40, alignItems: 'flex-start' },
-  centerSection: { flex: 1, alignItems: 'flex-start', paddingLeft: 5 },
+  centerSection: { flex: 1, alignItems: 'center' }, 
   rightSection: { width: 40, alignItems: 'flex-end' },
   title: {
-    fontSize: 18,
-    fontFamily: theme.fonts.headline,
-    color: theme.colors.headerTitleText,
+    fontSize: 16, 
     fontWeight: 'bold',
+    color: '#333',
   },
-  iconButton: { padding: 5, marginLeft: -5 },
+  iconButton: { padding: 4 },
   sproutCircle: { width: 32, height: 32, borderRadius: 16, backgroundColor: theme.colors.lightPeach, alignItems: 'center', justifyContent: 'center' },
-  logoSection: { flex: 1, alignItems: 'flex-start', justifyContent: 'center', paddingLeft: 5, paddingVertical: 5 },
-  greetingText: { fontSize: 14, fontWeight: '600', color: '#555', marginBottom: 4 },
-  headerLogo: { width: 80, height: 24 },
-
-  // 🌟 모달 관련 스타일 추가
+  headerLogoCentered: { 
+    width: 130, 
+    height: 40 
+  },
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.3)', // 배경을 살짝 어둡게 처리
+    backgroundColor: 'rgba(0, 0, 0, 0.3)',
   },
   menuContainer: {
     position: 'absolute',
-    top: 60, // 헤더 높이만큼 띄움
-    right: 15, // 화면 우측에 여백
+    top: 60, 
+    right: 15, 
     backgroundColor: '#FFF',
     borderRadius: 16,
     paddingVertical: 10,
@@ -359,7 +343,6 @@ const styles = StyleSheet.create({
     color: '#999',
     marginBottom: 8,
   },
-  // 세그먼트 컨트롤 바깥 틀
   langTrack: {
     flexDirection: 'row',
     padding: 3,
@@ -367,7 +350,6 @@ const styles = StyleSheet.create({
     backgroundColor: '#EEF0E6',
     marginBottom: 4,
   },
-  // 언어 한 칸
   langSegment: {
     flex: 1,
     alignItems: 'center',
@@ -375,7 +357,6 @@ const styles = StyleSheet.create({
     paddingVertical: 7,
     borderRadius: 9,
   },
-  // 선택된 칸은 흰 카드로 살짝 떠 보이게 한다
   langSegmentActive: {
     backgroundColor: '#FFFFFF',
     shadowColor: '#000',
@@ -389,12 +370,10 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: '#8A8F80',
   },
-  // 흰 바탕 위 초록 글자라 선택 상태가 또렷하게 읽힌다
   langLabelActive: {
     color: theme.colors.primary,
     fontWeight: '700',
   },
-  // 아직 열지 않은 언어
   langLabelDisabled: {
     color: '#C9CCC0',
   },

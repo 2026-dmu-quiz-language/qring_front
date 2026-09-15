@@ -8,6 +8,7 @@ import {
   ActivityIndicator
 } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native'; 
+// 뒤로가기 아이콘이 더 이상 필요 없으므로 Ionicons를 지워도 무방하지만, 혹시 나중을 위해 남겨두거나 지우셔도 됩니다.
 import { Ionicons } from '@expo/vector-icons'; 
 import { 
   fetchStoryLibrary, 
@@ -58,18 +59,22 @@ export default function StoryMainScreen({ navigation }: any) {
 
   return (
     <ScreenWrapper style={{ paddingHorizontal: 0 }}>
-      <ScrollView contentContainerStyle={styles.scrollContent}>
-        
-        <View style={styles.header}>
-          <TouchableOpacity onPress={() => navigation.navigate('Dashboard')} style={styles.iconBtn}>
-            <Ionicons name="chevron-back" size={28} color="#333" />
-          </TouchableOpacity>
-          <Text style={styles.headerTitle} numberOfLines={1}>
-            AI 인터렉티브 스토리
-          </Text>
-          <View style={{ width: 28 }} /> 
+      <View style={styles.headerContainer}>
+        <View style={styles.topBar}>
+          {/* 🌟 아이콘을 없애고 빈 공간만 둬서 타이틀이 정중앙에 오도록 유지합니다. */}
+          <View style={styles.leftSection} />
+          
+          <View style={styles.centerSection}>
+            <Text style={styles.title} numberOfLines={1}>
+              AI 인터렉티브 스토리
+            </Text>
+          </View>
+          
+          <View style={styles.rightSection} />
         </View>
+      </View>
 
+      <ScrollView contentContainerStyle={styles.scrollContent}>
         <View style={styles.titleSection}>
           <Text style={styles.mainTitle}>내가 만든 스토리</Text>
           <Text style={styles.subTitle}>
@@ -145,10 +150,15 @@ export default function StoryMainScreen({ navigation }: any) {
 }
 
 const styles = StyleSheet.create({
+  headerContainer: { width: '100%', backgroundColor: 'transparent', paddingBottom: 10, paddingTop: 10 },
+  topBar: { minHeight: 56, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, backgroundColor: 'transparent' },
+  leftSection: { width: 40, alignItems: 'flex-start' },
+  centerSection: { flex: 1, alignItems: 'center' },
+  rightSection: { width: 40, alignItems: 'flex-end' },
+  title: { fontSize: 16, fontWeight: 'bold', color: '#333' },
+  iconButton: { padding: 4, marginLeft: -5 },
+
   scrollContent: { padding: 24, paddingBottom: 100 },
-  header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 10, marginBottom: 30 },
-  iconBtn: { padding: 4, marginLeft: -4 },
-  headerTitle: { flex: 1, textAlign: 'center', fontSize: 16, fontWeight: 'bold', color: '#333' },
   titleSection: { marginBottom: 30 },
   mainTitle: { fontSize: 28, fontWeight: 'bold', color: '#222', marginBottom: 12 },
   subTitle: { fontSize: 14, color: '#555', lineHeight: 20 },

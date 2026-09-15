@@ -48,7 +48,7 @@ const WrongNoteScreen = () => {
   if (loading) {
     return (
       <ScreenWrapper style={{ paddingHorizontal: 0 }}>
-        <Header title="오답 노트" leftType="none" rightType="profile" />
+        <Header title="오답 노트" leftType="none" rightType="none" />
         <View style={styles.centerWrap}>
           <ActivityIndicator size="large" color={theme.colors.primary} />
         </View>
@@ -59,7 +59,7 @@ const WrongNoteScreen = () => {
   if (error) {
     return (
       <ScreenWrapper style={{ paddingHorizontal: 0 }}>
-        <Header title="오답 노트" leftType="none" rightType="profile" />
+        <Header title="오답 노트" leftType="none" rightType="none" />
         <View style={styles.centerWrap}>
           <Text style={styles.errorText}>{error}</Text>
         </View>
@@ -69,7 +69,7 @@ const WrongNoteScreen = () => {
 
   return (
     <ScreenWrapper style={{ paddingHorizontal: 0 }}>
-      <Header title="오답 노트" leftType="none" rightType="profile" />
+      <Header title="오답 노트" leftType="none" rightType="none" />
 
       <ScrollView
         style={styles.body}

@@ -17,7 +17,6 @@ import { getDashboard, type DashboardResponse } from '../api/dashboard';
 import { getErrorMessage } from '../utils/errorMessage';
 import { playSfx } from '../utils/sfx';
 
-// ─── 색상 ───
 const C = {
   darkGreen: '#3C6933',
   cardBorder: 'transparent',
@@ -25,15 +24,13 @@ const C = {
   streakInactive: '#d5d5c8',
 };
 
-// ─── 요일 데이터 ───
 const WEEKDAY_LABELS = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
 
-// ─── 반원 게이지 컴포넌트 ───
 const AchievementGauge = ({ percent }: { percent: number }) => {
   const safePercent = isNaN(percent) ? 0 : Math.min(100, Math.max(0, percent));
 
-  const size = 156; // 🌟 꽉 찬 느낌을 위해 소폭 확장 (150 -> 156)
-  const strokeWidth = 13; // 🌟 두께 확장 (12 -> 13)
+  const size = 156; 
+  const strokeWidth = 13; 
   const radius = (size - strokeWidth) / 2;
   const cx = size / 2;
   const cy = size / 2;
@@ -59,7 +56,6 @@ const AchievementGauge = ({ percent }: { percent: number }) => {
   );
 };
 
-// ─── 메인 컴포넌트 ───
 const DashboardScreen = () => {
   const navigation = useNavigation<any>();
   const [data, setData] = useState<DashboardResponse | null>(null);
@@ -106,25 +102,21 @@ const DashboardScreen = () => {
 
   return (
     <ScreenWrapper style={{ paddingHorizontal: 0 }}>
+      {/* 🌟 우측 아이콘을 'menu'로 설정하여 이 대시보드 화면에만 3줄 아이콘이 표시됩니다! */}
       <Header 
         showLogo={true} 
         leftType="none" 
-        rightType="profile" 
+        rightType="menu" 
         userName={data.name}
       />
 
       <ScrollView
         style={styles.bodyContainer}
-        // 탭바가 바닥에 붙어 있어 네비게이터가 이미 탭바만큼 화면을 줄여준다.
-        // 마지막 카드 아래에는 숨 쉴 틈만 남긴다.
         contentContainerStyle={{ paddingBottom: 20 }}
-        // 내용이 화면에 다 들어가면 아이폰에서도 튕기지 않게 한다.
-        // 작은 폰처럼 내용이 넘칠 때는 평소처럼 스크롤된다.
         alwaysBounceVertical={false}
         showsVerticalScrollIndicator={false}
       >
 
-        {/* 연속 학습 달성 카드 */}
         <View style={styles.streakCard}>
           <View style={styles.streakHeader}>
             <Text style={styles.streakTitle}>연속 학습 달성</Text>
@@ -146,7 +138,6 @@ const DashboardScreen = () => {
           </View>
         </View>
 
-        {/* 학습 성취도 */}
         <View style={styles.achievementSection}>
           <AchievementGauge percent={data.progressRate} />
           <Text style={styles.achievementTitle}>학습 성취도</Text>
@@ -155,7 +146,6 @@ const DashboardScreen = () => {
           </Text>
         </View>
 
-        {/* 봇 컴피티션 진입 버튼 */}
         <TouchableOpacity
           style={styles.botCompButton}
           activeOpacity={0.85}
@@ -168,7 +158,6 @@ const DashboardScreen = () => {
           <Text style={styles.botCompSub}>Q-Bot과 스피드 대결!</Text>
         </TouchableOpacity>
 
-        {/* 하단 스탯 카드 */}
         <View style={styles.statsRow}>
           <View style={styles.statCard}>
             <Text style={styles.statIcon}>📖</Text>
@@ -200,20 +189,18 @@ const DashboardScreen = () => {
   );
 };
 
-// ─── 스타일 ───
 const styles = StyleSheet.create({
   bodyContainer: {
     flex: 1,
     paddingHorizontal: 20,
-    paddingTop: 16, // 🌟 상단 여백 회복 (12 -> 16)
+    paddingTop: 16, 
   },
 
-  // 연속 학습
   streakCard: {
     backgroundColor: theme.colors.white,
     borderRadius: 20,
-    padding: 15, // 🌟 내부 볼륨 키움 (12 -> 15)
-    marginBottom: 20, // 🌟 간격 균형 조정 (14 -> 20)
+    padding: 15, 
+    marginBottom: 20, 
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.05,
@@ -226,19 +213,18 @@ const styles = StyleSheet.create({
   daysBadgeText: { fontSize: 11, fontWeight: '700', color: C.darkGreen },
   weekRow: { flexDirection: 'row', justifyContent: 'space-around' },
   weekDay: { alignItems: 'center', gap: 3 },
-  weekDot: { width: 32, height: 32, borderRadius: 16, backgroundColor: '#f0f0e8', justifyContent: 'center', alignItems: 'center' }, // 🌟 다시 크기 키움 (28 -> 32)
+  weekDot: { width: 32, height: 32, borderRadius: 16, backgroundColor: '#f0f0e8', justifyContent: 'center', alignItems: 'center' }, 
   weekDotDone: { backgroundColor: '#edf7e6' },
   weekLeaf: { fontSize: 13 },
   weekLabel: { fontSize: 11, fontWeight: '600', color: '#999' },
 
-  // 성취도
   achievementSection: {
     alignItems: 'center',
     backgroundColor: '#EFEFE1',
     borderRadius: 20,
-    padding: 15, // 🌟 내부 공간 확장 (12 -> 15)
+    padding: 15, 
     paddingTop: 16, 
-    marginBottom: 20, // 🌟 간격 확장 (14 -> 20)
+    marginBottom: 20, 
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.05,
@@ -250,13 +236,12 @@ const styles = StyleSheet.create({
   achievementTitle: { fontSize: 15, fontWeight: '800', color: '#1a1a1a', marginTop: 8 },
   achievementDesc: { fontSize: 11, color: '#888', textAlign: 'center', lineHeight: 17, marginTop: 4 },
 
-  // CTA
   ctaButton: {
     backgroundColor: theme.colors.primary,
     borderRadius: 20,
-    paddingVertical: 15, // 🌟 버튼 두께 다시 튼실하게 변경 (12 -> 15)
+    paddingVertical: 15, 
     alignItems: 'center',
-    marginBottom: 20, // 🌟 간격 확장 (14 -> 20)
+    marginBottom: 20, 
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.05,
@@ -266,7 +251,6 @@ const styles = StyleSheet.create({
   ctaTitle: { fontSize: 17, fontWeight: '800', color: '#fff' },
   ctaSub: { fontSize: 11, fontWeight: '500', color: 'rgba(255,255,255,0.7)', marginTop: 3 },
 
-  // 봇 컴피티션 진입 버튼
   botCompButton: {
     backgroundColor: theme.colors.tertiary,
     borderRadius: 20,
@@ -282,12 +266,11 @@ const styles = StyleSheet.create({
   botCompTitle: { fontSize: 17, fontWeight: '800', color: '#fff' },
   botCompSub: { fontSize: 11, fontWeight: '500', color: 'rgba(255,255,255,0.7)', marginTop: 3 },
 
-  // 마스코트 말풍선
   mascotSection: {
     flexDirection: 'row',
     alignItems: 'flex-end',
     justifyContent: 'space-between',
-    marginBottom: 20, // 🌟 간격 확장 (14 -> 20)
+    marginBottom: 20, 
   },
   speechBubble: {
     backgroundColor: theme.colors.white,
@@ -295,7 +278,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     paddingVertical: 10,
     marginRight: 6,
-    marginBottom: 20, // 🌟 마스코트 성장에 맞춰 높이 복귀 (15 -> 20)
+    marginBottom: 20, 
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.05,
@@ -316,11 +299,10 @@ const styles = StyleSheet.create({
     borderTopColor: 'transparent',
     borderBottomColor: 'transparent',
   },
-  mascotImageLeft: { width: 82, height: 82 }, // 🌟 딱 좋은 황금 밸런스 크기로 확대 (70 -> 82)
+  mascotImageLeft: { width: 82, height: 82 }, 
   mascotRight: { flexDirection: 'row', alignItems: 'flex-end' },
-  mascotImage: { width: 82, height: 82 }, // 🌟 딱 좋은 황금 밸런스 크기로 확대 (70 -> 82)
+  mascotImage: { width: 82, height: 82 }, 
 
-  // 하단 스탯
   statsRow: {
     flexDirection: 'row',
     gap: 12,
