@@ -28,7 +28,6 @@ import {
 } from '../api/competition';
 import { playSfx, playLoopSfx, stopSfx } from '../utils/sfx';
 
-// ─── 색상 ───
 const C = {
   darkGreen: '#4E5E43',
   chipGreen: '#6F9F63',
@@ -45,9 +44,6 @@ const C = {
   wrong: '#dc3545',
 };
 
-// ─── 유틸 ───
-
-// "[\"A\",\"B\"]" 형태의 JSON 문자열 필드 파싱
 const parseJsonArray = (value: string | null): string[] => {
   if (!value) return [];
   try {
@@ -58,7 +54,6 @@ const parseJsonArray = (value: string | null): string[] => {
   }
 };
 
-// 서버 quizType → 봇 설정 키
 const toBotQuizType = (quizType: BotQuestion['quizType']): QuizType => {
   if (quizType === 'multiple_choice') return 'multiple';
   if (quizType === 'subjective') return 'short';
@@ -82,9 +77,8 @@ const BotCompetitionScreen = () => {
   };
 
   const total = questions.length;
-  const winTarget = Math.floor(total / 2) + 1; // 과반수 (21문제 → 11)
+  const winTarget = Math.floor(total / 2) + 1; 
 
-  // ─── 매치 전체 상태 ───
   const [index, setIndex] = useState(0);
   const [myWins, setMyWins] = useState(0);
   const [botWins, setBotWins] = useState(0);
@@ -95,20 +89,18 @@ const BotCompetitionScreen = () => {
   const myWinsRef = useRef(0);
   const botWinsRef = useRef(0);
 
-  // ─── 라운드 상태 ───
   const [roundWinner, setRoundWinner] = useState<RoundWinner | null>(null);
-  const [lostByWrong, setLostByWrong] = useState(false); // 오답 때문에 라운드를 내준 경우 (봇 완주와 구분)
-  const [wrongFlash, setWrongFlash] = useState(false); // 재도전 유형 오답 직후 피드백
+  const [lostByWrong, setLostByWrong] = useState(false); 
+  const [wrongFlash, setWrongFlash] = useState(false); 
   const [botProgress, setBotProgress] = useState(0);
   const [paused, setPaused] = useState(false);
 
   const pausedRef = useRef(false);
   const resolvedRef = useRef(false);
-  const roundRemainRef = useRef(0); // 현재 라운드 봇의 남은 시간 (오답 페널티로 차감됨)
+  const roundRemainRef = useRef(0); 
   const roundTotalRef = useRef(0);
   const lastUserAnswerRef = useRef('');
 
-  // ─── 입력 상태 ───
   const [selected, setSelected] = useState<number | null>(null);
   const [answerText, setAnswerText] = useState('');
   const [placed, setPlaced] = useState<number[]>([]);
@@ -116,7 +108,6 @@ const BotCompetitionScreen = () => {
   const quiz: BotQuestion | undefined = questions[index];
   const section = Math.floor(index / BOT_CONFIG.questionsPerSection) + 1;
 
-  // ─── 문제 데이터 파싱 ───
   const options = useMemo(
     () => (quiz ? parseJsonArray(quiz.options) : []),
     [quiz],
@@ -138,19 +129,15 @@ const BotCompetitionScreen = () => {
     [quiz],
   );
 
-  // ─── 라운드 종료 처리 ───
   const resolveRound = (winner: RoundWinner) => {
     if (resolvedRef.current || !quiz) return;
     resolvedRef.current = true;
     setRoundWinner(winner);
 
-    // 흐르던 타이머 소리를 멈추고 승패 소리를 낸다.
-    // 다음 문제로 넘어가면 라운드 타이머 useEffect가 타이머 소리를 다시 켠다.
     stopSfx('timer');
     if (winner === 'user') {
       playSfx('correct');
     } else {
-      // 오답음 파일이 준비되면 여기에 playSfx('incorrect')를 넣으면 된다.
     }
 
     const userIsCorrect = winner === 'user';
@@ -180,7 +167,6 @@ const BotCompetitionScreen = () => {
     }, 1400);
   };
 
-  // ─── 매치 종료 → 결과 제출 ───
   const finishMatch = async () => {
     setPhase('submitting');
     try {
@@ -198,7 +184,6 @@ const BotCompetitionScreen = () => {
     }
   };
 
-  // ─── 봇 타이머: 라운드마다 리셋 ───
   useEffect(() => {
     if (!quiz || phase !== 'playing') return;
 
@@ -206,7 +191,6 @@ const BotCompetitionScreen = () => {
     roundTotalRef.current = solveTime;
     roundRemainRef.current = solveTime;
 
-    // 라운드 상태 초기화
     resolvedRef.current = false;
     lastUserAnswerRef.current = '';
     setRoundWinner(null);
@@ -217,7 +201,6 @@ const BotCompetitionScreen = () => {
     setAnswerText('');
     setPlaced([]);
 
-    // 새 라운드가 시작되면 타이머 소리를 다시 켠다.
     playLoopSfx('timer');
 
     const timer = setInterval(() => {
@@ -225,19 +208,16 @@ const BotCompetitionScreen = () => {
       roundRemainRef.current -= 0.1;
       setBotProgress(Math.min(1 - roundRemainRef.current / roundTotalRef.current, 1));
       if (roundRemainRef.current <= 0) {
-        resolveRound('bot'); // 시간이 다 되면 봇은 무조건 정답
+        resolveRound('bot'); 
       }
     }, 100);
 
     return () => {
       clearInterval(timer);
-      // 화면을 벗어나거나 라운드가 바뀌면 타이머 소리가 남지 않도록 정리한다.
       stopSfx('timer');
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [index, phase]);
 
-  // ─── 유저 제출 ───
   const checkUserAnswer = (): { userAnswer: string; correct: boolean } => {
     if (!quiz) return { userAnswer: '', correct: false };
     if (quiz.quizType === 'multiple_choice') {
@@ -258,7 +238,6 @@ const BotCompetitionScreen = () => {
           acceptableAnswers.includes(normalize(userAnswer)),
       };
     }
-    // word_arrange
     const sequence = placed.map((i) => wordBank[i]);
     const userAnswer = sequence.join(' ');
     const correct =
@@ -289,13 +268,11 @@ const BotCompetitionScreen = () => {
     }
 
     if (quiz?.quizType === 'multiple_choice') {
-      // 객관식은 기회 1번: 오답이면 기다릴 것 없이 바로 라운드를 내준다
       setLostByWrong(true);
       resolveRound('bot');
       return;
     }
 
-    // 주관식/단어조합은 재도전 가능, 대신 현재 라운드 봇 남은 시간 차감
     roundRemainRef.current -= BOT_CONFIG.wrongPenalty;
     if (roundRemainRef.current <= 0) {
       setLostByWrong(true);
@@ -307,7 +284,6 @@ const BotCompetitionScreen = () => {
     setTimeout(() => setWrongFlash(false), 1500);
   };
 
-  // ─── 일시정지 ───
   const handlePause = () => {
     pausedRef.current = true;
     setPaused(true);
@@ -320,19 +296,20 @@ const BotCompetitionScreen = () => {
   const handleResume = () => {
     pausedRef.current = false;
     setPaused(false);
-    // 라운드가 아직 안 끝났을 때만 타이머 소리를 되살린다.
     if (!resolvedRef.current) playLoopSfx('timer');
     pauseBotMatch(false)
       .then((res) => console.log('✅ [봇컴피티션] 재개:', JSON.stringify(res)))
       .catch((err) => console.error('❌ [봇컴피티션] 재개 실패:', err.message));
   };
 
-  // 그만두기: 확인 후 메인으로. 입장 포인트는 환불되지 않는다.
-  // Alert.alert는 웹에서 표시되지 않으므로 웹은 window.confirm으로 대체.
   const handleQuit = () => {
     const message = '지금 나가면 진행 상황이 사라지고 포인트는 돌려받을 수 없어요. 정말 나갈까요?';
     if (Platform.OS === 'web') {
-      if (window.confirm(message)) navigation.navigate('MainTab');
+      if (window.confirm(message)) {
+        setPaused(false);
+        pausedRef.current = false;
+        navigation.navigate('MainTab');
+      }
       return;
     }
     Alert.alert('대결 그만두기', message, [
@@ -340,12 +317,15 @@ const BotCompetitionScreen = () => {
       {
         text: '나가기',
         style: 'destructive',
-        onPress: () => navigation.navigate('MainTab'),
+        onPress: () => {
+          setPaused(false);
+          pausedRef.current = false;
+          navigation.navigate('MainTab');
+        },
       },
     ]);
   };
 
-  // ─── 방어: 문제 없이 진입한 경우 ───
   if (!quiz && phase === 'playing') {
     return (
       <ScreenWrapper style={{ paddingHorizontal: 0 }}>
@@ -362,7 +342,6 @@ const BotCompetitionScreen = () => {
     );
   }
 
-  // ─── 결과 화면 ───
   if (phase !== 'playing') {
     const isWin = myWinsRef.current > botWinsRef.current;
     return (
@@ -431,7 +410,6 @@ const BotCompetitionScreen = () => {
     );
   }
 
-  // ─── 라운드 배너 텍스트 ───
   const bannerText =
     roundWinner === 'user'
       ? '정답! 라운드 획득 🎉'
@@ -446,20 +424,19 @@ const BotCompetitionScreen = () => {
 
   return (
     <ScreenWrapper style={{ paddingHorizontal: 0 }}>
-      {/* 상단 바 */}
       <View style={styles.topBar}>
-        <TouchableOpacity style={styles.topIconButton} onPress={handleQuit} activeOpacity={0.7}>
-          <Ionicons name="arrow-back" size={22} color={C.darkGreen} />
-        </TouchableOpacity>
+        {/* 🌟 아이콘을 빼고, 중앙 텍스트 균형을 위해 빈 View만 남겨둡니다. */}
+        <View style={styles.topIconButton} />
+        
         <Text style={styles.sectionText}>
           섹션 {section} · {index + 1}/{total}
         </Text>
+        
         <TouchableOpacity style={styles.topIconButton} onPress={handlePause} activeOpacity={0.7}>
           <Ionicons name="pause" size={22} color={C.darkGreen} />
         </TouchableOpacity>
       </View>
 
-      {/* VS 헤더 */}
       <View style={styles.vsSection}>
         <View style={styles.playerColumn}>
           <View style={styles.myAvatarRing}>
@@ -511,9 +488,7 @@ const BotCompetitionScreen = () => {
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
         >
-          {/* 문제 카드 */}
           <View style={styles.questionCard}>
-            {/* 봇 풀이 진행 */}
             <View style={styles.botTimerRow}>
               <Text style={styles.botTimerLabel}>🤖 Q-Bot 풀이 중...</Text>
               <View style={styles.botTimerTrack}>
@@ -537,7 +512,6 @@ const BotCompetitionScreen = () => {
                   : '주어진 단어를 순서대로 조합하세요.'}
             </Text>
 
-            {/* 유형별 입력 영역 */}
             {quiz.quizType === 'word_arrange' && (
               <View
                 style={[
@@ -603,7 +577,6 @@ const BotCompetitionScreen = () => {
               />
             )}
 
-            {/* 라운드 결과 / 대기 배너 */}
             {bannerText && (
               <Text
                 style={[
@@ -621,7 +594,6 @@ const BotCompetitionScreen = () => {
             )}
           </View>
 
-          {/* 단어 보기 (word_arrange 전용) */}
           {quiz.quizType === 'word_arrange' && (
             <View style={styles.wordBank}>
               {wordBank.map((word, i) => {
@@ -648,7 +620,6 @@ const BotCompetitionScreen = () => {
           )}
         </ScrollView>
 
-        {/* 정답 확인 버튼 */}
         <View style={styles.bottomBar}>
           <TouchableOpacity
             style={[styles.submitButton, !canSubmit && styles.submitButtonDisabled]}
@@ -661,7 +632,6 @@ const BotCompetitionScreen = () => {
         </View>
       </KeyboardAvoidingView>
 
-      {/* 일시정지 오버레이 */}
       <Modal visible={paused} transparent animationType="fade" onRequestClose={handleResume}>
         <View style={styles.pauseOverlay}>
           <View style={styles.pauseBox}>
@@ -702,7 +672,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: 20,
+    paddingHorizontal: 18, 
     paddingTop: 8,
   },
   topIconButton: {
@@ -718,7 +688,6 @@ const styles = StyleSheet.create({
     color: '#888',
   },
 
-  // VS 헤더
   vsSection: {
     flexDirection: 'row',
     alignItems: 'flex-start',
@@ -819,7 +788,6 @@ const styles = StyleSheet.create({
     paddingBottom: 24,
   },
 
-  // 문제 카드
   questionCard: {
     backgroundColor: theme.colors.white,
     borderRadius: 28,
@@ -902,7 +870,6 @@ const styles = StyleSheet.create({
     color: theme.colors.white,
   },
 
-  // 객관식
   optionsWrap: { gap: 10 },
   optionRow: {
     paddingHorizontal: 18,
@@ -922,7 +889,6 @@ const styles = StyleSheet.create({
   },
   optionText: { fontSize: 15, fontWeight: '600', color: '#333' },
 
-  // 주관식
   textInput: {
     borderWidth: 1.5,
     borderColor: '#E8E8E8',
@@ -951,7 +917,6 @@ const styles = StyleSheet.create({
   feedbackCorrect: { color: C.chipGreen },
   feedbackWrong: { color: C.wrong },
 
-  // 단어 보기
   wordBank: {
     flexDirection: 'row',
     flexWrap: 'wrap',
@@ -1004,7 +969,6 @@ const styles = StyleSheet.create({
     color: C.buttonText,
   },
 
-  // 결과 화면
   resultEmoji: {
     fontSize: 56,
     marginBottom: 12,
@@ -1051,7 +1015,6 @@ const styles = StyleSheet.create({
     color: '#1a1a1a',
   },
 
-  // 일시정지
   pauseOverlay: {
     flex: 1,
     backgroundColor: 'rgba(0,0,0,0.45)',

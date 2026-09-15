@@ -14,30 +14,28 @@ import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Ionicons } from '@expo/vector-icons';
 import { theme } from '../constants/theme';
 import { playSfx } from '../utils/sfx';
+import { ScreenWrapper } from '../components/layout/ScreenWrapper';
+import { Header } from '../components/layout/Header';
 
 const LearningResultScreen = () => {
   const navigation = useNavigation<NativeStackNavigationProp<any>>();
   const route = useRoute<any>(); 
 
-  // 🌟 이전 화면(ChatLearnScreen)에서 API 호출 후 넘겨준 데이터
   const { score = 0, correctCount = 0, totalQuestions = 6 } = route.params || {};
 
-  // 결과 화면에 들어오는 순간 한 번만 울린다.
   useEffect(() => {
     playSfx('result');
   }, []);
 
   return (
-    <View style={styles.safeArea}>
+    <ScreenWrapper style={{ paddingHorizontal: 0 }}>
 
-      {/* Header */}
-      <View style={styles.header}>
-        <TouchableOpacity style={styles.headerBtn} onPress={() => navigation.goBack()}>
-          <Ionicons name="close" size={26} color="#333" />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>에피소드 클리어</Text>
-        <View style={styles.headerBtn} />
-      </View>
+      <Header 
+        title="에피소드 클리어" 
+        leftType="close" 
+        rightType="none" 
+        onLeftPress={() => navigation.navigate('MainTab')} 
+      />
 
       <ScrollView
         style={styles.scrollContainer}
@@ -54,7 +52,6 @@ const LearningResultScreen = () => {
             <View style={[styles.statIconWrap, { backgroundColor: '#EBF0E6' }]}>
               <Ionicons name="star" size={20} color={theme.colors.primary} />
             </View>
-            {/* 🌟 로딩 없이 넘어온 점수 바로 표시 */}
             <Text style={styles.statValueScore}>+{score}</Text>
             <Text style={styles.statUnitEXP}>EXP</Text>
             <Text style={styles.statLabel}>획득한 점수</Text>
@@ -64,7 +61,6 @@ const LearningResultScreen = () => {
             <View style={[styles.statIconWrap, { backgroundColor: '#EBF0E6' }]}>
               <Ionicons name="checkmark-circle" size={22} color={theme.colors.primary} />
             </View>
-            {/* 🌟 로딩 없이 넘어온 정답 횟수 바로 표시 */}
             <Text style={styles.statValueCount}>{correctCount}/{totalQuestions}</Text>
             <Text style={[styles.statUnitEXP, { color: 'transparent' }]}>-</Text>
             <Text style={styles.statLabel}>정답 횟수</Text>
@@ -105,7 +101,11 @@ const LearningResultScreen = () => {
           <Text style={styles.homeButtonText}>학습 홈으로 돌아가기 ➔</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.reviewButton} onPress={() => {}}>
+        {/* 🌟 수정됨: MainTab이라는 탭 네비게이터를 거쳐서 그 안의 WrongNote 스크린으로 이동하게끔 경로 명시 */}
+        <TouchableOpacity 
+          style={styles.reviewButton} 
+          onPress={() => navigation.navigate('MainTab', { screen: 'WrongNote' })}
+        >
           <View style={styles.reviewInner}>
             <Ionicons name="document-text-outline" size={18} color="#555" />
             <Text style={styles.reviewText}>틀린 문제 다시 보기</Text>
@@ -113,18 +113,13 @@ const LearningResultScreen = () => {
         </TouchableOpacity>
       </ScrollView>
 
-    </View>
+    </ScreenWrapper>
   );
 };
 
-// 스타일 기존 코드 유지 (생략)
 const styles = StyleSheet.create({
-  safeArea: { flex: 1, backgroundColor: theme.colors.background },
-  header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingVertical: 15 },
-  headerBtn: { width: 40, alignItems: 'center', justifyContent: 'center' },
-  headerTitle: { fontSize: 18, fontWeight: 'bold', color: '#4E5E43' },
   scrollContainer: { flex: 1 },
-  scrollContent: { paddingHorizontal: 24, paddingTop: 32, paddingBottom: 50 },
+  scrollContent: { paddingHorizontal: 24, paddingTop: 10, paddingBottom: 50 },
   completeTitle: { fontSize: 32, fontWeight: '900', color: '#1a1a1a', textAlign: 'center' },
   completeSubtitle: { marginTop: 15, fontSize: 16, color: '#666', textAlign: 'center', lineHeight: 24 },
   cardRow: { flexDirection: 'row', gap: 16, marginTop: 45 },

@@ -21,7 +21,7 @@ import {
   discardStorySession,
   StoryResumeResponse,
   TimelineEvent,
-  extendStorySession // 🌟 연장 API 추가
+  extendStorySession
 } from '../api/story';
 
 interface ChatMessage {
@@ -63,8 +63,6 @@ export default function StoryChatScreen({ route, navigation }: any) {
 
   const flatListRef = useRef<FlatList>(null);
   const isCompletedRef = useRef(resumeData?.is_completed ?? false);
-  
-  // 🌟 추가 연장 가능 여부 상태 (기본적으로 첫 연장은 가능하므로 true)
   const [canExtendStory, setCanExtendStory] = useState(true);
 
   const [inputText, setInputText] = useState('');
@@ -86,7 +84,6 @@ export default function StoryChatScreen({ route, navigation }: any) {
       await discardStorySession({ session_id: sessionId });
       if (Platform.OS === 'web') {
         window.alert('대화한 스토리가 삭제됩니다.');
-        // 🌟 수정됨: StoryMainScreen으로 이동
         navigation.navigate('StoryMainScreen');
       } else {
         Alert.alert('알림', '대화한 스토리가 삭제됩니다.', [
@@ -109,7 +106,6 @@ export default function StoryChatScreen({ route, navigation }: any) {
       playSfx('usePoints'); 
       if (Platform.OS === 'web') {
         window.alert(`스토리가 저장되었습니다.\n남은 포인트: ${response.user_remaining_points}`);
-        // 🌟 수정됨: StoryMainScreen으로 이동
         navigation.navigate('StoryMainScreen');
       } else {
         Alert.alert(
@@ -194,7 +190,6 @@ export default function StoryChatScreen({ route, navigation }: any) {
     if (Platform.OS === 'web') {
       const isConfirmed = window.confirm('대화는 저장되어 있어요. 나중에 이어서 할 수 있습니다.\n나가시겠습니까?');
       if (isConfirmed) {
-        // 🌟 수정됨: StoryMainScreen으로 이동
         navigation.navigate('StoryMainScreen');
       }
     } else {
@@ -250,7 +245,6 @@ export default function StoryChatScreen({ route, navigation }: any) {
       if (response.is_completed) {
         isCompletedRef.current = true;
         setTimeout(() => {
-          
           if (canExtendStory) {
             if (Platform.OS === 'web') {
               const isConfirmed = window.confirm(`퀴즈를 모두 풀었어요!\n100포인트를 사용하여 대화를 연장하시겠습니까?\n확인: 연장, 취소: 종료(저장/삭제 선택)`);
@@ -290,7 +284,6 @@ export default function StoryChatScreen({ route, navigation }: any) {
               );
             }
           }
-
         }, 500);
       }
 
@@ -310,7 +303,6 @@ export default function StoryChatScreen({ route, navigation }: any) {
 
   const renderMessageItem = ({ item }: { item: ChatMessage }) => {
     const isUser = item.role === 'user';
-
     return (
       <View style={[styles.messageRow, isUser ? styles.messageRowRight : styles.messageRowLeft]}>
         {!isUser && (
@@ -318,7 +310,6 @@ export default function StoryChatScreen({ route, navigation }: any) {
             <Text style={styles.profileText}>{characterName?.[0] ?? '?'}</Text>
           </View>
         )}
-
         <View style={styles.messageContentWrapper}>
           <View style={[
             styles.messageBubble, 
@@ -327,7 +318,6 @@ export default function StoryChatScreen({ route, navigation }: any) {
             <Text style={[styles.messageText, isUser && styles.userMessageText]}>
               {item.content}
             </Text>
-            
             {!isUser && item.translation ? (
               <Text style={styles.translationText}>{item.translation}</Text>
             ) : null}
@@ -345,14 +335,12 @@ export default function StoryChatScreen({ route, navigation }: any) {
                 <Ionicons name="sparkles" size={16} color="#A69463" />
                 <Text style={styles.quizHeaderText}>{item.quiz.question}</Text>
               </View>
-              
               <View style={styles.quizOptionsBox}>
                 {!item.quiz.options?.length && !item.quiz.tiles?.length ? (
                   <Text style={styles.quizHint}>
                     ✏️ 직접 입력해 보세요{item.quiz.hint ? `\n💡 힌트: ${item.quiz.hint}` : ''}
                   </Text>
                 ) : null}
-
                 {item.quiz.options && item.quiz.options.length > 0 ? (
                   item.quiz.options.map((option, idx) => (
                     <TouchableOpacity 
@@ -364,7 +352,6 @@ export default function StoryChatScreen({ route, navigation }: any) {
                     </TouchableOpacity>
                   ))
                 ) : null}
-
                 {item.quiz.tiles && item.quiz.tiles.length > 0 ? (
                   <View style={styles.tilesWrapper}>
                     {item.quiz.tiles.map((tile, idx) => (
@@ -378,7 +365,6 @@ export default function StoryChatScreen({ route, navigation }: any) {
                     ))}
                   </View>
                 ) : null}
-
               </View>
             </View>
           ) : null}
@@ -394,14 +380,20 @@ export default function StoryChatScreen({ route, navigation }: any) {
         style={{ flex: 1 }} 
         behavior={Platform.OS === 'ios' ? 'padding' : 'padding'}
       >
-        <View style={styles.header}>
-          <TouchableOpacity onPress={handleBack} style={styles.iconBtn}>
-            <Ionicons name="chevron-back" size={28} color="#333" />
-          </TouchableOpacity>
-          <Text style={styles.headerTitle} numberOfLines={1}>
-            {situation || '스토리 학습'}
-          </Text>
-          <View style={{ width: 28 }} />
+        <View style={styles.headerContainer}>
+          <View style={styles.topBar}>
+            <View style={styles.leftSection}>
+              <TouchableOpacity onPress={handleBack} style={styles.iconButton}>
+                <Ionicons name="chevron-back" size={26} color="#333" />
+              </TouchableOpacity>
+            </View>
+            <View style={styles.centerSection}>
+              <Text style={styles.title} numberOfLines={1}>
+                {situation || '스토리 학습'}
+              </Text>
+            </View>
+            <View style={styles.rightSection} />
+          </View>
         </View>
 
         <FlatList
@@ -433,10 +425,17 @@ export default function StoryChatScreen({ route, navigation }: any) {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#F5F6F1' },
-  header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingVertical: 16, backgroundColor: '#F9FAF4' },
-  iconBtn: { padding: 4 },
-  headerTitle: { flex: 1, textAlign: 'center', fontSize: 16, fontWeight: 'bold', color: '#333' },
+  // 🌟 앱 전체 배경 테마에 맞춰 #E9E9DB 로 변경
+  container: { flex: 1, backgroundColor: '#E9E9DB' },
+  
+  headerContainer: { width: '100%', backgroundColor: 'transparent', paddingBottom: 10, paddingTop: 10 },
+  topBar: { minHeight: 56, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, backgroundColor: 'transparent' },
+  leftSection: { width: 40, alignItems: 'flex-start' },
+  centerSection: { flex: 1, alignItems: 'center' },
+  rightSection: { width: 40, alignItems: 'flex-end' },
+  title: { fontSize: 16, fontWeight: 'bold', color: '#333' },
+  iconButton: { padding: 4, marginLeft: -5 },
+
   chatArea: { paddingHorizontal: 20, paddingVertical: 20 },
   timeLabelContainer: { alignItems: 'center', marginBottom: 20 },
   timeLabel: { backgroundColor: '#E0E1D6', color: '#555', fontSize: 12, paddingVertical: 4, paddingHorizontal: 12, borderRadius: 12, overflow: 'hidden' },
@@ -452,21 +451,16 @@ const styles = StyleSheet.create({
   messageText: { fontSize: 15, color: '#333', lineHeight: 22 },
   userMessageText: { color: '#111', fontWeight: '500' },
   translationText: { fontSize: 13, color: '#888', marginTop: 8 },
-  
   resultCorrect: { fontSize: 12, color: '#5D7341', fontWeight: 'bold', marginTop: 6, alignSelf: 'flex-end' },
   resultWrong: { fontSize: 12, color: '#E57373', fontWeight: 'bold', marginTop: 6, alignSelf: 'flex-end' },
-
   quizContainer: { marginTop: 12, width: '100%' },
   quizHeader: { flexDirection: 'row', alignItems: 'center', marginBottom: 8, paddingHorizontal: 4 },
   quizHeaderText: { fontSize: 13, color: '#A69463', fontWeight: '600', marginLeft: 6, flexShrink: 1 },
   quizOptionsBox: { backgroundColor: '#FAF9F4', borderRadius: 12, padding: 12, borderWidth: 1, borderColor: '#EFEFEF' },
-  
   quizOptionBtn: { backgroundColor: '#FFFFFF', borderWidth: 1, borderColor: '#E6E6E6', borderRadius: 8, paddingVertical: 12, paddingHorizontal: 16, marginBottom: 8 },
   quizOptionText: { fontSize: 14, color: '#333', fontWeight: '500' },
-  
   tilesWrapper: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 4 },
   tileBtn: { backgroundColor: '#FFFFFF', borderWidth: 1, borderColor: '#C5D0B5', borderRadius: 20, paddingVertical: 8, paddingHorizontal: 14, shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.05, shadowRadius: 2, elevation: 1 },
   tileText: { fontSize: 14, color: '#5D7341', fontWeight: '600' },
-  
   quizHint: { fontSize: 13, color: '#888', lineHeight: 20 },
 });

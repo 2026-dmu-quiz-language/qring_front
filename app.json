@@ -4,7 +4,7 @@
     "slug": "qring_front",
     "scheme": "qring",
     "version": "1.0.1",
-    "backgroundColor": "#f0f2ee", 
+    "backgroundColor": "#E9E9DB", 
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
@@ -12,16 +12,16 @@
     "splash": {
       "image": "./assets/icon.png",
       "resizeMode": "contain",
-      "backgroundColor": "#ffffff"
+      "backgroundColor": "#E9E9DB"
     },
     "ios": {
       "supportsTablet": true,
-      "backgroundColor": "#f0f2ee"
+      "backgroundColor": "#E9E9DB"
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/icon.png",
-        "backgroundColor": "#f0f2ee"
+        "backgroundColor": "#E9E9DB"
       },
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false,
