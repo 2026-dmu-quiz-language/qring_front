@@ -392,7 +392,7 @@ export default function StoryChatScreen({ route, navigation }: any) {
     <SafeAreaView style={styles.container}>
       <KeyboardAvoidingView 
         style={{ flex: 1 }} 
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'padding'}
       >
         <View style={styles.header}>
           <TouchableOpacity onPress={handleBack} style={styles.iconBtn}>
