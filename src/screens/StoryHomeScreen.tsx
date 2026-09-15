@@ -153,7 +153,7 @@ const StoryHomeScreen = () => {
 
   return (
     <ScreenWrapper style={{ paddingHorizontal: 0 }}>
-      <Header title="스토리 홈" leftType="none" rightType="profile" />
+      <Header title="스토리 홈" leftType="none" rightType="none" />
 
       <ScrollView
         style={styles.body}

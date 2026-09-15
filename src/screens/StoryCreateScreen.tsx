@@ -14,6 +14,8 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { startStorySession } from '../api/story';
+// 🌟 Header 컴포넌트 추가
+import { Header } from '../components/layout/Header'; 
 
 const TONE_OPTIONS = [
   '다정하게', '격식있게', '유머러스하게', 
@@ -38,7 +40,6 @@ export default function StoryCreateScreen({ navigation }: any) {
         targetLanguage: userTargetLanguage,
       });
 
-      // 생성 완료 후 채팅 화면으로 이동
       navigation.replace('StoryChat', { storyData: response });
       
     } catch (error) {
@@ -89,13 +90,8 @@ export default function StoryCreateScreen({ navigation }: any) {
         style={{ flex: 1 }} 
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       >
-        <View style={styles.header}>
-          <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
-            <Ionicons name="arrow-back" size={24} color="#333" />
-          </TouchableOpacity>
-          <Text style={styles.headerTitle}>나만의 스토리 만들기</Text>
-          <View style={{ width: 24 }} />
-        </View>
+        {/* 🌟 기존 하드코딩된 헤더 대신 공통 Header 컴포넌트 사용 */}
+        <Header title="나만의 스토리 만들기" leftType="back" rightType="none" />
 
         <ScrollView contentContainerStyle={styles.scrollContent}>
           <View style={styles.formCard}>
@@ -173,9 +169,6 @@ export default function StoryCreateScreen({ navigation }: any) {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#EBEBE0' },
-  header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: 20 },
-  backButton: { padding: 4 },
-  headerTitle: { fontSize: 18, fontWeight: '600', color: '#333' },
   scrollContent: { padding: 20 },
   formCard: { backgroundColor: '#FFF', borderRadius: 30, padding: 24, shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.05, shadowRadius: 10, elevation: 3 },
   inputSection: { marginBottom: 32 },

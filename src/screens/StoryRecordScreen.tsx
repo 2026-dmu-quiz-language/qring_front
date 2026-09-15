@@ -5,11 +5,12 @@ import {
   StyleSheet, 
   FlatList, 
   ActivityIndicator,
-  TouchableOpacity,
   SafeAreaView
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { fetchStoryRecord, StoryRecordResponse, TimelineItem } from '../api/story';
+// 🌟 Header 컴포넌트 추가
+import { Header } from '../components/layout/Header';
 
 export default function StoryRecordScreen({ route, navigation }: any) {
   const { sessionId } = route.params;
@@ -33,7 +34,6 @@ export default function StoryRecordScreen({ route, navigation }: any) {
   };
 
   const renderTimelineItem = ({ item, index }: { item: TimelineItem; index: number }) => {
-    // 1. 일반 메시지 렌더링 (Assistant vs User)
     if (item.type === 'message') {
       const isUser = item.role === 'user';
       return (
@@ -51,7 +51,6 @@ export default function StoryRecordScreen({ route, navigation }: any) {
             <Text style={[styles.messageText, isUser && styles.userMessageText]}>
               {item.content}
             </Text>
-            {/* 🌟 수정됨: && 대신 삼항 연산자를 사용하여 빈 문자열 에러 방지 */}
             {!isUser && item.translation ? (
                <Text style={styles.translationText}>{item.translation}</Text>
             ) : null}
@@ -60,7 +59,6 @@ export default function StoryRecordScreen({ route, navigation }: any) {
       );
     }
 
-    // 2. 퀴즈 출제 블록 렌더링
     if (item.type === 'quiz' && item.quiz) {
       const options = item.quiz.options || item.quiz.tiles || [];
       return (
@@ -81,7 +79,6 @@ export default function StoryRecordScreen({ route, navigation }: any) {
       );
     }
 
-    // 3. 퀴즈 결과 
     if (item.type === 'quiz_result') {
       return null; 
     }
@@ -91,15 +88,8 @@ export default function StoryRecordScreen({ route, navigation }: any) {
 
   return (
     <SafeAreaView style={styles.container}>
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
-          <Ionicons name="chevron-back" size={24} color="#333" />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle} numberOfLines={1}>
-          {record ? record.situation : '로딩 중...'}
-        </Text>
-        <View style={{ width: 24 }} />
-      </View>
+      {/* 🌟 기존 하드코딩된 헤더 대신 공통 Header 컴포넌트 사용 */}
+      <Header title={record ? record.situation : '로딩 중...'} leftType="back" rightType="none" />
 
       {loading ? (
         <ActivityIndicator size="large" color="#6B8E23" style={{ marginTop: '50%' }} />
@@ -118,9 +108,6 @@ export default function StoryRecordScreen({ route, navigation }: any) {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#F5F6F1' },
-  header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 20, paddingVertical: 16, backgroundColor: '#F5F6F1' },
-  backButton: { padding: 4 },
-  headerTitle: { flex: 1, textAlign: 'center', fontSize: 16, fontWeight: '600', color: '#333', paddingHorizontal: 12 },
   chatContainer: { paddingHorizontal: 20, paddingTop: 10, paddingBottom: 40 },
   messageRow: { flexDirection: 'row', marginBottom: 16, alignItems: 'flex-start' },
   messageRowLeft: { justifyContent: 'flex-start' },
