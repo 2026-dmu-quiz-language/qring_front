@@ -13,6 +13,7 @@ import {
   // 🌟 KeyboardAvoidingView와 Platform 추가
   KeyboardAvoidingView,
   Platform,
+  Keyboard,
 } from 'react-native';
 import { useRoute, useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -27,6 +28,7 @@ import { getErrorMessage } from '../utils/errorMessage';
 import { Ionicons } from '@expo/vector-icons';
 import WordBreakText from '../components/common/WordBreakText';
 import { playSfx } from '../utils/sfx';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 interface DisplayMessage {
   type: 'script' | 'quiz';
@@ -53,7 +55,33 @@ const ChatBubble = ({ text }: { text: string }) => (
   </View>
 );
 
+// 키보드가 떠 있는지 추적한다.
+const useKeyboardVisible = () => {
+  const [visible, setVisible] = useState(false);
+  useEffect(() => {
+    const showSub = Keyboard.addListener('keyboardDidShow', () => setVisible(true));
+    const hideSub = Keyboard.addListener('keyboardDidHide', () => setVisible(false));
+    return () => {
+      showSub.remove();
+      hideSub.remove();
+    };
+  }, []);
+  return visible;
+};
+
+// 문제창 아래 여백.
+// 아이폰은 기존 값을 유지한다.
+// 갤럭시는 하단 시스템 바에 힌트보기 버튼이 가리지 않도록 그 높이만큼 더한다.
+// 단, 키보드가 떠 있으면 키보드가 하단 바를 덮으므로 더하지 않는다. 더하면 키보드와 문제창 사이가 벌어진다.
+const useQuizCardBottomPadding = () => {
+  const insets = useSafeAreaInsets();
+  const keyboardVisible = useKeyboardVisible();
+  if (Platform.OS === 'ios') return 40;
+  return 20 + (keyboardVisible ? 0 : insets.bottom);
+};
+
 const ChoiceQuiz = ({ quiz, hint, onComplete }: { quiz: Quiz; hint: string; onComplete: (result: QuizResult) => void; }) => {
+  const cardBottomPadding = useQuizCardBottomPadding();
   const [selected, setSelected] = useState<number | null>(null);
   const [submitted, setSubmitted] = useState(false);
   const [isModalVisible, setModalVisible] = useState(false);
@@ -100,7 +128,7 @@ const ChoiceQuiz = ({ quiz, hint, onComplete }: { quiz: Quiz; hint: string; onCo
   };
 
   return (
-    <View style={styles.quizCard}>
+    <View style={[styles.quizCard, { paddingBottom: cardBottomPadding }]}>
       <View style={styles.dragHandle} />
       <Text style={styles.quizLabel}>
         {quiz.quizType === 'fill_in_blank' ? '빈칸 채우기' : '객관식'}
@@ -182,6 +210,7 @@ const ChoiceQuiz = ({ quiz, hint, onComplete }: { quiz: Quiz; hint: string; onCo
 };
 
 const SubjectiveQuiz = ({ quiz, hint, onComplete }: { quiz: Quiz; hint: string; onComplete: (result: QuizResult) => void; }) => {
+  const cardBottomPadding = useQuizCardBottomPadding();
   const [answer, setAnswer] = useState('');
   const [submitted, setSubmitted] = useState(false);
   const [isModalVisible, setModalVisible] = useState(false);
@@ -204,7 +233,7 @@ const SubjectiveQuiz = ({ quiz, hint, onComplete }: { quiz: Quiz; hint: string; 
   };
 
   return (
-    <View style={styles.quizCard}>
+    <View style={[styles.quizCard, { paddingBottom: cardBottomPadding }]}>
       <View style={styles.dragHandle} />
       <Text style={styles.quizLabel}>주관식</Text>
       <Text style={styles.quizQuestion}>{quiz.question}</Text>
@@ -280,6 +309,11 @@ const ChatLearnScreen = () => {
   const route = useRoute<RouteProp<LearnStackParamList, 'ChatLearn'>>();
   const resultRef = useRef<QuizResultItem[]>([]);
   const scrollRef = useRef<ScrollView>(null);
+
+  // 갤럭시는 하단 시스템 바가 메시지 바를 덮으므로 그 높이만큼 올린다.
+  // 아이폰은 홈 인디케이터가 얇은 선이라 지금 모양을 유지하기 위해 더하지 않는다.
+  const insets = useSafeAreaInsets();
+  const bottomExtra = Platform.OS === 'android' ? insets.bottom : 0;
 
   const { episodeId, episodeTitle } = route.params;
 
@@ -435,8 +469,11 @@ const ChatLearnScreen = () => {
       {/* 🌟 1. 화면 전체를 감싸서 키보드가 올라올 때 밀어 올릴 준비를 합니다 */}
       <KeyboardAvoidingView
         style={{ flex: 1 }}
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-        keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
+        // 안드로이드는 엣지 투 엣지라 운영체제가 화면을 줄여주지 않으므로 직접 밀어 올린다.
+        behavior="padding"
+        // 헤더가 이 영역 바깥 위쪽에 있어서, 화면 맨 위에서 떨어진 만큼 보정한다.
+        // 아이폰은 기존 값을 유지하고, 안드로이드는 상태바 높이만큼 보정한다.
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : insets.top}
       >
         <Pressable style={{ flex: 1 }} onPress={handleTap}>
           <ScrollView
@@ -455,7 +492,7 @@ const ChatLearnScreen = () => {
 
         {/* 🌟 3. 가짜 입력바 (퀴즈가 없을 때만 바닥에 위치) */}
         {!currentQuiz && (
-          <View style={styles.fakeInputBar}>
+          <View style={[styles.fakeInputBar, { paddingBottom: 10 + bottomExtra }]}>
             <View style={styles.fakeInput}>
               <Text style={styles.fakeInputText}>메시지 입력</Text>
             </View>
@@ -530,7 +567,7 @@ const styles = StyleSheet.create({
     borderTopRightRadius: 32, 
     paddingHorizontal: 24, 
     paddingTop: 15, 
-    paddingBottom: Platform.OS === 'ios' ? 40 : 20, // iOS 홈 바 고려
+    paddingBottom: Platform.OS === 'ios' ? 40 : 20, // 기본값. 실제 값은 useQuizCardBottomPadding이 기기와 키보드 상태에 맞춰 덮어쓴다.
     shadowColor: theme.colors.primary, 
     shadowOffset: { width: 0, height: -5 }, 
     shadowOpacity: 0.1, 

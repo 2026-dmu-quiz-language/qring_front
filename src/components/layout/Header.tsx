@@ -21,9 +21,9 @@ interface HeaderProps {
 const API_BASE_URL = 'https://q-ring.app/api/v1/auth';
 
 const LANGUAGES = [
-  { code: 'EN', label: '영어', flag: '🇺🇸' },
-  { code: 'JA', label: '일본어', flag: '🇯🇵' },
-  { code: 'ZH', label: '중국어', flag: '🇨🇳' },
+  { code: 'EN', label: '영어' },
+  { code: 'JA', label: '일본어' },
+  { code: 'ZH', label: '중국어' },
 ];
 
 export const Header = ({
@@ -230,7 +230,8 @@ export const Header = ({
           <View style={styles.menuDivider} />
 
           <Text style={styles.langSectionLabel}>학습 언어 전환</Text>
-          <View style={styles.langRow}>
+          {/* 세그먼트 컨트롤: 연한 틀 안에서 선택된 언어 칸만 흰 카드로 떠오른다 */}
+          <View style={styles.langTrack}>
             {LANGUAGES.map((lang) => {
               const isEnabled = enabledLangs.includes(lang.code);
               const isActive = activeLang === lang.code;
@@ -238,15 +239,13 @@ export const Header = ({
                 <TouchableOpacity
                   key={lang.code}
                   style={[
-                    styles.langChip,
-                    isActive && styles.langChipActive,
-                    !isEnabled && styles.langChipDisabled,
+                    styles.langSegment,
+                    isActive && styles.langSegmentActive,
                   ]}
                   onPress={() => isEnabled && handleLangSwitch(lang.code)}
                   disabled={!isEnabled}
                   activeOpacity={0.7}
                 >
-                  <Text style={styles.langFlag}>{lang.flag}</Text>
                   <Text style={[
                     styles.langLabel,
                     isActive && styles.langLabelActive,
@@ -360,41 +359,43 @@ const styles = StyleSheet.create({
     color: '#999',
     marginBottom: 8,
   },
-  langRow: {
+  // 세그먼트 컨트롤 바깥 틀
+  langTrack: {
     flexDirection: 'row',
-    gap: 6,
+    padding: 3,
+    borderRadius: 12,
+    backgroundColor: '#EEF0E6',
     marginBottom: 4,
   },
-  langChip: {
+  // 언어 한 칸
+  langSegment: {
     flex: 1,
-    flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 4,
-    paddingVertical: 8,
-    borderRadius: 12,
-    backgroundColor: '#F3F4EB',
+    paddingVertical: 7,
+    borderRadius: 9,
   },
-  langChipActive: {
-    backgroundColor: theme.colors.secondary,
-  },
-  langChipDisabled: {
-    backgroundColor: '#F0F0F0',
-    opacity: 0.5,
-  },
-  langFlag: {
-    fontSize: 14,
+  // 선택된 칸은 흰 카드로 살짝 떠 보이게 한다
+  langSegmentActive: {
+    backgroundColor: '#FFFFFF',
+    shadowColor: '#000',
+    shadowOpacity: 0.08,
+    shadowOffset: { width: 0, height: 1 },
+    shadowRadius: 3,
+    elevation: 2,
   },
   langLabel: {
     fontSize: 12,
     fontWeight: '600',
-    color: '#555',
+    color: '#8A8F80',
   },
+  // 흰 바탕 위 초록 글자라 선택 상태가 또렷하게 읽힌다
   langLabelActive: {
-    color: '#fff',
-    fontWeight: 'bold',
+    color: theme.colors.primary,
+    fontWeight: '700',
   },
+  // 아직 열지 않은 언어
   langLabelDisabled: {
-    color: '#bbb',
+    color: '#C9CCC0',
   },
 });
