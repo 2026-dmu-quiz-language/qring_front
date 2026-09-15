@@ -4,9 +4,7 @@ import {
   Text, 
   StyleSheet, 
   TouchableOpacity, 
-  TextInput,
   FlatList,
-  ActivityIndicator,
   KeyboardAvoidingView,
   Platform,
   Alert
@@ -14,6 +12,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context'; 
 import { Ionicons } from '@expo/vector-icons';
 import { playSfx } from '../utils/sfx';
+import { ChatInputBar } from '../components/common/ChatInputBar';
 import { 
   StartStoryResponse, 
   sendStoryChatMessage, 
@@ -389,7 +388,8 @@ export default function StoryChatScreen({ route, navigation }: any) {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
+      {/* 위쪽만 비운다. 아래쪽 인셋은 메시지 바가 직접 처리한다. */}
       <KeyboardAvoidingView 
         style={{ flex: 1 }} 
         behavior={Platform.OS === 'ios' ? 'padding' : 'padding'}
@@ -420,31 +420,13 @@ export default function StoryChatScreen({ route, navigation }: any) {
           }
         />
 
-        <View style={styles.inputArea}>
-          <TouchableOpacity style={styles.plusBtn}>
-            <Ionicons name="add-circle-outline" size={28} color="#666" />
-          </TouchableOpacity>
-          <TextInput 
-            style={styles.textInput}
-            placeholder="메시지를 입력하세요..."
-            placeholderTextColor="#999"
-            value={inputText}
-            onChangeText={setInputText}
-            onSubmitEditing={() => handleSend()}
-            editable={!isSending && !isCompletedRef.current}
-          />
-          <TouchableOpacity 
-            style={[styles.sendBtn, (!inputText.trim() || isSending || isCompletedRef.current) && { opacity: 0.5 }]}
-            onPress={() => handleSend()}
-            disabled={!inputText.trim() || isSending || isCompletedRef.current}
-          >
-            {isSending ? (
-              <ActivityIndicator size="small" color="#FFF" />
-            ) : (
-              <Ionicons name="send" size={16} color="#FFF" style={{ marginLeft: 2 }} />
-            )}
-          </TouchableOpacity>
-        </View>
+        <ChatInputBar
+          value={inputText}
+          onChangeText={setInputText}
+          onSend={() => handleSend()}
+          editable={!isCompletedRef.current}
+          sending={isSending}
+        />
       </KeyboardAvoidingView>
     </SafeAreaView>
   );
@@ -487,9 +469,4 @@ const styles = StyleSheet.create({
   tileText: { fontSize: 14, color: '#5D7341', fontWeight: '600' },
   
   quizHint: { fontSize: 13, color: '#888', lineHeight: 20 },
-
-  inputArea: { flexDirection: 'row', alignItems: 'center', padding: 12, backgroundColor: '#FFF', borderTopWidth: 1, borderColor: '#EEE' },
-  plusBtn: { marginRight: 12 },
-  textInput: { flex: 1, backgroundColor: '#EBEBE0', borderRadius: 20, paddingHorizontal: 16, paddingVertical: 10, fontSize: 15, maxHeight: 100 },
-  sendBtn: { backgroundColor: '#6B8E23', width: 40, height: 40, borderRadius: 20, justifyContent: 'center', alignItems: 'center', marginLeft: 10 }
 });

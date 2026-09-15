@@ -13,7 +13,6 @@ import {
   // 🌟 KeyboardAvoidingView와 Platform 추가
   KeyboardAvoidingView,
   Platform,
-  Keyboard,
 } from 'react-native';
 import { useRoute, useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -29,6 +28,8 @@ import { Ionicons } from '@expo/vector-icons';
 import WordBreakText from '../components/common/WordBreakText';
 import { playSfx } from '../utils/sfx';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useKeyboardVisible } from '../utils/useKeyboardVisible';
+import { ChatInputBar } from '../components/common/ChatInputBar';
 
 interface DisplayMessage {
   type: 'script' | 'quiz';
@@ -54,20 +55,6 @@ const ChatBubble = ({ text }: { text: string }) => (
     </View>
   </View>
 );
-
-// 키보드가 떠 있는지 추적한다.
-const useKeyboardVisible = () => {
-  const [visible, setVisible] = useState(false);
-  useEffect(() => {
-    const showSub = Keyboard.addListener('keyboardDidShow', () => setVisible(true));
-    const hideSub = Keyboard.addListener('keyboardDidHide', () => setVisible(false));
-    return () => {
-      showSub.remove();
-      hideSub.remove();
-    };
-  }, []);
-  return visible;
-};
 
 // 문제창 아래 여백.
 // 아이폰은 기존 값을 유지한다.
@@ -310,10 +297,8 @@ const ChatLearnScreen = () => {
   const resultRef = useRef<QuizResultItem[]>([]);
   const scrollRef = useRef<ScrollView>(null);
 
-  // 갤럭시는 하단 시스템 바가 메시지 바를 덮으므로 그 높이만큼 올린다.
-  // 아이폰은 홈 인디케이터가 얇은 선이라 지금 모양을 유지하기 위해 더하지 않는다.
+  // 키보드 회피 보정값에 상단 인셋을 쓴다.
   const insets = useSafeAreaInsets();
-  const bottomExtra = Platform.OS === 'android' ? insets.bottom : 0;
 
   const { episodeId, episodeTitle } = route.params;
 
@@ -490,17 +475,8 @@ const ChatLearnScreen = () => {
           </ScrollView>
         </Pressable>
 
-        {/* 🌟 3. 가짜 입력바 (퀴즈가 없을 때만 바닥에 위치) */}
-        {!currentQuiz && (
-          <View style={[styles.fakeInputBar, { paddingBottom: 10 + bottomExtra }]}>
-            <View style={styles.fakeInput}>
-              <Text style={styles.fakeInputText}>메시지 입력</Text>
-            </View>
-            <TouchableOpacity style={styles.fakeSendButton} activeOpacity={0.7}>
-              <Ionicons name="send" size={18} color="#fff" />
-            </TouchableOpacity>
-          </View>
-        )}
+        {/* 🌟 3. 메시지 바 (퀴즈가 없을 때만 바닥에 위치). 입력은 안 되고 모양만 있다. */}
+        {!currentQuiz && <ChatInputBar readOnly />}
 
         {/* 🌟 4. 퀴즈 영역 (absolute를 뺐기 때문에 이제 키보드가 올라오면 그 위에 찰떡같이 얹혀서 올라갑니다) */}
         {!episodeComplete && currentQuiz?.quiz && (
@@ -644,19 +620,6 @@ const styles = StyleSheet.create({
   },
   resultModalButtonText: { fontSize: 16, fontWeight: '700', color: '#FFF' },
 
-  fakeInputBar: {
-    flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 10,
-    backgroundColor: '#fff', borderTopWidth: 1, borderTopColor: '#E8E8E8',
-  },
-  fakeInput: {
-    flex: 1, backgroundColor: '#F5F5F5', borderRadius: 20, paddingHorizontal: 16, paddingVertical: 12,
-    marginRight: 10,
-  },
-  fakeInputText: { fontSize: 14, color: '#bbb' },
-  fakeSendButton: {
-    width: 36, height: 36, borderRadius: 18, backgroundColor: theme.colors.primary,
-    justifyContent: 'center', alignItems: 'center',
-  },
 });
 
 export default ChatLearnScreen;
