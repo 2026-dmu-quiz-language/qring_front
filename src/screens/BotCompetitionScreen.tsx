@@ -27,6 +27,7 @@ import {
   type BotMatchResultResponse,
 } from '../api/competition';
 import { playSfx, playLoopSfx, stopSfx } from '../utils/sfx';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 const C = {
   darkGreen: '#4E5E43',
@@ -69,6 +70,10 @@ type MatchPhase = 'playing' | 'submitting' | 'done' | 'submitError';
 const BotCompetitionScreen = () => {
   const navigation = useNavigation<any>();
   const route = useRoute<RouteProp<any>>();
+
+  // 하단 정답 확인 버튼이 아이폰 홈 인디케이터와 갤럭시 하단 바에 가리지 않도록 그 높이만큼 올린다.
+  const insets = useSafeAreaInsets();
+  const bottomBarPadding = Math.max(28, insets.bottom + 12);
   const { questions = [] } = (route.params ?? {}) as {
     matchId?: number;
     questions?: BotQuestion[];
@@ -479,8 +484,10 @@ const BotCompetitionScreen = () => {
 
       <KeyboardAvoidingView
         style={{ flex: 1 }}
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-        keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
+        // 안드로이드는 엣지 투 엣지라 운영체제가 화면을 줄여주지 않으므로 직접 밀어 올린다.
+        behavior="padding"
+        // 이 영역 위에 점수판이 있어서, 화면 틀이 시작되는 상단 인셋만큼 보정한다.
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : insets.top}
       >
         <ScrollView
           style={{ flex: 1 }}
@@ -619,18 +626,20 @@ const BotCompetitionScreen = () => {
             </View>
           )}
         </ScrollView>
-
-        <View style={styles.bottomBar}>
-          <TouchableOpacity
-            style={[styles.submitButton, !canSubmit && styles.submitButtonDisabled]}
-            onPress={handleSubmit}
-            disabled={!canSubmit}
-            activeOpacity={0.85}
-          >
-            <Text style={styles.submitButtonText}>정답 확인</Text>
-          </TouchableOpacity>
-        </View>
       </KeyboardAvoidingView>
+
+      {/* 정답 확인 버튼은 키보드 회피 영역 밖에 둔다.
+          주관식 입력 중에는 문제와 입력창만 키보드 위로 올라가고, 버튼은 제자리에서 키보드에 가려진다. */}
+      <View style={[styles.bottomBar, { paddingBottom: bottomBarPadding }]}>
+        <TouchableOpacity
+          style={[styles.submitButton, !canSubmit && styles.submitButtonDisabled]}
+          onPress={handleSubmit}
+          disabled={!canSubmit}
+          activeOpacity={0.85}
+        >
+          <Text style={styles.submitButtonText}>정답 확인</Text>
+        </TouchableOpacity>
+      </View>
 
       <Modal visible={paused} transparent animationType="fade" onRequestClose={handleResume}>
         <View style={styles.pauseOverlay}>

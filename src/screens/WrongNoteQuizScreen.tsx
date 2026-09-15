@@ -22,10 +22,16 @@ import {
   type IncorrectQuiz,
 } from '../api/incorrect';
 import { playSfx } from '../utils/sfx';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 const WrongNoteQuizScreen = () => {
   const navigation = useNavigation<any>();
   const route = useRoute<RouteProp<any>>();
+
+  // 하단 버튼이 아이폰 홈 인디케이터와 갤럭시 하단 바에 가리지 않도록 그 높이만큼 올린다.
+  // 인셋이 작은 기기에서는 기존 여백 32를 유지한다.
+  const insets = useSafeAreaInsets();
+  const bottomBarPadding = Math.max(32, insets.bottom + 12);
   const { episodeId } = route.params as {
     episodeId: number;
     episodeTitle: string;
@@ -96,7 +102,7 @@ const WrongNoteQuizScreen = () => {
             <Text style={styles.completedScore}>총점: {completed}</Text>
           )}
         </View>
-        <View style={styles.bottomBar}>
+        <View style={[styles.bottomBar, { paddingBottom: bottomBarPadding }]}>
           <TouchableOpacity
             style={styles.submitButton}
             onPress={() => navigation.navigate('MainTab')}
@@ -180,8 +186,10 @@ const WrongNoteQuizScreen = () => {
 
       <KeyboardAvoidingView
         style={{ flex: 1 }}
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-        keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
+        // 안드로이드는 엣지 투 엣지라 운영체제가 화면을 줄여주지 않으므로 직접 밀어 올린다.
+        behavior="padding"
+        // 헤더가 이 영역 바깥 위쪽에 있어서, 화면 틀이 시작되는 상단 인셋만큼 보정한다.
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : insets.top}
       >
         <ScrollView
           style={styles.body}
@@ -265,30 +273,32 @@ const WrongNoteQuizScreen = () => {
             {currentIndex + 1} / {quizzes.length}
           </Text>
         </ScrollView>
-
-        <View style={styles.bottomBar}>
-          {!submitted ? (
-            <TouchableOpacity
-              style={[styles.submitButton, !canSubmit && styles.submitButtonDisabled]}
-              onPress={handleSubmit}
-              disabled={!canSubmit}
-              activeOpacity={0.8}
-            >
-              <Text style={styles.submitButtonText}>제출하기 →</Text>
-            </TouchableOpacity>
-          ) : (
-            <TouchableOpacity
-              style={styles.submitButton}
-              onPress={handleNext}
-              activeOpacity={0.8}
-            >
-              <Text style={styles.submitButtonText}>
-                {currentIndex < quizzes.length - 1 ? '다음 문제 →' : '완료'}
-              </Text>
-            </TouchableOpacity>
-          )}
-        </View>
       </KeyboardAvoidingView>
+
+      {/* 하단 버튼은 키보드 회피 영역 밖에 둔다.
+          주관식 입력 중에는 문제와 입력창만 키보드 위로 올라가고, 버튼은 제자리에서 키보드에 가려진다. */}
+      <View style={[styles.bottomBar, { paddingBottom: bottomBarPadding }]}>
+        {!submitted ? (
+          <TouchableOpacity
+            style={[styles.submitButton, !canSubmit && styles.submitButtonDisabled]}
+            onPress={handleSubmit}
+            disabled={!canSubmit}
+            activeOpacity={0.8}
+          >
+            <Text style={styles.submitButtonText}>제출하기 →</Text>
+          </TouchableOpacity>
+        ) : (
+          <TouchableOpacity
+            style={styles.submitButton}
+            onPress={handleNext}
+            activeOpacity={0.8}
+          >
+            <Text style={styles.submitButtonText}>
+              {currentIndex < quizzes.length - 1 ? '다음 문제 →' : '완료'}
+            </Text>
+          </TouchableOpacity>
+        )}
+      </View>
     </ScreenWrapper>
   );
 };
