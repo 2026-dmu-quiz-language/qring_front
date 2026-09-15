@@ -16,7 +16,6 @@ import { useNavigation } from '@react-navigation/native';
 import { getDashboard, type DashboardResponse } from '../api/dashboard';
 import { getErrorMessage } from '../utils/errorMessage';
 import { playSfx } from '../utils/sfx';
-import { TAB_BAR_SPACE } from '../constants/layout';
 
 // ─── 색상 ───
 const C = {
@@ -116,8 +115,12 @@ const DashboardScreen = () => {
 
       <ScrollView
         style={styles.bodyContainer}
-        // 떠 있는 탭바 뒤로 마지막 카드가 숨지 않도록 탭바 높이만큼 비워둔다.
-        contentContainerStyle={{ paddingBottom: TAB_BAR_SPACE }}
+        // 탭바가 바닥에 붙어 있어 네비게이터가 이미 탭바만큼 화면을 줄여준다.
+        // 마지막 카드 아래에는 숨 쉴 틈만 남긴다.
+        contentContainerStyle={{ paddingBottom: 20 }}
+        // 내용이 화면에 다 들어가면 아이폰에서도 튕기지 않게 한다.
+        // 작은 폰처럼 내용이 넘칠 때는 평소처럼 스크롤된다.
+        alwaysBounceVertical={false}
         showsVerticalScrollIndicator={false}
       >
 
@@ -152,20 +155,7 @@ const DashboardScreen = () => {
           </Text>
         </View>
 
-        {/* CTA 버튼 */}
-        <TouchableOpacity
-          style={styles.ctaButton}
-          activeOpacity={0.85}
-          onPress={() => {
-            playSfx('touch');
-            navigation.navigate('Content');
-          }}
-        >
-          <Text style={styles.ctaTitle}>🚀 오늘의 썰 풀기 시작!</Text>
-          <Text style={styles.ctaSub}>▶ 약 5분 소요</Text>
-        </TouchableOpacity>
-
-        {/* 봇 컴피티션 임시 진입 버튼 (UI 확인용) */}
+        {/* 봇 컴피티션 진입 버튼 */}
         <TouchableOpacity
           style={styles.botCompButton}
           activeOpacity={0.85}
@@ -177,26 +167,6 @@ const DashboardScreen = () => {
           <Text style={styles.botCompTitle}>🤖 봇 컴피티션</Text>
           <Text style={styles.botCompSub}>Q-Bot과 스피드 대결!</Text>
         </TouchableOpacity>
-
-        {/* 마스코트 말풍선 */}
-        <View style={styles.mascotSection}>
-          <Image
-            source={require('../../assets/Qring-img3.png')}
-            style={styles.mascotImageLeft}
-            resizeMode="contain"
-          />
-          <View style={styles.mascotRight}>
-            <View style={styles.speechBubble}>
-              <Text style={styles.speechText}>오늘도 와주셨군요!{'\n'}열심히 해봐요!</Text>
-              <View style={styles.speechTail} />
-            </View>
-            <Image
-              source={require('../../assets/Qring-img.png')}
-              style={styles.mascotImage}
-              resizeMode="contain"
-            />
-          </View>
-        </View>
 
         {/* 하단 스탯 카드 */}
         <View style={styles.statsRow}>
