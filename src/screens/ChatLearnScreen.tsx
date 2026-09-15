@@ -27,6 +27,7 @@ import { getErrorMessage } from '../utils/errorMessage';
 import { Ionicons } from '@expo/vector-icons';
 import WordBreakText from '../components/common/WordBreakText';
 import { playSfx } from '../utils/sfx';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 interface DisplayMessage {
   type: 'script' | 'quiz';
@@ -281,6 +282,11 @@ const ChatLearnScreen = () => {
   const resultRef = useRef<QuizResultItem[]>([]);
   const scrollRef = useRef<ScrollView>(null);
 
+  // 갤럭시는 하단 시스템 바가 메시지 바를 덮으므로 그 높이만큼 올린다.
+  // 아이폰은 홈 인디케이터가 얇은 선이라 지금 모양을 유지하기 위해 더하지 않는다.
+  const insets = useSafeAreaInsets();
+  const bottomExtra = Platform.OS === 'android' ? insets.bottom : 0;
+
   const { episodeId, episodeTitle } = route.params;
 
   const [messages, setMessages] = useState<DisplayMessage[]>([]);
@@ -455,7 +461,7 @@ const ChatLearnScreen = () => {
 
         {/* 🌟 3. 가짜 입력바 (퀴즈가 없을 때만 바닥에 위치) */}
         {!currentQuiz && (
-          <View style={styles.fakeInputBar}>
+          <View style={[styles.fakeInputBar, { paddingBottom: 10 + bottomExtra }]}>
             <View style={styles.fakeInput}>
               <Text style={styles.fakeInputText}>메시지 입력</Text>
             </View>
