@@ -458,8 +458,19 @@ export default function StoryChatScreen({ route, navigation }: any) {
           }
         />
 
-        {/* 🌟 4. 키보드가 열리면 여백을 8px로 확 줄여서 입력창이 키보드에 예쁘게 착! 달라붙게 했습니다. */}
-        <View style={[styles.inputContainer, { paddingBottom: isKeyboardVisible ? 8 : Math.max(insets.bottom, 12) }]}>
+        {/* 🌟 여기가 핵심 수정 포인트입니다! 🌟 
+            키보드가 열렸을 때는 둘 다 8px로 붙게 하고,
+            닫혀있을 때 아이폰은 홈바(insets.bottom) 높이를 주고 갤럭시는 12px만 고정으로 줍니다! */}
+        <View style={[
+          styles.inputContainer, 
+          { 
+            paddingBottom: isKeyboardVisible 
+              ? 8 
+              : Platform.OS === 'ios' 
+                ? Math.max(insets.bottom, 12) 
+                : 12 // 갤럭시(Android)는 이중 여백을 방지하기 위해 12로 고정
+          }
+        ]}>
           <ChatInputBar
             value={inputText}
             onChangeText={setInputText}
