@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { 
   View, 
   Text, 
@@ -7,12 +7,14 @@ import {
   FlatList,
   KeyboardAvoidingView,
   Platform,
-  Alert
+  Alert,
+  Keyboard
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context'; 
+import { useSafeAreaInsets } from 'react-native-safe-area-context'; 
 import { Ionicons } from '@expo/vector-icons';
 import { playSfx } from '../utils/sfx';
 import { ChatInputBar } from '../components/common/ChatInputBar';
+import { theme } from '../constants/theme';
 import { 
   StartStoryResponse, 
   sendStoryChatMessage, 
@@ -61,12 +63,14 @@ export default function StoryChatScreen({ route, navigation }: any) {
   const characterName = storyData?.character_name ?? resumeData?.character_name ?? '';
   const situation = storyData?.situation ?? resumeData?.situation ?? '';
 
+  const insets = useSafeAreaInsets();
   const flatListRef = useRef<FlatList>(null);
   const isCompletedRef = useRef(resumeData?.is_completed ?? false);
   const [canExtendStory, setCanExtendStory] = useState(true);
 
   const [inputText, setInputText] = useState('');
   const [isSending, setIsSending] = useState(false);
+  const [isKeyboardVisible, setKeyboardVisible] = useState(false);
   
   const [messages, setMessages] = useState<ChatMessage[]>(() =>
     resumeData?.timeline ? timelineToMessages(resumeData.timeline)
@@ -78,6 +82,33 @@ export default function StoryChatScreen({ route, navigation }: any) {
         isQuiz: false 
       }]
   );
+
+  // 🌟 스크롤을 맨 아래로 부드럽게 당겨주는 함수 (살짝 여유를 주어 확실히 스크롤되게 함)
+  const scrollToBottom = () => {
+    if (messages.length > 0) {
+      setTimeout(() => {
+        flatListRef.current?.scrollToEnd({ animated: true });
+      }, 150);
+    }
+  };
+
+  useEffect(() => {
+    const showEvent = Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow';
+    const hideEvent = Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide';
+
+    const showSubscription = Keyboard.addListener(showEvent, () => {
+      setKeyboardVisible(true);
+      scrollToBottom();
+    });
+    const hideSubscription = Keyboard.addListener(hideEvent, () => {
+      setKeyboardVisible(false);
+    });
+
+    return () => {
+      showSubscription.remove();
+      hideSubscription.remove();
+    };
+  }, []);
 
   const handleDiscard = async () => {
     try {
@@ -173,6 +204,7 @@ export default function StoryChatScreen({ route, navigation }: any) {
       };
       setMessages((prev) => [...prev, newAiMsg]);
       playSfx('receiveChat');
+      scrollToBottom();
 
     } catch (error) {
       console.error('스토리 연장 실패:', error);
@@ -220,6 +252,7 @@ export default function StoryChatScreen({ route, navigation }: any) {
     setMessages((prev) => [...prev, newUserMsg]);
     playSfx('sendChat');
     setIsSending(true);
+    scrollToBottom(); 
 
     try {
       const response = await sendStoryChatMessage({
@@ -247,6 +280,7 @@ export default function StoryChatScreen({ route, navigation }: any) {
       setMessages((prev) => [...prev, newAiMsg]);
 
       playSfx(response.is_quiz ? 'quiz' : 'receiveChat');
+      scrollToBottom(); 
 
       if (response.is_completed) {
         isCompletedRef.current = true;
@@ -310,18 +344,18 @@ export default function StoryChatScreen({ route, navigation }: any) {
   const renderMessageItem = ({ item }: { item: ChatMessage }) => {
     const isUser = item.role === 'user';
     return (
-      <View style={[styles.messageRow, isUser ? styles.messageRowRight : styles.messageRowLeft]}>
+      <View style={[styles.bubbleRow, isUser ? styles.bubbleRowRight : styles.bubbleRowLeft]}>
         {!isUser && (
-          <View style={styles.profileAvatar}>
+          <View style={styles.avatar}>
             <Text style={styles.profileText}>{characterName?.[0] ?? '?'}</Text>
           </View>
         )}
         <View style={styles.messageContentWrapper}>
           <View style={[
-            styles.messageBubble, 
+            styles.bubble, 
             isUser ? styles.userBubble : styles.assistantBubble
           ]}>
-            <Text style={[styles.messageText, isUser && styles.userMessageText]}>
+            <Text style={[styles.bubbleText, isUser && styles.userBubbleText]}>
               {item.content}
             </Text>
             {!isUser && item.translation ? (
@@ -380,11 +414,16 @@ export default function StoryChatScreen({ route, navigation }: any) {
   };
 
   return (
-    <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
-      <KeyboardAvoidingView 
-        style={{ flex: 1 }} 
-        behavior={Platform.OS === 'ios' ? 'padding' : 'padding'}
-      >
+    // 🌟 1. 충돌의 원인이던 SafeAreaView 태그를 아예 제거하고 최상단을 KeyboardAvoidingView로 감쌌습니다.
+    // 이렇게 하면 억지로 오프셋 계산할 필요 없이(offset=0) OS가 알아서 키보드 높이만큼 완벽하게 밀어줍니다!
+    <KeyboardAvoidingView 
+      style={{ flex: 1, backgroundColor: '#E9E9DB' }} 
+      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      keyboardVerticalOffset={0}
+    >
+      {/* 🌟 2. SafeAreaView 대신 직접 insets.top 만큼 상단 여백을 주어 카메라 노치를 피합니다. */}
+      <View style={{ flex: 1, paddingTop: insets.top }}>
+        
         <View style={styles.headerContainer}>
           <View style={styles.topBar}>
             <View style={styles.leftSection}>
@@ -406,10 +445,12 @@ export default function StoryChatScreen({ route, navigation }: any) {
           data={messages}
           keyExtractor={(item) => item.id}
           renderItem={renderMessageItem}
+          // 🌟 3. 마지막 채팅이 답답하게 가려지지 않도록 하단 공백(paddingBottom)을 '40'으로 넉넉하게 주었습니다.
           contentContainerStyle={styles.chatArea}
           showsVerticalScrollIndicator={false}
-          onContentSizeChange={() => flatListRef.current?.scrollToEnd({ animated: true })}
-          onLayout={() => flatListRef.current?.scrollToEnd({ animated: true })}
+          keyboardShouldPersistTaps="handled"
+          onContentSizeChange={scrollToBottom}
+          onLayout={scrollToBottom}
           ListHeaderComponent={
             <View style={styles.timeLabelContainer}>
               <Text style={styles.timeLabel}>오늘, 스토리 시작</Text>
@@ -417,20 +458,22 @@ export default function StoryChatScreen({ route, navigation }: any) {
           }
         />
 
-        <ChatInputBar
-          value={inputText}
-          onChangeText={setInputText}
-          onSend={() => handleSend()}
-          editable={!isCompletedRef.current}
-          sending={isSending}
-        />
-      </KeyboardAvoidingView>
-    </SafeAreaView>
+        {/* 🌟 4. 키보드가 열리면 여백을 8px로 확 줄여서 입력창이 키보드에 예쁘게 착! 달라붙게 했습니다. */}
+        <View style={[styles.inputContainer, { paddingBottom: isKeyboardVisible ? 8 : Math.max(insets.bottom, 12) }]}>
+          <ChatInputBar
+            value={inputText}
+            onChangeText={setInputText}
+            onSend={() => handleSend()}
+            editable={!isCompletedRef.current}
+            sending={isSending}
+          />
+        </View>
+      </View>
+    </KeyboardAvoidingView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#E9E9DB' },
   headerContainer: { width: '100%', backgroundColor: 'transparent', paddingBottom: 10, paddingTop: 10 },
   topBar: { minHeight: 56, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, backgroundColor: 'transparent' },
   leftSection: { width: 40, alignItems: 'flex-start' },
@@ -438,23 +481,45 @@ const styles = StyleSheet.create({
   rightSection: { width: 40, alignItems: 'flex-end' },
   title: { fontSize: 16, fontWeight: 'bold', color: '#333' },
   iconButton: { padding: 4, marginLeft: -5 },
-  chatArea: { paddingHorizontal: 20, paddingVertical: 20 },
+  
+  // 🌟 채팅 리스트 안쪽 하단 패딩 확보 (마지막 메시지가 입력창에 가리지 않게 넉넉히 40px 부여)
+  chatArea: { paddingHorizontal: 20, paddingTop: 20, paddingBottom: 40 },
+  
   timeLabelContainer: { alignItems: 'center', marginBottom: 20 },
   timeLabel: { backgroundColor: '#E0E1D6', color: '#555', fontSize: 12, paddingVertical: 4, paddingHorizontal: 12, borderRadius: 12, overflow: 'hidden' },
-  messageRow: { flexDirection: 'row', alignItems: 'flex-start', marginBottom: 20 },
-  messageRowLeft: { justifyContent: 'flex-start' },
-  messageRowRight: { justifyContent: 'flex-end' },
-  profileAvatar: { width: 40, height: 40, borderRadius: 20, backgroundColor: '#D5DFCA', justifyContent: 'center', alignItems: 'center', marginRight: 12 },
-  profileText: { color: '#5D7341', fontWeight: 'bold', fontSize: 16 },
-  messageContentWrapper: { maxWidth: '80%' },
-  messageBubble: { padding: 14, borderRadius: 16, shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.05, shadowRadius: 3, elevation: 1 },
-  assistantBubble: { backgroundColor: '#FFF', borderTopLeftRadius: 4 },
-  userBubble: { backgroundColor: '#A3B880', borderTopRightRadius: 4 },
-  messageText: { fontSize: 15, color: '#333', lineHeight: 22 },
-  userMessageText: { color: '#111', fontWeight: '500' },
+  
+  bubbleRow: { flexDirection: 'row', alignItems: 'flex-start', marginBottom: 16 },
+  bubbleRowLeft: { justifyContent: 'flex-start' },
+  bubbleRowRight: { justifyContent: 'flex-end' },
+  
+  avatar: {
+    width: 38, height: 38, borderRadius: 19, backgroundColor: theme.colors.white, marginRight: 12,
+    justifyContent: 'center', alignItems: 'center',
+    elevation: 2, shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.1, shadowRadius: 2,
+  },
+  profileText: { color: theme.colors.primary, fontWeight: 'bold', fontSize: 16 },
+  
+  messageContentWrapper: { maxWidth: '75%' },
+  bubble: { 
+    paddingHorizontal: 16, paddingVertical: 12, borderRadius: 20,
+    elevation: 1, shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.05, shadowRadius: 2,
+  },
+  assistantBubble: { backgroundColor: theme.colors.white, borderTopLeftRadius: 4 },
+  userBubble: { backgroundColor: theme.colors.primary, borderTopRightRadius: 4 },
+  
+  bubbleText: { fontSize: 15, color: '#333', lineHeight: 22 },
+  userBubbleText: { color: theme.colors.white, fontWeight: '500' },
+  
   translationText: { fontSize: 13, color: '#888', marginTop: 8 },
   resultCorrect: { fontSize: 12, color: '#5D7341', fontWeight: 'bold', marginTop: 6, alignSelf: 'flex-end' },
   resultWrong: { fontSize: 12, color: '#E57373', fontWeight: 'bold', marginTop: 6, alignSelf: 'flex-end' },
+  
+  inputContainer: { 
+    paddingHorizontal: 16, 
+    paddingTop: 10, 
+    backgroundColor: 'transparent'
+  },
+
   quizContainer: { marginTop: 12, width: '100%' },
   quizHeader: { flexDirection: 'row', alignItems: 'center', marginBottom: 8, paddingHorizontal: 4 },
   quizHeaderText: { fontSize: 13, color: '#A69463', fontWeight: '600', marginLeft: 6, flexShrink: 1 },

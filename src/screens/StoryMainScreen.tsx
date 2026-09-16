@@ -31,7 +31,6 @@ export default function StoryMainScreen({ navigation }: any) {
     return `${date.getFullYear()}.${String(date.getMonth() + 1).padStart(2, '0')}.${String(date.getDate()).padStart(2, '0')}`;
   };
 
-  // 🌟 모델 티어 뱃지 렌더링 함수
   const renderTierBadge = (tier?: string) => {
     const isPremium = tier === 'premium';
     return (
@@ -61,15 +60,14 @@ export default function StoryMainScreen({ navigation }: any) {
 
         {resume?.has_session ? (
           <TouchableOpacity style={styles.resumeCard} onPress={() => navigation.navigate('StoryChat', { resumeData: resume })}>
-            <View>
-              {/* 🌟 이어하기 뱃지 적용 */}
+            <View style={{ flex: 1 }}>
               <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 6 }}>
                 {renderTierBadge(resume.model_tier)}
-                <Text style={[styles.resumeTitle, { marginBottom: 0, marginLeft: 8 }]}>
+                <Text style={[styles.resumeTitle, { marginBottom: 0, marginLeft: 8, flexShrink: 1 }]} numberOfLines={1}>
                   {resume.is_completed ? '저장 안 한 스토리가 있어요' : '진행 중인 대화가 있어요'}
                 </Text>
               </View>
-              <Text style={styles.resumeSub}>{resume.character_name} · {resume.situation}</Text>
+              <Text style={styles.resumeSub} numberOfLines={1}>{resume.character_name} · {resume.situation}</Text>
             </View>
             <Text style={styles.resumeLinkText}>이어하기 {'>'}</Text>
           </TouchableOpacity>
@@ -85,11 +83,11 @@ export default function StoryMainScreen({ navigation }: any) {
             {archives.map((item) => (
               <TouchableOpacity key={item.session_id} style={styles.card} onPress={() => navigation.navigate('StoryRecord', { sessionId: item.session_id })}>
                 <View style={styles.cardHeader}>
-                  <View style={{ flex: 1, flexDirection: 'row', alignItems: 'center' }}>
-                    {/* 🌟 보관함 목록 뱃지 적용 */}
+                  <View style={{ flex: 1, flexDirection: 'row', alignItems: 'center', marginRight: 10 }}>
                     {renderTierBadge(item.model_tier)}
-                    <Text style={[styles.cardTitle, { marginLeft: 8 }]} numberOfLines={1}>
-                      {item.character_name}과의 {item.situation}
+                    {/* 🌟 'OO과의' 부분을 제거하고 situation(스토리 상황/제목)만 출력하도록 수정 */}
+                    <Text style={[styles.cardTitle, { marginLeft: 8, flex: 1 }]} numberOfLines={1}>
+                      {item.situation}
                     </Text>
                   </View>
                   <Text style={styles.cardDate}>{formatDate(item.archived_at)}</Text>
@@ -118,17 +116,17 @@ const styles = StyleSheet.create({
   scrollContent: { padding: 24, paddingBottom: 100 },
   titleSection: { marginBottom: 30 }, mainTitle: { fontSize: 28, fontWeight: 'bold', color: '#222', marginBottom: 12 }, subTitle: { fontSize: 14, color: '#555', lineHeight: 20 },
   resumeCard: { backgroundColor: '#5D7341', borderRadius: 20, padding: 20, marginBottom: 16, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.15, shadowRadius: 8, elevation: 4 },
-  resumeTitle: { color: '#FFF', fontSize: 15, fontWeight: 'bold' }, resumeSub: { color: '#D5DFCA', fontSize: 13, marginTop: 4 }, resumeLinkText: { color: '#E0E8D5', fontSize: 14, fontWeight: 'bold' },
+  resumeTitle: { color: '#FFF', fontSize: 15, fontWeight: 'bold' }, resumeSub: { color: '#D5DFCA', fontSize: 13, marginTop: 4 }, resumeLinkText: { color: '#E0E8D5', fontSize: 14, fontWeight: 'bold', marginLeft: 10 },
   newStoryButton: { height: 140, borderWidth: 2, borderColor: '#C5D0B5', borderStyle: 'dashed', borderRadius: 24, justifyContent: 'center', alignItems: 'center', backgroundColor: 'rgba(255, 255, 255, 0.4)', marginBottom: 24 },
   plusIconCircle: { width: 40, height: 40, borderRadius: 20, backgroundColor: '#E0E8D5', justifyContent: 'center', alignItems: 'center', marginBottom: 12 }, plusIconText: { fontSize: 24, color: '#6B8E23', fontWeight: '300' }, newStoryText: { fontSize: 16, color: '#6B8E23', fontWeight: '600' },
   listContainer: { gap: 16 }, card: { backgroundColor: '#FFFFFF', borderRadius: 20, padding: 20, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.05, shadowRadius: 8, elevation: 2 },
-  cardHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }, cardTitle: { fontSize: 16, fontWeight: 'bold', color: '#222' }, cardDate: { fontSize: 13, color: '#999', marginLeft: 10 },
-  tagContainer: { flexDirection: 'row', gap: 8, marginBottom: 20 }, tag: { backgroundColor: '#E0E8D5', paddingVertical: 6, paddingHorizontal: 12, borderRadius: 12 }, tagText: { color: '#7A9958', fontSize: 12, fontWeight: '600' },
+  cardHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }, cardTitle: { fontSize: 16, fontWeight: 'bold', color: '#222' }, cardDate: { fontSize: 13, color: '#999' },
+  tagContainer: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 20 }, 
+  tag: { backgroundColor: '#E0E8D5', paddingVertical: 6, paddingHorizontal: 12, borderRadius: 12 }, tagText: { color: '#7A9958', fontSize: 12, fontWeight: '600' },
   cardFooter: { alignItems: 'flex-end' }, recordLinkText: { fontSize: 14, color: '#888' },
-  // 🌟 티어 뱃지 스타일 추가
   tierBadge: { paddingHorizontal: 8, paddingVertical: 4, borderRadius: 8 },
   tierBadgeStandard: { backgroundColor: '#EBEBE0' },
-  tierBadgePremium: { backgroundColor: '#FFD700' }, // 프리미엄 강조색 (원하는 색상으로 변경 가능)
+  tierBadgePremium: { backgroundColor: '#FFD700' }, 
   tierBadgeText: { fontSize: 10, fontWeight: 'bold' },
   tierBadgeTextStandard: { color: '#666' },
   tierBadgeTextPremium: { color: '#8B6508' }
