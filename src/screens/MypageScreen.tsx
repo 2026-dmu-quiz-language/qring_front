@@ -64,6 +64,7 @@ const MENU_ITEMS: MenuItem[] = [
   { id: 'account', label: '계정 관리', icon: 'person-outline' },
   { id: 'sound', label: '소리 설정', icon: 'volume-high-outline' },
   { id: 'levelLang', label: '레벨 / 언어 변경', icon: 'options-outline' },
+  { id: 'info', label: '앱 정보', icon: 'information-circle-outline' },
   { id: 'logout', label: '로그아웃', icon: 'log-out-outline', isLogout: true },
 ];
 
@@ -211,6 +212,8 @@ const MyPageScreen = ({ navigation }: any) => {
                     userLang: userLangKorean,
                     userLevel: levelCode,
                   });
+                } else if (item.id === 'info') {
+                  navigation.navigate('AppInfoScreen');
                 } else if (item.isLogout) {
                   Alert.alert('로그아웃', '정말 로그아웃 하시겠습니까?', [
                     { text: '취소', style: 'cancel' },

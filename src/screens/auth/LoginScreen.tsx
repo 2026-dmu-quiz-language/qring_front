@@ -283,7 +283,6 @@ const LoginScreen = ({ navigation }: any) => {
           <Text style={styles.signUpText}>계정이 없으신가요? <Text style={{ fontWeight: 'bold', color: '#6F9F63' }}>회원가입</Text></Text>
         </TouchableOpacity>
 
-        <Text style={styles.attributionText}>Icon by Freepik - Flaticon</Text>
       </View>
     </ScreenWrapper>
   );
@@ -306,7 +305,6 @@ const styles = StyleSheet.create({
   socialIcon: { width: 48, height: 48, resizeMode: 'contain' as const },
   signUpLink: { marginTop: 10 },
   signUpText: { color: '#666' },
-  attributionText: { fontSize: 10, color: '#BBB', marginTop: 15 }
 });
 
 export default LoginScreen;
