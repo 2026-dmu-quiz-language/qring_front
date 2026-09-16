@@ -6,6 +6,7 @@ export interface StoryArchive {
   character_name: string;
   quiz_count: number;
   archived_at: string;
+  model_tier?: string; // 🌟 추가됨: 보관함 카드 배지용
 }
 
 export interface StoryLibraryResponse {
@@ -19,7 +20,7 @@ export const fetchStoryLibrary = async (): Promise<StoryLibraryResponse> => {
 };
 
 export interface TimelineItem {
-  type: 'message' | 'quiz' | 'quiz_result';
+  type: 'message' | 'quiz' | 'quiz_result' | 'extension'; // 🌟 'extension' 추가됨
   role?: 'assistant' | 'user';
   content?: string;
   translation?: string; // assistant 메시지의 한글 번역
@@ -35,6 +36,8 @@ export interface TimelineItem {
   quiz_number?: number;
   user_answer?: string;
   result?: 'correct' | 'incorrect';
+  quiz_limit?: number; // 🌟 추가됨: 연장 이벤트용
+  charged_points?: number; // 🌟 추가됨: 연장 이벤트용
 }
 
 export interface StoryRecordResponse {
@@ -61,6 +64,7 @@ export interface StartStoryRequest {
   situationDescription: string;
   tone: string;
   targetLanguage: string;
+  modelTier?: string; // 🌟 추가됨: 생략하면 standard
 }
 
 export interface StartStoryResponse {
@@ -70,6 +74,8 @@ export interface StartStoryResponse {
   ai_first_message: string;
   ai_first_translation: string;
   user_remaining_points: number;
+  model_tier: string; // 🌟 추가됨
+  charged_points: number; // 🌟 추가됨
 }
 
 export const startStorySession = async (request: StartStoryRequest): Promise<StartStoryResponse> => {
@@ -103,6 +109,12 @@ export interface StoryChatResponse {
   answer_result: string; // "none", "correct", "incorrect"
   current_quiz_count: number;
   is_completed: boolean;
+  // 아래는 연장 혹은 추후 확장을 위해 포함될 수 있는 필드
+  quiz_limit?: number; // 🌟 추가됨
+  can_extend?: boolean; // 🌟 추가됨
+  user_remaining_points?: number; // 🌟 추가됨
+  model_tier?: string; // 🌟 추가됨
+  charged_points?: number; // 🌟 추가됨
 }
 
 export const sendStoryChatMessage = async (request: StoryChatRequest): Promise<StoryChatResponse> => {
@@ -133,7 +145,7 @@ export const discardStorySession = async (request: StoryDiscardRequest): Promise
 };
 
 export interface TimelineEvent {
-  type: 'message' | 'quiz' | 'quiz_result';
+  type: 'message' | 'quiz' | 'quiz_result' | 'extension'; // 🌟 'extension' 추가됨
   role?: 'user' | 'assistant';
   content?: string;
   translation?: string;
@@ -141,6 +153,8 @@ export interface TimelineEvent {
   quiz_number?: number;
   user_answer?: string;
   result?: 'correct' | 'incorrect' | 'none';
+  quiz_limit?: number; // 🌟 추가됨: 연장 이벤트용
+  charged_points?: number; // 🌟 추가됨: 연장 이벤트용
 }
 
 export interface StoryResumeResponse {
@@ -153,6 +167,7 @@ export interface StoryResumeResponse {
   current_quiz_count?: number;
   is_completed?: boolean;
   timeline?: TimelineEvent[];
+  model_tier?: string; // 🌟 추가됨: 이어보기 화면 배지용
 }
 
 export const resumeStory = async (): Promise<StoryResumeResponse> => {
@@ -161,10 +176,15 @@ export const resumeStory = async (): Promise<StoryResumeResponse> => {
 };
 
 export interface ExtendStoryResponse {
+  session_id: string; // 🌟 API 명세 기준 추가
   ai_message: string;
+  translation?: string; // 🌟 API 명세 기준 추가
+  current_quiz_count: number; // 🌟 API 명세 기준 추가
   quiz_limit: number;
   can_extend: boolean;
   user_remaining_points: number;
+  model_tier: string; // 🌟 추가됨
+  charged_points: number; // 🌟 추가됨
 }
 
 export const extendStorySession = async (data: { session_id: string }): Promise<ExtendStoryResponse> => {

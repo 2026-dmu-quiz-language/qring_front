@@ -23,17 +23,24 @@ import StoryRecordScreen from '../screens/StoryRecordScreen';
 const Stack = createNativeStackNavigator();
 
 const LearningScreen = ({ navigation }: any) => (
-  <ScreenWrapper><Text>학습(채팅) 페이지</Text><Button title="결과창 보기" onPress={() => navigation.navigate('Result')} /></ScreenWrapper>
+  <ScreenWrapper>
+    <Text>학습(채팅) 페이지</Text>
+    <Button title="결과창 보기" onPress={() => navigation.navigate('Result')} />
+  </ScreenWrapper>
 );
+
 const ResultScreen = ({ navigation }: any) => (
-  <ScreenWrapper><Text>학습 완료 결과창</Text><Button title="홈으로 돌아가기" onPress={() => navigation.navigate('MainTab')} /></ScreenWrapper>
+  <ScreenWrapper>
+    <Text>학습 완료 결과창</Text>
+    <Button title="홈으로 돌아가기" onPress={() => navigation.navigate('MainTab')} />
+  </ScreenWrapper>
 );
 
 export const RootNavigator = () => {
   return (
     <Stack.Navigator initialRouteName="Splash" screenOptions={{ headerShown: false }}>
       {/* Auth Flow */}
-      <Stack.Screen name="Splash" options={{ headerShown: false,title: '', }} component={SplashScreen} />
+      <Stack.Screen name="Splash" options={{ headerShown: false, title: '' }} component={SplashScreen} />
       <Stack.Screen name="Login" component={LoginScreen} />
       <Stack.Screen name="SignUp" component={SignUpScreen} />
       <Stack.Screen name="EmailVerify" component={EmailVerifyScreen} />

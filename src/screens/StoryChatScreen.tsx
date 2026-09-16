@@ -84,18 +84,21 @@ export default function StoryChatScreen({ route, navigation }: any) {
       await discardStorySession({ session_id: sessionId });
       if (Platform.OS === 'web') {
         window.alert('대화한 스토리가 삭제됩니다.');
-        navigation.navigate('StoryMainScreen');
+        navigation.navigate('MainTab', { screen: 'Story' });
       } else {
         Alert.alert('알림', '대화한 스토리가 삭제됩니다.', [
-          { text: '확인', onPress: () => navigation.navigate('StoryMainScreen') }
+          { text: '확인', onPress: () => navigation.navigate('MainTab', { screen: 'Story' }) }
         ]);
       }
     } catch (error) {
       console.error('스토리 삭제 실패:', error);
       if (Platform.OS === 'web') {
-        window.alert('스토리 삭제에 실패했습니다.');
+        window.alert('스토리 삭제에 실패했습니다. 메인 화면으로 이동합니다.');
+        navigation.navigate('MainTab', { screen: 'Story' });
       } else {
-        Alert.alert('오류', '스토리 삭제에 실패했습니다.');
+        Alert.alert('오류', '스토리 삭제에 실패했습니다. 메인 화면으로 이동합니다.', [
+          { text: '확인', onPress: () => navigation.navigate('MainTab', { screen: 'Story' }) }
+        ]);
       }
     }
   };
@@ -106,20 +109,23 @@ export default function StoryChatScreen({ route, navigation }: any) {
       playSfx('usePoints'); 
       if (Platform.OS === 'web') {
         window.alert(`스토리가 저장되었습니다.\n남은 포인트: ${response.user_remaining_points}`);
-        navigation.navigate('StoryMainScreen');
+        navigation.navigate('MainTab', { screen: 'Story' });
       } else {
         Alert.alert(
           '저장 완료', 
           `스토리가 저장되었습니다.\n남은 포인트: ${response.user_remaining_points}`, 
-          [{ text: '확인', onPress: () => navigation.navigate('StoryMainScreen') }]
+          [{ text: '확인', onPress: () => navigation.navigate('MainTab', { screen: 'Story' }) }]
         );
       }
     } catch (error) {
       console.error('스토리 저장 실패:', error);
       if (Platform.OS === 'web') {
-        window.alert('스토리 저장에 실패했습니다.');
+        window.alert('스토리 저장에 실패했습니다. 메인 화면으로 이동합니다.');
+        navigation.navigate('MainTab', { screen: 'Story' });
       } else {
-        Alert.alert('오류', '스토리 저장에 실패했습니다.');
+        Alert.alert('오류', '스토리 저장에 실패했습니다. 메인 화면으로 이동합니다.', [
+          { text: '확인', onPress: () => navigation.navigate('MainTab', { screen: 'Story' }) }
+        ]);
       }
     }
   };
@@ -190,12 +196,12 @@ export default function StoryChatScreen({ route, navigation }: any) {
     if (Platform.OS === 'web') {
       const isConfirmed = window.confirm('대화는 저장되어 있어요. 나중에 이어서 할 수 있습니다.\n나가시겠습니까?');
       if (isConfirmed) {
-        navigation.navigate('StoryMainScreen');
+        navigation.navigate('MainTab', { screen: 'Story' });
       }
     } else {
       Alert.alert('대화 나가기', '대화는 저장되어 있어요. 나중에 이어서 할 수 있습니다.', [
         { text: '취소', style: 'cancel' },
-        { text: '나가기', onPress: () => navigation.navigate('StoryMainScreen') },
+        { text: '나가기', onPress: () => navigation.navigate('MainTab', { screen: 'Story' }) },
       ]);
     }
   };
@@ -375,7 +381,6 @@ export default function StoryChatScreen({ route, navigation }: any) {
 
   return (
     <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
-      {/* 위쪽만 비운다. 아래쪽 인셋은 메시지 바가 직접 처리한다. */}
       <KeyboardAvoidingView 
         style={{ flex: 1 }} 
         behavior={Platform.OS === 'ios' ? 'padding' : 'padding'}
@@ -425,9 +430,7 @@ export default function StoryChatScreen({ route, navigation }: any) {
 }
 
 const styles = StyleSheet.create({
-  // 🌟 앱 전체 배경 테마에 맞춰 #E9E9DB 로 변경
   container: { flex: 1, backgroundColor: '#E9E9DB' },
-  
   headerContainer: { width: '100%', backgroundColor: 'transparent', paddingBottom: 10, paddingTop: 10 },
   topBar: { minHeight: 56, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, backgroundColor: 'transparent' },
   leftSection: { width: 40, alignItems: 'flex-start' },
@@ -435,7 +438,6 @@ const styles = StyleSheet.create({
   rightSection: { width: 40, alignItems: 'flex-end' },
   title: { fontSize: 16, fontWeight: 'bold', color: '#333' },
   iconButton: { padding: 4, marginLeft: -5 },
-
   chatArea: { paddingHorizontal: 20, paddingVertical: 20 },
   timeLabelContainer: { alignItems: 'center', marginBottom: 20 },
   timeLabel: { backgroundColor: '#E0E1D6', color: '#555', fontSize: 12, paddingVertical: 4, paddingHorizontal: 12, borderRadius: 12, overflow: 'hidden' },
