@@ -32,7 +32,6 @@ interface ContentItem {
   requiredPoints?: number; 
 }
 
-// 카테고리 아이콘. 번들러가 파일을 앱에 넣으려면 경로를 코드에 그대로 적어야 한다.
 const CATEGORY_ICONS = {
   all: require('../../assets/categories.png'),
   romance: require('../../assets/romance.png'),
@@ -47,7 +46,6 @@ const StoryHomeScreen = () => {
   const [activeCategory, setActiveCategory] = useState('ALL');
   const [isLoading, setIsLoading] = useState(true);
 
-  // 연애 계열은 하트 아이콘, 나머지는 책 아이콘을 쓴다.
   const getCategoryIcon = (name: string) => {
     if (!name) return CATEGORY_ICONS.book;
     const isRomance = ['짝사랑', '특이한연애', '연애갈등', '로맨스'].some((keyword) =>
@@ -103,19 +101,68 @@ const StoryHomeScreen = () => {
     }, [])
   );
 
-  // 🌟 잠금해제 버튼 클릭 처리 (웹/앱 호환 알림창 + status 파라미터 전달)
+  // 🌟 API 명세서에 맞춘 해금 로직
   const handleUnlockPress = (ep: ContentItem) => {
     const confirmMessage = `${ep.title}을(를) 열람하시겠습니까?\n${ep.requiredPoints || 0}포인트 차감`;
+
+    const unlockAndNavigate = async () => {
+      try {
+        const token = await AsyncStorage.getItem('accessToken');
+        if (!token) return;
+
+        // 1. URL Path에 contentId를 넣고, Request Body는 빈 객체({})로 전송
+        const response = await axios.post(
+          `https://q-ring.app/content/${ep.contentId}/unlock`, 
+          {}, 
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+
+        // API 응답에서 남은 포인트(balanceAfter) 가져오기
+        const balanceAfter = response.data.balanceAfter;
+
+        if (Platform.OS === 'web') {
+          window.alert(`해금되었습니다!\n남은 포인트: ${balanceAfter}P`);
+          navigation.navigate('ChatLearn', {
+            episodeId: ep.contentId, 
+            episodeTitle: ep.title,
+            status: 'UNLOCKED' 
+          });
+        } else {
+          setTimeout(() => {
+            Alert.alert(
+              '해금 완료',
+              `해금되었습니다!\n남은 포인트: ${balanceAfter}P`,
+              [
+                {
+                  text: '확인',
+                  onPress: () => {
+                    navigation.navigate('ChatLearn', {
+                      episodeId: ep.contentId, 
+                      episodeTitle: ep.title,
+                      status: 'UNLOCKED' 
+                    });
+                  }
+                }
+              ]
+            );
+          }, 300);
+        }
+      } catch (error: any) {
+        console.error('해금 API 에러:', error);
+        // 서버에서 보내주는 에러 메시지가 있다면 표시, 없으면 기본 메시지
+        const errorMsg = error.response?.data?.message || '포인트가 부족하거나 오류가 발생했습니다.';
+        if (Platform.OS === 'web') {
+          window.alert(errorMsg);
+        } else {
+          Alert.alert('잠금 해제 실패', errorMsg);
+        }
+      }
+    };
 
     if (Platform.OS === 'web') {
       const isConfirmed = window.confirm(confirmMessage);
       if (isConfirmed) {
-        window.alert('포인트가 차감되었습니다!');
-        navigation.navigate('ChatLearn', {
-          episodeId: ep.contentId, 
-          episodeTitle: ep.title,
-          status: ep.status 
-        });
+        unlockAndNavigate();
       }
     } else {
       Alert.alert(
@@ -123,29 +170,7 @@ const StoryHomeScreen = () => {
         confirmMessage,
         [
           { text: '취소', style: 'cancel' },
-          { 
-            text: '확인', 
-            onPress: () => {
-              setTimeout(() => {
-                Alert.alert(
-                  '알림',
-                  '포인트가 차감되었습니다!',
-                  [
-                    {
-                      text: '확인',
-                      onPress: () => {
-                        navigation.navigate('ChatLearn', {
-                          episodeId: ep.contentId, 
-                          episodeTitle: ep.title,
-                          status: ep.status 
-                        });
-                      }
-                    }
-                  ]
-                );
-              }, 300);
-            } 
-          }
+          { text: '확인', onPress: () => unlockAndNavigate() }
         ]
       );
     }
@@ -221,7 +246,6 @@ const StoryHomeScreen = () => {
                     }
                   }}
                 >
-                  {/* 1. 이미지 영역 (잠금 오버레이 포함) */}
                   <View style={styles.imageWrap}>
                     {ep.thumbnailUrl ? (
                       <Image source={{ uri: ep.thumbnailUrl }} style={styles.cardImage} resizeMode="cover" />
@@ -229,7 +253,6 @@ const StoryHomeScreen = () => {
                       <View style={[styles.cardImage, { backgroundColor: '#EFEFE1' }]} />
                     )}
 
-                    {/* 잠금 화면 오버레이 (이미지 영역에만 덮임) */}
                     {isLocked && (
                       <View style={styles.lockedOverlay}>
                         <View style={styles.lockIconCircle}>
@@ -245,7 +268,6 @@ const StoryHomeScreen = () => {
                     )}
                   </View>
 
-                  {/* 2. 하단 텍스트 영역 (항상 선명하게 보임) */}
                   <View style={styles.cardInfo}>
                     <Text style={styles.cardTitle}>{ep.title}</Text>
                     <View style={styles.cardMeta}>
@@ -286,18 +308,14 @@ const styles = StyleSheet.create({
   bodyContent: { padding: 20, paddingBottom: 150 },
   title: { fontSize: 22, fontWeight: '800', color: '#333', lineHeight: 30 },
   subtitle: { marginTop: 6, fontSize: 14, color: '#888' },
-  
   loadingWrap: { marginTop: 50, alignItems: 'center' },
   emptyText: { marginTop: 40, textAlign: 'center', color: '#999', fontSize: 15 },
-
   chipRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 20, marginBottom: 10 },
   chip: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 18, paddingVertical: 10, borderRadius: 25 },
-  // 선택된 칩. 진한 초록 위에서는 아이콘 그림이 묻혀서 연한 초록 바탕에 초록 글자로 둔다.
   chipActive: { backgroundColor: '#E0E8D5', borderWidth: 1, borderColor: theme.colors.primary },
   chipInactive: { backgroundColor: '#F3F4EB', borderWidth: 1, borderColor: 'transparent' },
   chipIcon: { width: 16, height: 16 },
   chipLabel: { fontSize: 14, fontWeight: '600' },
-
   card: {
     borderRadius: 24,
     overflow: 'hidden',
@@ -311,8 +329,6 @@ const styles = StyleSheet.create({
     elevation: 3,
     position: 'relative', 
   },
-  
-  // 새롭게 분리된 이미지 래퍼 영역
   imageWrap: {
     height: 140,
     width: '100%',
@@ -325,16 +341,12 @@ const styles = StyleSheet.create({
   cardInfo: { padding: 20 },
   cardTitle: { fontSize: 17, fontWeight: 'bold', color: '#333' },
   cardMeta: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 12 },
-  
   badgeWrap: { flexDirection: 'row', gap: 8 },
   badge: { backgroundColor: '#edf7e6', paddingHorizontal: 10, paddingVertical: 4, borderRadius: 12 },
   badgeText: { fontSize: 12, fontWeight: 'bold', color: theme.colors.primary },
-  
   badgeCompleted: { flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: '#F0F0F0', paddingHorizontal: 10, paddingVertical: 4, borderRadius: 12 },
   badgeCheckIcon: { width: 14, height: 14 },
   badgeTextCompleted: { fontSize: 12, fontWeight: 'bold', color: '#666' },
-
-  // 이미지 영역 안에서만 위치하도록 absoluteFill 적용 및 사이즈 축소
   lockedOverlay: {
     ...StyleSheet.absoluteFill,
     backgroundColor: 'rgba(0, 0, 0, 0.65)',
