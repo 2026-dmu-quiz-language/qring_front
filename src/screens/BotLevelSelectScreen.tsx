@@ -26,11 +26,12 @@ const LEVELS: {
   level: BotLevel;
   title: string;
   desc: string;
-  icon: string;
+  icon: any;
 }[] = [
-  { level: '하', title: '하급 봇', desc: '여유로운 속도로 풀어요', icon: '🌱' },
-  { level: '중', title: '중급 봇', desc: '제법 빠르고 정확해요', icon: '🌿' },
-  { level: '상', title: '상급 봇', desc: '빈틈없는 스피드! 최고 보상', icon: '🔥' },
+  // 아이콘은 하급부터 차례대로. 번들러가 파일을 앱에 넣으려면 경로를 코드에 그대로 적어야 한다.
+  { level: '하', title: '하급 봇', desc: '여유로운 속도로 풀어요', icon: require('../../assets/time1.png') },
+  { level: '중', title: '중급 봇', desc: '제법 빠르고 정확해요', icon: require('../../assets/time2.png') },
+  { level: '상', title: '상급 봇', desc: '빈틈없는 스피드! 최고 보상', icon: require('../../assets/time3.png') },
 ];
 
 const BotLevelSelectScreen = () => {
@@ -118,7 +119,14 @@ const BotLevelSelectScreen = () => {
 
         {/* 보유 포인트 */}
         <View style={styles.pointRow}>
-          <Text style={styles.pointLabel}>💰 보유 포인트</Text>
+          <View style={styles.pointLabelRow}>
+            <Image
+              source={require('../../assets/point.png')}
+              style={styles.pointIcon}
+              resizeMode="contain"
+            />
+            <Text style={styles.pointLabel}>보유 포인트</Text>
+          </View>
           {points === null ? (
             <ActivityIndicator size="small" color={theme.colors.primary} />
           ) : (
@@ -137,7 +145,7 @@ const BotLevelSelectScreen = () => {
                 onPress={() => setSelected(level)}
                 activeOpacity={0.8}
               >
-                <Text style={styles.levelIcon}>{icon}</Text>
+                <Image source={icon} style={styles.levelIcon} resizeMode="contain" />
                 <View style={{ flex: 1 }}>
                   <Text style={styles.levelTitle}>{title}</Text>
                   <Text style={styles.levelDesc}>{desc}</Text>
@@ -158,7 +166,14 @@ const BotLevelSelectScreen = () => {
         </View>
 
         {notEnough && (
-          <Text style={styles.notEnoughText}>포인트가 부족해요 😢</Text>
+          <View style={styles.notEnoughRow}>
+            <Image
+              source={require('../../assets/Qring-emoji3.png')}
+              style={styles.notEnoughImage}
+              resizeMode="contain"
+            />
+            <Text style={styles.notEnoughText}>포인트가 부족해요</Text>
+          </View>
         )}
       </ScrollView>
 
@@ -224,6 +239,8 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
     marginBottom: 20,
   },
+  pointLabelRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  pointIcon: { width: 20, height: 20 },
   pointLabel: {
     fontSize: 14,
     fontWeight: '700',
@@ -254,7 +271,8 @@ const styles = StyleSheet.create({
     backgroundColor: '#F9FAF5',
   },
   levelIcon: {
-    fontSize: 28,
+    width: 34,
+    height: 34,
   },
   levelTitle: {
     fontSize: 16,
@@ -296,8 +314,15 @@ const styles = StyleSheet.create({
     color: '#dc3545',
     marginBottom: 10,
   },
-  notEnoughText: {
+  notEnoughRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
     marginTop: 14,
+  },
+  notEnoughImage: { width: 28, height: 28 },
+  notEnoughText: {
     textAlign: 'center',
     fontSize: 13,
     fontWeight: '700',
