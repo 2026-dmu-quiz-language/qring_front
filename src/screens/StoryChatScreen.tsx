@@ -83,7 +83,6 @@ export default function StoryChatScreen({ route, navigation }: any) {
       }]
   );
 
-  // 🌟 스크롤을 맨 아래로 부드럽게 당겨주는 함수 (살짝 여유를 주어 확실히 스크롤되게 함)
   const scrollToBottom = () => {
     if (messages.length > 0) {
       setTimeout(() => {
@@ -414,14 +413,11 @@ export default function StoryChatScreen({ route, navigation }: any) {
   };
 
   return (
-    // 🌟 1. 충돌의 원인이던 SafeAreaView 태그를 아예 제거하고 최상단을 KeyboardAvoidingView로 감쌌습니다.
-    // 이렇게 하면 억지로 오프셋 계산할 필요 없이(offset=0) OS가 알아서 키보드 높이만큼 완벽하게 밀어줍니다!
     <KeyboardAvoidingView 
       style={{ flex: 1, backgroundColor: '#E9E9DB' }} 
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       keyboardVerticalOffset={0}
     >
-      {/* 🌟 2. SafeAreaView 대신 직접 insets.top 만큼 상단 여백을 주어 카메라 노치를 피합니다. */}
       <View style={{ flex: 1, paddingTop: insets.top }}>
         
         <View style={styles.headerContainer}>
@@ -445,7 +441,6 @@ export default function StoryChatScreen({ route, navigation }: any) {
           data={messages}
           keyExtractor={(item) => item.id}
           renderItem={renderMessageItem}
-          // 🌟 3. 마지막 채팅이 답답하게 가려지지 않도록 하단 공백(paddingBottom)을 '40'으로 넉넉하게 주었습니다.
           contentContainerStyle={styles.chatArea}
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
@@ -458,8 +453,19 @@ export default function StoryChatScreen({ route, navigation }: any) {
           }
         />
 
-        {/* 🌟 4. 키보드가 열리면 여백을 8px로 확 줄여서 입력창이 키보드에 예쁘게 착! 달라붙게 했습니다. */}
-        <View style={[styles.inputContainer, { paddingBottom: isKeyboardVisible ? 8 : Math.max(insets.bottom, 12) }]}>
+        {/* 🌟 여기가 핵심 수정 포인트입니다! 🌟 
+            키보드가 열렸을 때는 둘 다 8px로 붙게 하고,
+            닫혀있을 때 아이폰은 홈바(insets.bottom) 높이를 주고 갤럭시는 12px만 고정으로 줍니다! */}
+        <View style={[
+          styles.inputContainer, 
+          { 
+            paddingBottom: isKeyboardVisible 
+              ? 8 
+              : Platform.OS === 'ios' 
+                ? Math.max(insets.bottom, 12) 
+                : 12 // 갤럭시(Android)는 이중 여백을 방지하기 위해 12로 고정
+          }
+        ]}>
           <ChatInputBar
             value={inputText}
             onChangeText={setInputText}
@@ -482,7 +488,6 @@ const styles = StyleSheet.create({
   title: { fontSize: 16, fontWeight: 'bold', color: '#333' },
   iconButton: { padding: 4, marginLeft: -5 },
   
-  // 🌟 채팅 리스트 안쪽 하단 패딩 확보 (마지막 메시지가 입력창에 가리지 않게 넉넉히 40px 부여)
   chatArea: { paddingHorizontal: 20, paddingTop: 20, paddingBottom: 40 },
   
   timeLabelContainer: { alignItems: 'center', marginBottom: 20 },
