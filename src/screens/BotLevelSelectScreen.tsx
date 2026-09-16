@@ -19,6 +19,7 @@ import { startBotMatch, type BotLevel } from '../api/competition';
 import { playSfx } from '../utils/sfx';
 import { getDashboard } from '../api/dashboard';
 import { getErrorMessage } from '../utils/errorMessage';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 // ─── 레벨 카드 정보 ───
 const LEVELS: {
@@ -34,6 +35,10 @@ const LEVELS: {
 
 const BotLevelSelectScreen = () => {
   const navigation = useNavigation<any>();
+  // 하단 시작 버튼이 아이폰 홈 인디케이터와 갤럭시 하단 바에 가리지 않도록 그 높이만큼 올린다.
+  // 인셋이 없는 기기에서는 기존 여백 28을 유지한다.
+  const insets = useSafeAreaInsets();
+  const bottomBarPadding = Math.max(28, insets.bottom + 12);
 
   const [selected, setSelected] = useState<BotLevel | null>(null);
   const [points, setPoints] = useState<number | null>(null);
@@ -158,7 +163,7 @@ const BotLevelSelectScreen = () => {
       </ScrollView>
 
       {/* 시작 버튼 */}
-      <View style={styles.bottomBar}>
+      <View style={[styles.bottomBar, { paddingBottom: bottomBarPadding }]}>
         {errorMsg && <Text style={styles.startErrorText}>{errorMsg}</Text>}
         <TouchableOpacity
           style={[styles.startButton, !canStart && styles.startButtonDisabled]}
