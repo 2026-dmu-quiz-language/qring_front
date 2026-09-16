@@ -9,6 +9,7 @@ import {
   Image,
 } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
+import { Ionicons } from '@expo/vector-icons';
 import { theme } from '../constants/theme';
 import { ScreenWrapper } from '../components/layout/ScreenWrapper';
 import { Header } from '../components/layout/Header';
@@ -25,6 +26,18 @@ const C = {
 };
 
 const WEEKDAY_LABELS = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
+
+// 레벨별 아이콘. 번들러가 파일을 앱에 넣으려면 경로를 코드에 그대로 적어야 한다.
+const ICONS = {
+  bot: require('../../assets/bot.png'),
+  point: require('../../assets/point.png'),
+};
+
+const LEVEL_ICONS: Record<number, any> = {
+  1: require('../../assets/level1.png'),
+  2: require('../../assets/level2.png'),
+  3: require('../../assets/level3.png'),
+};
 
 const AchievementGauge = ({ percent }: { percent: number }) => {
   const safePercent = isNaN(percent) ? 0 : Math.min(100, Math.max(0, percent));
@@ -121,7 +134,7 @@ const DashboardScreen = () => {
           <View style={styles.streakHeader}>
             <Text style={styles.streakTitle}>연속 학습 달성</Text>
             <View style={styles.daysBadge}>
-              <Text style={styles.daysBadgeText}>🌿 {data.consecutiveDays} DAYS</Text>
+              <Text style={styles.daysBadgeText}>{data.consecutiveDays} DAYS</Text>
             </View>
           </View>
           <View style={styles.weekRow}>
@@ -129,7 +142,7 @@ const DashboardScreen = () => {
               <View key={i} style={styles.weekDay}>
                 <View style={[styles.weekDot, day.done && styles.weekDotDone]}>
                   {day.done && (
-                    <Text style={styles.weekLeaf}>🌿</Text>
+                    <Ionicons name="checkmark" size={18} color={theme.colors.primary} />
                   )}
                 </View>
                 <Text style={styles.weekLabel}>{day.day}</Text>
@@ -154,36 +167,53 @@ const DashboardScreen = () => {
             navigation.navigate('BotLevelSelect');
           }}
         >
-          <Text style={styles.botCompTitle}>🤖 봇 컴피티션</Text>
-          <Text style={styles.botCompSub}>Q-Bot과 스피드 대결!</Text>
+          <Image source={ICONS.bot} style={styles.botCompIcon} resizeMode="contain" />
+          <View>
+            <Text style={styles.botCompTitle}>봇 컴피티션</Text>
+            <Text style={styles.botCompSub}>Q-Bot과 스피드 대결!</Text>
+          </View>
         </TouchableOpacity>
 
-        <View style={styles.statsRow}>
-          <View style={styles.statCard}>
-            <Text style={styles.statIcon}>📖</Text>
-            <Text style={styles.statLabel}>완료한 스토리</Text>
-            <Text style={styles.statValue}>{data.completedStoryCount ?? 0} 편</Text>
+        {/* 포인트만 카드로 강조하고, 나머지 값은 배경 없이 한 줄로 둔다 */}
+        <View style={styles.pointCard}>
+          <View style={{ flex: 1 }}>
+            <Text style={styles.pointLabel}>보유 포인트</Text>
+            <Text style={styles.pointValue}>{(data.currentPoints ?? 0).toLocaleString()} P</Text>
           </View>
-          <View style={styles.statCard}>
-            <Text style={styles.statIcon}>🌿</Text>
-            <Text style={styles.statLabel}>내 레벨</Text>
-            <Text style={styles.statValue}>Lv.{data.levelCode} {data.levelDesc}</Text>
+          <Image source={ICONS.point} style={styles.pointIcon} resizeMode="contain" />
+        </View>
+
+        <View style={styles.summaryRow}>
+          <View style={styles.summaryItem}>
+            <Text style={styles.summaryLabel}>완료한 스토리</Text>
+            <Text style={styles.summaryValue}>{data.completedStoryCount ?? 0} 편</Text>
+          </View>
+
+          <View style={styles.summaryDivider} />
+
+          <View style={styles.summaryItem}>
+            <Text style={styles.summaryLabel}>내 레벨</Text>
+            <View style={styles.levelRow}>
+              {/* 레벨 값이 비었거나 목록에 없으면 1레벨 아이콘을 쓴다 */}
+              <Image
+                source={LEVEL_ICONS[data.levelCode] ?? LEVEL_ICONS[1]}
+                style={styles.levelIcon}
+                resizeMode="contain"
+              />
+              <Text style={styles.summaryValue} numberOfLines={1}>Lv.{data.levelCode}</Text>
+            </View>
+          </View>
+
+          <View style={styles.summaryDivider} />
+
+          <View style={styles.summaryItem}>
+            <Text style={[styles.summaryLabel, styles.summaryLabelWarning]}>오답 문제</Text>
+            <Text style={[styles.summaryValue, styles.summaryValueWarning]}>
+              {data.incorrectQuizCount ?? 0} 문제
+            </Text>
           </View>
         </View>
 
-        <View style={styles.statsRowLast}>
-          <View style={styles.statCard}>
-            <Text style={styles.statIcon}>❌</Text>
-            <Text style={styles.statLabel}>오답 문제 수</Text>
-            <Text style={styles.statValue}>{data.incorrectQuizCount ?? 0} 문제</Text>
-          </View>
-          <View style={styles.statCard}>
-            <Text style={styles.statIcon}>💰</Text>
-            <Text style={styles.statLabel}>보유 포인트</Text>
-            <Text style={styles.statValue}>{(data.currentPoints ?? 0).toLocaleString()} P</Text>
-          </View>
-        </View>
-        
       </ScrollView>
     </ScreenWrapper>
   );
@@ -215,7 +245,6 @@ const styles = StyleSheet.create({
   weekDay: { alignItems: 'center', gap: 3 },
   weekDot: { width: 32, height: 32, borderRadius: 16, backgroundColor: '#f0f0e8', justifyContent: 'center', alignItems: 'center' }, 
   weekDotDone: { backgroundColor: '#edf7e6' },
-  weekLeaf: { fontSize: 13 },
   weekLabel: { fontSize: 11, fontWeight: '600', color: '#999' },
 
   achievementSection: {
@@ -255,7 +284,10 @@ const styles = StyleSheet.create({
     backgroundColor: theme.colors.tertiary,
     borderRadius: 20,
     paddingVertical: 15,
+    flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'center',
+    gap: 10,
     marginBottom: 20,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
@@ -263,6 +295,7 @@ const styles = StyleSheet.create({
     shadowRadius: 15,
     elevation: 3,
   },
+  botCompIcon: { width: 34, height: 34 },
   botCompTitle: { fontSize: 17, fontWeight: '800', color: '#fff' },
   botCompSub: { fontSize: 11, fontWeight: '500', color: 'rgba(255,255,255,0.7)', marginTop: 3 },
 
@@ -303,29 +336,31 @@ const styles = StyleSheet.create({
   mascotRight: { flexDirection: 'row', alignItems: 'flex-end' },
   mascotImage: { width: 82, height: 82 }, 
 
-  statsRow: {
+  // 포인트 강조 카드
+  pointCard: {
     flexDirection: 'row',
-    gap: 12,
-    marginBottom: 12,
-  },
-  statsRowLast: {
-    flexDirection: 'row',
-    gap: 12,
-  },
-  statCard: {
-    flex: 1,
+    alignItems: 'center',
     backgroundColor: '#F5F4E6',
-    borderRadius: 22, 
-    padding: 14,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.05,
-    shadowRadius: 15,
-    elevation: 3,
+    borderRadius: 24,
+    paddingVertical: 18,
+    paddingHorizontal: 20,
+    marginBottom: 18,
   },
-  statIcon: { fontSize: 16, marginBottom: 4 },
-  statLabel: { fontSize: 11, color: '#999', fontWeight: '500' },
-  statValue: { fontSize: 14, fontWeight: '800', color: '#1a1a1a', marginTop: 2 },
+  pointLabel: { fontSize: 12, fontWeight: '600', color: '#8A8F80' },
+  pointValue: { fontSize: 22, fontWeight: '900', color: '#1a1a1a', marginTop: 4 },
+  pointIcon: { width: 44, height: 44 },
+
+  // 카드 없이 여백으로만 나누는 보조 값 줄
+  summaryRow: { flexDirection: 'row', alignItems: 'center' },
+  summaryItem: { flex: 1, alignItems: 'center' },
+  summaryDivider: { width: 1, height: 28, backgroundColor: '#DEDECF' },
+  summaryLabel: { fontSize: 11, fontWeight: '500', color: '#999', marginBottom: 6 },
+  summaryValue: { fontSize: 15, fontWeight: '800', color: '#1a1a1a' },
+  summaryValueWarning: { color: '#C97A7A' },
+  // 오답 라벨. 경고 빨강(#dc3545)은 화면에서 튀어서 한 단계 연한 색으로 낮춘다.
+  summaryLabelWarning: { color: '#C97A7A' },
+  levelRow: { flexDirection: 'row', alignItems: 'center', gap: 4 },
+  levelIcon: { width: 20, height: 20 },
 });
 
 export default DashboardScreen;

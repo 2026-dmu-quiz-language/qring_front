@@ -32,24 +32,28 @@ interface ContentItem {
   requiredPoints?: number; 
 }
 
+// 카테고리 아이콘. 번들러가 파일을 앱에 넣으려면 경로를 코드에 그대로 적어야 한다.
+const CATEGORY_ICONS = {
+  all: require('../../assets/categories.png'),
+  romance: require('../../assets/romance.png'),
+  book: require('../../assets/book.png'),
+};
+
 const StoryHomeScreen = () => {
   const navigation = useNavigation<NativeStackNavigationProp<LearnStackParamList>>();
   
   const [contents, setContents] = useState<ContentItem[]>([]);
-  const [categories, setCategories] = useState<{id: string, label: string, emoji: string}[]>([]);
+  const [categories, setCategories] = useState<{id: string, label: string, icon: any}[]>([]);
   const [activeCategory, setActiveCategory] = useState('ALL');
   const [isLoading, setIsLoading] = useState(true);
 
-  const getCategoryEmoji = (name: string) => {
-    if (!name) return '📚';
-    if (name.includes('짝사랑')) return '💘';
-    if (name.includes('드라마')) return '📺';
-    if (name.includes('스릴러')) return '😱';
-    if (name.includes('추리')) return '🕵️‍♂️';
-    if (name.includes('특이한연애')) return '💬';
-    if (name.includes('연애갈등')) return '💔';
-    if (name.includes('로맨스')) return '💕';
-    return '📚';
+  // 연애 계열은 하트 아이콘, 나머지는 책 아이콘을 쓴다.
+  const getCategoryIcon = (name: string) => {
+    if (!name) return CATEGORY_ICONS.book;
+    const isRomance = ['짝사랑', '특이한연애', '연애갈등', '로맨스'].some((keyword) =>
+      name.includes(keyword),
+    );
+    return isRomance ? CATEGORY_ICONS.romance : CATEGORY_ICONS.book;
   };
 
   const fetchContentList = async () => {
@@ -75,11 +79,11 @@ const StoryHomeScreen = () => {
       const mappedCategories = uniqueCategories.map(name => ({
         id: name,
         label: name,
-        emoji: getCategoryEmoji(name),
+        icon: getCategoryIcon(name),
       }));
 
       const finalCategories = [
-        { id: 'ALL', label: '전체', emoji: '✨' },
+        { id: 'ALL', label: '전체', icon: CATEGORY_ICONS.all },
         ...mappedCategories
       ];
 
@@ -183,11 +187,11 @@ const StoryHomeScreen = () => {
                       isActive ? styles.chipActive : styles.chipInactive,
                     ]}
                   >
-                    <Text style={styles.chipEmoji}>{cat.emoji}</Text>
+                    <Image source={cat.icon} style={styles.chipIcon} resizeMode="contain" />
                     <Text
                       style={[
                         styles.chipLabel,
-                        { color: isActive ? '#fff' : '#666' },
+                        { color: isActive ? theme.colors.primary : '#666' },
                       ]}
                     >
                       {cat.label}
@@ -252,7 +256,12 @@ const StoryHomeScreen = () => {
                         
                         {ep.isCompleted && (
                           <View style={styles.badgeCompleted}>
-                            <Text style={styles.badgeTextCompleted}>✅ 학습 완료</Text>
+                            <Image
+                              source={require('../../assets/check.png')}
+                              style={styles.badgeCheckIcon}
+                              resizeMode="contain"
+                            />
+                            <Text style={styles.badgeTextCompleted}>학습 완료</Text>
                           </View>
                         )}
                       </View>
@@ -283,9 +292,10 @@ const styles = StyleSheet.create({
 
   chipRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 20, marginBottom: 10 },
   chip: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 18, paddingVertical: 10, borderRadius: 25 },
-  chipActive: { backgroundColor: theme.colors.primary },
-  chipInactive: { backgroundColor: '#F3F4EB' },
-  chipEmoji: { fontSize: 14 },
+  // 선택된 칩. 진한 초록 위에서는 아이콘 그림이 묻혀서 연한 초록 바탕에 초록 글자로 둔다.
+  chipActive: { backgroundColor: '#E0E8D5', borderWidth: 1, borderColor: theme.colors.primary },
+  chipInactive: { backgroundColor: '#F3F4EB', borderWidth: 1, borderColor: 'transparent' },
+  chipIcon: { width: 16, height: 16 },
   chipLabel: { fontSize: 14, fontWeight: '600' },
 
   card: {
@@ -320,7 +330,8 @@ const styles = StyleSheet.create({
   badge: { backgroundColor: '#edf7e6', paddingHorizontal: 10, paddingVertical: 4, borderRadius: 12 },
   badgeText: { fontSize: 12, fontWeight: 'bold', color: theme.colors.primary },
   
-  badgeCompleted: { backgroundColor: '#F0F0F0', paddingHorizontal: 10, paddingVertical: 4, borderRadius: 12 },
+  badgeCompleted: { flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: '#F0F0F0', paddingHorizontal: 10, paddingVertical: 4, borderRadius: 12 },
+  badgeCheckIcon: { width: 14, height: 14 },
   badgeTextCompleted: { fontSize: 12, fontWeight: 'bold', color: '#666' },
 
   // 이미지 영역 안에서만 위치하도록 absoluteFill 적용 및 사이즈 축소
