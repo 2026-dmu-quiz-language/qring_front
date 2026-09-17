@@ -375,7 +375,7 @@ export default function StoryChatScreen({ route, navigation }: any) {
     // 이렇게 하면 억지로 오프셋 계산할 필요 없이(offset=0) OS가 알아서 키보드 높이만큼 완벽하게 밀어줍니다!
     <KeyboardAvoidingView 
       style={{ flex: 1, backgroundColor: '#E9E9DB' }} 
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       keyboardVerticalOffset={0}
     >
       {/* 🌟 2. SafeAreaView 대신 직접 insets.top 만큼 상단 여백을 주어 카메라 노치를 피합니다. */}
