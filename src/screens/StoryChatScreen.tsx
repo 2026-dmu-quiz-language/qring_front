@@ -7,13 +7,13 @@ import {
   FlatList,
   KeyboardAvoidingView,
   Platform,
-  Alert,
   Keyboard
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context'; 
 import { Ionicons } from '@expo/vector-icons';
 import { playSfx } from '../utils/sfx';
 import { ChatInputBar } from '../components/common/ChatInputBar';
+import { showAlert, showConfirm } from '../components/common/AlertHost';
 import { theme } from '../constants/theme';
 import { 
   StartStoryResponse, 
@@ -113,71 +113,49 @@ export default function StoryChatScreen({ route, navigation }: any) {
   const handleDiscard = async () => {
     try {
       await discardStorySession({ session_id: sessionId });
-      if (Platform.OS === 'web') {
-        window.alert('대화한 스토리가 삭제됩니다.');
-        navigation.navigate('MainTab', { screen: 'Story' });
-      } else {
-        Alert.alert('알림', '대화한 스토리가 삭제됩니다.', [
-          { text: '확인', onPress: () => navigation.navigate('MainTab', { screen: 'Story' }) }
-        ]);
-      }
+      await showAlert({ title: '알림', message: '대화한 스토리가 삭제됩니다.' });
     } catch (error) {
       console.error('스토리 삭제 실패:', error);
-      if (Platform.OS === 'web') {
-        window.alert('스토리 삭제에 실패했습니다. 메인 화면으로 이동합니다.');
-        navigation.navigate('MainTab', { screen: 'Story' });
-      } else {
-        Alert.alert('오류', '스토리 삭제에 실패했습니다. 메인 화면으로 이동합니다.', [
-          { text: '확인', onPress: () => navigation.navigate('MainTab', { screen: 'Story' }) }
-        ]);
-      }
+      await showAlert({
+        title: '오류',
+        message: '스토리 삭제에 실패했습니다. 메인 화면으로 이동합니다.',
+      });
     }
+    // 성공이든 실패든 알림을 닫으면 스토리 목록으로 나간다.
+    navigation.navigate('MainTab', { screen: 'Story' });
   };
 
   const handleArchive = async () => {
     try {
       const response = await archiveStorySession({ session_id: sessionId });
-      playSfx('usePoints'); 
-      if (Platform.OS === 'web') {
-        window.alert(`스토리가 저장되었습니다.\n남은 포인트: ${response.user_remaining_points}`);
-        navigation.navigate('MainTab', { screen: 'Story' });
-      } else {
-        Alert.alert(
-          '저장 완료', 
-          `스토리가 저장되었습니다.\n남은 포인트: ${response.user_remaining_points}`, 
-          [{ text: '확인', onPress: () => navigation.navigate('MainTab', { screen: 'Story' }) }]
-        );
-      }
+      playSfx('usePoints');
+      await showAlert({
+        title: '저장 완료',
+        message: `스토리가 저장되었습니다.\n남은 포인트: ${response.user_remaining_points}`,
+      });
     } catch (error) {
       console.error('스토리 저장 실패:', error);
-      if (Platform.OS === 'web') {
-        window.alert('스토리 저장에 실패했습니다. 메인 화면으로 이동합니다.');
-        navigation.navigate('MainTab', { screen: 'Story' });
-      } else {
-        Alert.alert('오류', '스토리 저장에 실패했습니다. 메인 화면으로 이동합니다.', [
-          { text: '확인', onPress: () => navigation.navigate('MainTab', { screen: 'Story' }) }
-        ]);
-      }
+      await showAlert({
+        title: '오류',
+        message: '스토리 저장에 실패했습니다. 메인 화면으로 이동합니다.',
+      });
     }
+    // 성공이든 실패든 알림을 닫으면 스토리 목록으로 나간다.
+    navigation.navigate('MainTab', { screen: 'Story' });
   };
 
-  const promptSaveStory = () => {
-    if (Platform.OS === 'web') {
-      const isConfirmed = window.confirm('이 스토리를 보관함에 저장할까요? (포인트가 차감될 수 있습니다)\n확인: 저장, 취소: 삭제');
-      if (isConfirmed) {
-        handleArchive();
-      } else {
-        handleDiscard();
-      }
+  const promptSaveStory = async () => {
+    const isConfirmed = await showConfirm({
+      title: '스토리 저장',
+      message: '이 스토리를 보관함에 저장할까요? (포인트가 차감될 수 있습니다)',
+      confirmText: '저장하기',
+      cancelText: '저장 안 함 (삭제)',
+    });
+
+    if (isConfirmed) {
+      await handleArchive();
     } else {
-      Alert.alert(
-        '스토리 저장',
-        '이 스토리를 보관함에 저장할까요? (포인트가 차감될 수 있습니다)',
-        [
-          { text: '아니요 (삭제)', style: 'destructive', onPress: handleDiscard },
-          { text: '네 (저장)', onPress: handleArchive }
-        ]
-      );
+      await handleDiscard();
     }
   };
 
@@ -187,11 +165,11 @@ export default function StoryChatScreen({ route, navigation }: any) {
       const response = await extendStorySession({ session_id: sessionId });
       
       playSfx('usePoints');
-      if (Platform.OS === 'web') {
-        window.alert(`스토리가 연장되었습니다!\n남은 포인트: ${response.user_remaining_points}`);
-      } else {
-        Alert.alert('연장 완료', `스토리가 연장되었습니다!\n남은 포인트: ${response.user_remaining_points}`);
-      }
+      // 연장된 첫 메시지가 알림 뒤에 바로 쌓이도록 기다리지 않는다.
+      showAlert({
+        title: '연장 완료',
+        message: `스토리가 연장되었습니다!\n남은 포인트: ${response.user_remaining_points}`,
+      });
 
       setCanExtendStory(response.can_extend);
       isCompletedRef.current = false;
@@ -208,11 +186,7 @@ export default function StoryChatScreen({ route, navigation }: any) {
 
     } catch (error) {
       console.error('스토리 연장 실패:', error);
-      if (Platform.OS === 'web') {
-        window.alert('연장에 실패했습니다. 스토리를 종료합니다.');
-      } else {
-        Alert.alert('오류', '연장에 실패했습니다. 스토리를 종료합니다.');
-      }
+      await showAlert({ title: '오류', message: '연장에 실패했습니다. 스토리를 종료합니다.' });
       promptSaveStory(); 
     } finally {
       setIsSending(false);
@@ -225,17 +199,18 @@ export default function StoryChatScreen({ route, navigation }: any) {
       return;
     }
     
-    if (Platform.OS === 'web') {
-      const isConfirmed = window.confirm('대화는 저장되어 있어요. 나중에 이어서 할 수 있습니다.\n나가시겠습니까?');
+    void (async () => {
+      const isConfirmed = await showConfirm({
+        title: '대화 나가기',
+        message: '대화는 저장되어 있어요. 나중에 이어서 할 수 있습니다.',
+        confirmText: '나가기',
+        cancelText: '취소',
+        cancelable: true, // 남는 쪽이 안전하므로 뒤로가기로 닫아도 된다
+      });
       if (isConfirmed) {
         navigation.navigate('MainTab', { screen: 'Story' });
       }
-    } else {
-      Alert.alert('대화 나가기', '대화는 저장되어 있어요. 나중에 이어서 할 수 있습니다.', [
-        { text: '취소', style: 'cancel' },
-        { text: '나가기', onPress: () => navigation.navigate('MainTab', { screen: 'Story' }) },
-      ]);
-    }
+    })();
   };
 
   const handleSend = async (messageToSend: string = inputText) => {
@@ -284,44 +259,30 @@ export default function StoryChatScreen({ route, navigation }: any) {
 
       if (response.is_completed) {
         isCompletedRef.current = true;
-        setTimeout(() => {
+        setTimeout(async () => {
           if (canExtendStory) {
-            if (Platform.OS === 'web') {
-              const isConfirmed = window.confirm(`퀴즈를 모두 풀었어요!\n100포인트를 사용하여 대화를 연장하시겠습니까?\n확인: 연장, 취소: 종료(저장/삭제 선택)`);
-              if (isConfirmed) {
-                handleExtend();
-              } else {
-                promptSaveStory();
-              }
+            const isConfirmed = await showConfirm({
+              title: '스토리 연장',
+              message: '퀴즈를 모두 풀었어요!\n100포인트를 사용하여 대화를 연장하시겠습니까?',
+              confirmText: '연장하기',
+              cancelText: '종료하기',
+            });
+            if (isConfirmed) {
+              await handleExtend();
             } else {
-              Alert.alert(
-                '스토리 연장',
-                '퀴즈를 모두 풀었어요!\n100포인트를 사용하여 대화를 연장하시겠습니까?',
-                [
-                  { text: '아니요 (종료)', style: 'cancel', onPress: promptSaveStory },
-                  { text: '네 (연장)', onPress: handleExtend },
-                ],
-                { cancelable: false }
-              );
+              await promptSaveStory();
             }
           } else {
-            if (Platform.OS === 'web') {
-              const isConfirmed = window.confirm(`최대 연장 횟수에 도달하여 스토리가 종료됩니다.\n이 스토리를 보관함에 저장할까요?\n확인: 저장, 취소: 삭제`);
-              if (isConfirmed) {
-                handleArchive();
-              } else {
-                handleDiscard();
-              }
+            const isConfirmed = await showConfirm({
+              title: '스토리 종료',
+              message: '최대 연장 횟수에 도달하여 스토리가 종료됩니다.\n이 스토리를 보관함에 저장할까요?',
+              confirmText: '저장하기',
+              cancelText: '저장 안 함 (삭제)',
+            });
+            if (isConfirmed) {
+              await handleArchive();
             } else {
-              Alert.alert(
-                '스토리 종료',
-                '최대 연장 횟수에 도달하여 스토리가 종료됩니다.\n이 스토리를 보관함에 저장할까요?',
-                [
-                  { text: '아니요 (삭제)', style: 'destructive', onPress: handleDiscard },
-                  { text: '네 (저장)', onPress: handleArchive },
-                ],
-                { cancelable: false }
-              );
+              await handleDiscard();
             }
           }
         }, 500);
@@ -331,11 +292,7 @@ export default function StoryChatScreen({ route, navigation }: any) {
       console.error('메시지 전송 실패:', error);
       setMessages((prev) => prev.filter((m) => m.id !== newUserMsg.id)); 
       setInputText(userMessage);
-      if (Platform.OS === 'web') {
-        window.alert('메시지를 다시 보내주세요.');
-      } else {
-        Alert.alert('전송 실패', '메시지를 다시 보내주세요.');
-      }
+      showAlert({ title: '전송 실패', message: '메시지를 다시 보내주세요.' });
     } finally {
       setIsSending(false);
     }

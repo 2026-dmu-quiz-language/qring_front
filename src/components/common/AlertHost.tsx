@@ -26,6 +26,11 @@ interface ConfirmOptions extends AlertOptions {
   cancelText?: string;
   /** 되돌릴 수 없는 동작이면 확인 버튼이 빨갛게 나온다 */
   destructive?: boolean;
+  /**
+   * 안드로이드 뒤로가기로 닫을 수 있는지. 기본은 false 다.
+   * 취소 쪽이 삭제처럼 되돌릴 수 없는 동작일 때 실수로 닫히면 안 되기 때문이다.
+   */
+  cancelable?: boolean;
 }
 
 interface AlertRequest extends ConfirmOptions {
@@ -89,6 +94,18 @@ export const AlertHost = () => {
         ]
       : [{ text: current.confirmText ?? '확인', onPress: () => close(true) }];
 
+  // 안드로이드 뒤로가기 버튼
+  const handleRequestClose = () => {
+    if (!current) return;
+    // 확인 버튼 하나뿐인 알림은 뒤로가기로 닫아도 결과가 같다.
+    if (!current.cancelText) {
+      close(true);
+      return;
+    }
+    // 확인/취소 알림은 취소가 실수로 눌리지 않도록 기본적으로 뒤로가기를 무시한다.
+    if (current.cancelable) close(false);
+  };
+
   return (
     <AppModal
       visible={!!current}
@@ -96,7 +113,7 @@ export const AlertHost = () => {
       message={current?.message}
       icon={current?.icon}
       buttons={buttons}
-      onRequestClose={() => close(false)}
+      onRequestClose={handleRequestClose}
     />
   );
 };

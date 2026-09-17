@@ -7,8 +7,6 @@ import {
   StyleSheet,
   Image,
   ActivityIndicator,
-  Alert,
-  Platform, 
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { useFocusEffect } from '@react-navigation/native';
@@ -20,6 +18,7 @@ import { Header } from '../components/layout/Header';
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Ionicons } from '@expo/vector-icons';
+import { showAlert, showConfirm } from '../components/common/AlertHost';
 
 interface ContentItem {
   contentId: number;
@@ -59,7 +58,7 @@ const StoryHomeScreen = () => {
       setIsLoading(true);
       const token = await AsyncStorage.getItem('accessToken');
       if (!token) {
-        Alert.alert('로그인 만료', '다시 로그인해 주세요.');
+        showAlert({ title: '로그인 만료', message: '다시 로그인해 주세요.' });
         return;
       }
 
@@ -112,68 +111,42 @@ const StoryHomeScreen = () => {
 
         // 1. URL Path에 contentId를 넣고, Request Body는 빈 객체({})로 전송
         const response = await axios.post(
-          `https://q-ring.app/content/${ep.contentId}/unlock`, 
-          {}, 
+          `https://q-ring.app/content/${ep.contentId}/unlock`,
+          {},
           { headers: { Authorization: `Bearer ${token}` } }
         );
 
         // API 응답에서 남은 포인트(balanceAfter) 가져오기
         const balanceAfter = response.data.balanceAfter;
 
-        if (Platform.OS === 'web') {
-          window.alert(`해금되었습니다!\n남은 포인트: ${balanceAfter}P`);
-          navigation.navigate('ChatLearn', {
-            episodeId: ep.contentId, 
-            episodeTitle: ep.title,
-            status: 'UNLOCKED' 
-          });
-        } else {
-          setTimeout(() => {
-            Alert.alert(
-              '해금 완료',
-              `해금되었습니다!\n남은 포인트: ${balanceAfter}P`,
-              [
-                {
-                  text: '확인',
-                  onPress: () => {
-                    navigation.navigate('ChatLearn', {
-                      episodeId: ep.contentId, 
-                      episodeTitle: ep.title,
-                      status: 'UNLOCKED' 
-                    });
-                  }
-                }
-              ]
-            );
-          }, 300);
-        }
+        await showAlert({
+          title: '해금 완료',
+          message: `해금되었습니다!\n남은 포인트: ${balanceAfter}P`,
+        });
+
+        navigation.navigate('ChatLearn', {
+          episodeId: ep.contentId,
+          episodeTitle: ep.title,
+          status: 'UNLOCKED'
+        });
       } catch (error: any) {
         console.error('해금 API 에러:', error);
         // 서버에서 보내주는 에러 메시지가 있다면 표시, 없으면 기본 메시지
         const errorMsg = error.response?.data?.message || '포인트가 부족하거나 오류가 발생했습니다.';
-        if (Platform.OS === 'web') {
-          window.alert(errorMsg);
-        } else {
-          Alert.alert('잠금 해제 실패', errorMsg);
-        }
+        await showAlert({ title: '잠금 해제 실패', message: errorMsg });
       }
     };
 
-    if (Platform.OS === 'web') {
-      const isConfirmed = window.confirm(confirmMessage);
-      if (isConfirmed) {
-        unlockAndNavigate();
-      }
-    } else {
-      Alert.alert(
-        '잠금 해제',
-        confirmMessage,
-        [
-          { text: '취소', style: 'cancel' },
-          { text: '확인', onPress: () => unlockAndNavigate() }
-        ]
-      );
-    }
+    void (async () => {
+      const isConfirmed = await showConfirm({
+        title: '잠금 해제',
+        message: confirmMessage,
+        confirmText: '확인',
+        cancelText: '취소',
+        cancelable: true, // 해금하지 않는 쪽이 안전하므로 뒤로가기로 닫아도 된다
+      });
+      if (isConfirmed) await unlockAndNavigate();
+    })();
   };
 
   const filteredContents = activeCategory === 'ALL' 

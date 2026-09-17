@@ -1,7 +1,7 @@
 // screens/auth/SocialSignUpScreen.tsx
 
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Image, Alert } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Image } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -10,6 +10,7 @@ import { Header } from '../../components/layout/Header';
 import { CustomButton } from '../../components/common/Button';
 import { CustomInput } from '../../components/common/Input'; // 🌟 CustomInput 임포트 추가
 import { theme } from '../../constants/theme';
+import { showAlert } from '../../components/common/AlertHost';
 
 const API_BASE_URL = 'https://q-ring.app/api/v1/auth'; 
 
@@ -40,7 +41,7 @@ const SocialSignUpScreen = ({ navigation }: any) => {
   // 🌟 닉네임 중복 확인 API (GET) 추가
   const handleCheckNickname = async () => {
     if (!nickname.trim()) {
-      Alert.alert('알림', '닉네임을 입력해 주세요.');
+      showAlert({ title: '알림', message: '닉네임을 입력해 주세요.' });
       return;
     }
     try {
@@ -52,27 +53,27 @@ const SocialSignUpScreen = ({ navigation }: any) => {
 
       if (isAvailable) {
         setIsNicknameAvailable(true);
-        Alert.alert('확인', '사용 가능한 닉네임입니다.');
+        showAlert({ title: '확인', message: '사용 가능한 닉네임입니다.' });
       } else {
         setIsNicknameAvailable(false);
-        Alert.alert('불가', '이미 사용 중인 닉네임입니다.');
+        showAlert({ title: '불가', message: '이미 사용 중인 닉네임입니다.' });
       }
     } catch (error) {
       console.error('닉네임 확인 에러:', error);
-      Alert.alert('에러', '중복 확인에 실패했습니다.');
+      showAlert({ title: '에러', message: '중복 확인에 실패했습니다.' });
     }
   };
 
   // 🌟 설정 저장 및 닉네임 함께 전송 (PUT)
   const handlePreferencesSubmit = async () => {
     if (!nickname.trim()) {
-      return Alert.alert('알림', '닉네임을 입력해 주세요.');
+      return showAlert({ title: '알림', message: '닉네임을 입력해 주세요.' });
     }
     if (!isNicknameAvailable) {
-      return Alert.alert('알림', '닉네임 중복 확인을 진행해 주세요.');
+      return showAlert({ title: '알림', message: '닉네임 중복 확인을 진행해 주세요.' });
     }
     if (!agreedTerms || !agreedPrivacy) {
-      return Alert.alert('알림', '필수 약관에 모두 동의해 주세요.');
+      return showAlert({ title: '알림', message: '필수 약관에 모두 동의해 주세요.' });
     }
 
     try {
@@ -96,17 +97,20 @@ const SocialSignUpScreen = ({ navigation }: any) => {
 
       // 응답 명세서의 updated 확인
       if (response.data.updated) {
-        Alert.alert('환영합니다!', '초기 학습 설정이 완료되었습니다.', [
-          { text: '시작하기', onPress: () => navigation.navigate('MainTab') }
-        ]);
+        await showAlert({
+          title: '환영합니다!',
+          message: '초기 학습 설정이 완료되었습니다.',
+          confirmText: '시작하기',
+        });
+        navigation.navigate('MainTab');
       } else {
-        Alert.alert('오류', '설정 업데이트에 실패했습니다.');
+        showAlert({ title: '오류', message: '설정 업데이트에 실패했습니다.' });
       }
       
     } catch (error: any) {
       console.error('Preferences Error:', error);
       const errorMessage = error.response?.data?.message || '설정 저장 중 오류가 발생했습니다.';
-      Alert.alert('오류', errorMessage);
+      showAlert({ title: '오류', message: errorMessage });
     }
   };
 
