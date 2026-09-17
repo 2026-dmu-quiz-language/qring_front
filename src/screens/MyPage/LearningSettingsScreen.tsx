@@ -4,10 +4,10 @@ import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
-  ScrollView,
   TouchableOpacity,
   StyleSheet,
   ActivityIndicator,
+  Platform
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import axios from 'axios';
@@ -33,7 +33,7 @@ const LEVELS: LevelOption[] = [
   { level: 3, label: 'Lv.3', subLabel: '고급' },
 ];
 
-// 🌟 수정 1: 스페인어 제거
+// 🌟 스페인어 제거됨
 const LANGUAGES = ['일본어', '중국어', '영어'];
 
 const LearningSettingsScreen = ({ navigation, route }: any) => {
@@ -41,7 +41,7 @@ const LearningSettingsScreen = ({ navigation, route }: any) => {
   const [currentLang, setCurrentLang] = useState(route?.params?.userLang || '영어');
   const [currentLevel, setCurrentLevel] = useState(route?.params?.userLevel || 2);
 
-  // 🌟 수정 2: 초기값을 빈 문자열로 두어, 사용자가 하단에서 '새 언어'를 직접 선택했는지 구분
+  // 🌟 초기값을 빈 문자열로 두어, 사용자가 하단에서 '새 언어'를 직접 선택했는지 구분
   const [selectedNewLang, setSelectedNewLang] = useState('');
   const [selectedNewLevel, setSelectedNewLevel] = useState(currentLevel);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -62,7 +62,7 @@ const LearningSettingsScreen = ({ navigation, route }: any) => {
     }
   }, [route?.params]);
 
-  // ─── 백엔드 언어 이름 -> 코드 변환 맵 (스페인어 제거) ───
+  // ─── 백엔드 언어 이름 -> 코드 변환 맵 ───
   const LANGUAGE_CODE_MAP: { [key: string]: string } = {
     '일본어': 'JA',
     '중국어': 'ZH',
@@ -75,7 +75,7 @@ const LearningSettingsScreen = ({ navigation, route }: any) => {
       setIsSubmitting(true);
       const token = await getAuthToken();
 
-      // 🌟 수정 3: 하단에서 새 언어를 선택했다면 하단 설정 저장, 아니면 상단(현재 언어)의 변경된 레벨 저장
+      // 🌟 하단에서 새 언어를 선택했다면 하단 설정 저장, 아니면 상단(현재 언어)의 변경된 레벨 저장
       const targetLang = selectedNewLang ? selectedNewLang : currentLang;
       const targetLevel = selectedNewLang ? selectedNewLevel : currentLevel;
 
@@ -117,97 +117,101 @@ const LearningSettingsScreen = ({ navigation, route }: any) => {
         rightType="none" 
       />
 
-      <ScrollView style={styles.scroll} contentContainerStyle={styles.content}>
+      {/* 🌟 ScrollView 제거 및 View 로 대체 */}
+      <View style={[styles.scroll, styles.content]}>
         
-        {/* 1. 현재 학습 설정 카드 */}
-        <View style={styles.card}>
-          <View style={styles.cardHeaderRow}>
-            <View style={styles.headerTitleWrap}>
-              <View style={styles.iconCircle}>
-                <Ionicons name="settings-sharp" size={18} color={colors.primary} />
+        {/* 🌟 카드 영역들이 안드로이드/아이폰 비율에 맞춰 분배되도록 래핑 */}
+        <View style={{ flex: 1, justifyContent: 'space-evenly' }}>
+          {/* 1. 현재 학습 설정 카드 */}
+          <View style={styles.card}>
+            <View style={styles.cardHeaderRow}>
+              <View style={styles.headerTitleWrap}>
+                <View style={styles.iconCircle}>
+                  <Ionicons name="settings-sharp" size={18} color={colors.primary} />
+                </View>
+                <Text style={styles.cardTitle}>현재 학습 설정</Text>
               </View>
-              <Text style={styles.cardTitle}>현재 학습 설정</Text>
+              <View style={styles.langBadge}>
+                <Text style={styles.langBadgeText}>현재 언어: {currentLang}</Text>
+              </View>
             </View>
-            <View style={styles.langBadge}>
-              <Text style={styles.langBadgeText}>현재 언어: {currentLang}</Text>
+
+            <Text style={styles.subLabel}>현재 학습 레벨</Text>
+            <View style={styles.levelRow}>
+              {LEVELS.map((item) => {
+                const isSelected = currentLevel === item.level;
+                return (
+                  <TouchableOpacity
+                    key={`cur-${item.level}`}
+                    style={[styles.levelCard, isSelected ? styles.levelCardSelected : styles.levelCardDefault]}
+                    onPress={() => {
+                      // 상단 레벨 클릭 시 하단 동기화(setSelectedNewLevel) 제거
+                      setCurrentLevel(item.level);
+                      setSelectedNewLang(''); // 상단을 조작하면 하단 새 언어 선택 상태 해제
+                    }}
+                    activeOpacity={0.8}
+                  >
+                    <Text style={[styles.levelText, isSelected && styles.textWhite]}>{item.label}</Text>
+                    <Text style={[styles.levelSubText, isSelected && styles.textWhiteSub]}>{item.subLabel}</Text>
+                  </TouchableOpacity>
+                );
+              })}
             </View>
           </View>
 
-          <Text style={styles.subLabel}>현재 학습 레벨</Text>
-          <View style={styles.levelRow}>
-            {LEVELS.map((item) => {
-              const isSelected = currentLevel === item.level;
-              return (
-                <TouchableOpacity
-                  key={`cur-${item.level}`}
-                  style={[styles.levelCard, isSelected ? styles.levelCardSelected : styles.levelCardDefault]}
-                  onPress={() => {
-                    // 🌟 수정 4: 상단 레벨 클릭 시 하단 동기화(setSelectedNewLevel) 제거
-                    setCurrentLevel(item.level);
-                    setSelectedNewLang(''); // 상단을 조작하면 하단 새 언어 선택 상태 해제
-                  }}
-                  activeOpacity={0.8}
-                >
-                  <Text style={[styles.levelText, isSelected && styles.textWhite]}>{item.label}</Text>
-                  <Text style={[styles.levelSubText, isSelected && styles.textWhiteSub]}>{item.subLabel}</Text>
-                </TouchableOpacity>
-              );
-            })}
-          </View>
-        </View>
-
-        {/* 2. 새로운 언어 추가 카드 */}
-        <View style={[styles.card, styles.marginTop]}>
-          <View style={styles.headerTitleWrap}>
-            <View style={[styles.iconCircle, styles.plusCircle]}>
-              <Ionicons name="add" size={20} color={colors.primary} />
+          {/* 2. 새로운 언어 추가 카드 */}
+          <View style={[styles.card, styles.marginTop]}>
+            <View style={styles.headerTitleWrap}>
+              <View style={[styles.iconCircle, styles.plusCircle]}>
+                <Ionicons name="add" size={20} color={colors.primary} />
+              </View>
+              <Text style={styles.cardTitle}>새로운 언어 추가 / 변경</Text>
             </View>
-            <Text style={styles.cardTitle}>새로운 언어 추가 / 변경</Text>
-          </View>
 
-          {/* 언어 칩 리스트 */}
-          <View style={styles.langChipContainer}>
-            {/* 🌟 수정 5: 현재 설정된 언어(currentLang)를 필터링하여 목록에서 제외 */}
-            {LANGUAGES.filter(lang => lang !== currentLang).map((lang) => {
-              const isSelected = selectedNewLang === lang;
-              return (
-                <TouchableOpacity
-                  key={lang}
-                  style={[styles.langChip, isSelected && styles.langChipSelected]}
-                  onPress={() => setSelectedNewLang(lang)}
-                  activeOpacity={0.8}
-                >
-                  <Text style={[styles.langChipText, isSelected && styles.langChipTextSelected]}>
-                    {lang}
-                  </Text>
-                </TouchableOpacity>
-              );
-            })}
-          </View>
+            {/* 언어 칩 리스트 */}
+            <View style={styles.langChipContainer}>
+              {/* 현재 설정된 언어(currentLang)를 필터링하여 목록에서 제외 */}
+              {LANGUAGES.filter(lang => lang !== currentLang).map((lang) => {
+                const isSelected = selectedNewLang === lang;
+                return (
+                  <TouchableOpacity
+                    key={lang}
+                    style={[styles.langChip, isSelected && styles.langChipSelected]}
+                    onPress={() => setSelectedNewLang(lang)}
+                    activeOpacity={0.8}
+                  >
+                    <Text style={[styles.langChipText, isSelected && styles.langChipTextSelected]}>
+                      {lang}
+                    </Text>
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
 
-          <Text style={styles.subLabel}>시작 레벨 선택</Text>
-          <View style={styles.levelRow}>
-            {LEVELS.map((item) => {
-              const isSelected = selectedNewLevel === item.level;
-              return (
-                <TouchableOpacity
-                  key={`new-${item.level}`}
-                  style={[styles.levelCard, isSelected ? styles.levelCardSelected : styles.levelCardDefault]}
-                  onPress={() => {
-                    setSelectedNewLevel(item.level);
-                    // 만약 언어 칩을 선택하지 않고 하단 레벨만 눌렀다면, 남아있는 새 언어 중 첫 번째를 자동 지정
-                    if (!selectedNewLang) {
-                      const availableLangs = LANGUAGES.filter(l => l !== currentLang);
-                      if (availableLangs.length > 0) setSelectedNewLang(availableLangs[0]);
-                    }
-                  }}
-                  activeOpacity={0.8}
-                >
-                  <Text style={[styles.levelText, isSelected && styles.textWhite]}>{item.label}</Text>
-                  <Text style={[styles.levelSubText, isSelected && styles.textWhiteSub]}>{item.subLabel}</Text>
-                </TouchableOpacity>
-              );
-            })}
+            <Text style={styles.subLabel}>시작 레벨 선택</Text>
+            <View style={styles.levelRow}>
+              {LEVELS.map((item) => {
+                const isSelected = selectedNewLevel === item.level;
+                return (
+                  <TouchableOpacity
+                    key={`new-${item.level}`}
+                    style={[styles.levelCard, isSelected ? styles.levelCardSelected : styles.levelCardDefault]}
+                    onPress={() => {
+                      setSelectedNewLevel(item.level);
+                      // 만약 언어 칩을 선택하지 않고 하단 레벨만 눌렀다면, 남아있는 새 언어 중 첫 번째를 자동 지정
+                      if (!selectedNewLang) {
+                        const availableLangs = LANGUAGES.filter(l => l !== currentLang);
+                        if (availableLangs.length > 0) setSelectedNewLang(availableLangs[0]);
+                      }
+                    }}
+                    activeOpacity={0.8}
+                  >
+                    <Text style={[styles.levelText, isSelected && styles.textWhite]}>{item.label}</Text>
+                    <Text style={[styles.levelSubText, isSelected && styles.textWhiteSub]}>{item.subLabel}</Text>
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
           </View>
         </View>
 
@@ -224,7 +228,7 @@ const LearningSettingsScreen = ({ navigation, route }: any) => {
           )}
         </TouchableOpacity>
 
-      </ScrollView>
+      </View>
     </ScreenWrapper>
   );
 };
@@ -232,32 +236,61 @@ const LearningSettingsScreen = ({ navigation, route }: any) => {
 const styles = StyleSheet.create({
   wrapper: { paddingHorizontal: 0, backgroundColor: colors.background },
   scroll: { flex: 1 },
-  content: { padding: 20, paddingBottom: 60 },
-  card: { backgroundColor: '#FFFFFF', borderRadius: 24, padding: 20, shadowColor: '#000', shadowOpacity: 0.04, shadowOffset: { width: 0, height: 2 }, shadowRadius: 8, elevation: 2 },
+  // 🌟 iOS와 Android의 하단 여백 다르게 처리하여 짤림 방지, 버튼이 맨 아래 고정되도록 space-between 설정
+  content: { flex: 1, padding: 20, paddingBottom: Platform.OS === 'ios' ? 40 : 20, justifyContent: 'space-between' },
+  card: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 24,
+    padding: 20,
+    shadowColor: '#000',
+    shadowOpacity: 0.04,
+    shadowOffset: { width: 0, height: 2 },
+    shadowRadius: 8,
+    elevation: 2,
+  },
   marginTop: { marginTop: 16 },
   cardHeaderRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 },
   headerTitleWrap: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 12 },
-  iconCircle: { width: 32, height: 32, borderRadius: 16, backgroundColor: '#EDF7E6', justifyContent: 'center', alignItems: 'center' },
+  iconCircle: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: '#EDF7E6',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
   plusCircle: { backgroundColor: '#F0F2EE' },
   cardTitle: { fontSize: 16, fontWeight: '700', color: '#2C3A29', fontFamily: fonts.headline },
   langBadge: { backgroundColor: colors.primary, paddingHorizontal: 12, paddingVertical: 4, borderRadius: 12 },
   langBadgeText: { color: '#FFFFFF', fontSize: 12, fontWeight: '600', fontFamily: fonts.label },
   subLabel: { fontSize: 13, color: '#6B7A68', fontFamily: fonts.label, fontWeight: '600', marginBottom: 10, marginTop: 8 },
   levelRow: { flexDirection: 'row', gap: 10 },
-  levelCard: { flex: 1, paddingVertical: 18, borderRadius: 16, alignItems: 'center', justifyContent: 'center' },
-  levelCardDefault: { backgroundColor: '#F5F5EC' },
-  levelCardSelected: { backgroundColor: colors.secondary },
-  levelText: { fontSize: 16, fontWeight: '800', color: '#2C3A29', fontFamily: fonts.headline },
-  levelSubText: { fontSize: 12, color: '#6B7A68', fontWeight: '500', marginTop: 2, fontFamily: fonts.body },
+  levelCard: { flex: 1, paddingVertical: 18, borderRadius: 20, alignItems: 'center', justifyContent: 'center' },
+  levelCardDefault: { backgroundColor: '#F5F4E6' },
+  levelCardSelected: { backgroundColor: colors.primary },
+  levelText: { fontSize: 16, fontWeight: '800', color: '#3C6933', fontFamily: fonts.headline },
+  levelSubText: { fontSize: 12, color: '#888', fontWeight: '600', marginTop: 4, fontFamily: fonts.body },
   textWhite: { color: '#FFFFFF' },
-  textWhiteSub: { color: '#EDF7E6' },
-  langChipContainer: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 16 },
-  langChip: { paddingHorizontal: 16, paddingVertical: 8, borderRadius: 20, borderWidth: 1, borderColor: '#DCE2D6', backgroundColor: '#FFFFFF' },
+  textWhiteSub: { color: '#E0E8D5' },
+  langChipContainer: { flexDirection: 'row', flexWrap: 'wrap', gap: 10, marginBottom: 20, marginTop: 4 },
+  langChip: { paddingHorizontal: 18, paddingVertical: 10, borderRadius: 20, borderWidth: 1, borderColor: '#E0E8D5', backgroundColor: '#FFFFFF' },
   langChipSelected: { borderColor: colors.primary, backgroundColor: '#EDF7E6' },
-  langChipText: { fontSize: 13, color: '#6B7A68', fontFamily: fonts.label, fontWeight: '600' },
+  langChipText: { fontSize: 14, color: '#6B7A68', fontFamily: fonts.label, fontWeight: '600' },
   langChipTextSelected: { color: colors.primary, fontWeight: '700' },
-  saveButton: { backgroundColor: colors.primary, height: 54, borderRadius: 27, justifyContent: 'center', alignItems: 'center', marginTop: 24, shadowColor: colors.primary, shadowOpacity: 0.3, shadowOffset: { width: 0, height: 4 }, shadowRadius: 8, elevation: 4 },
-  saveButtonDisabled: { backgroundColor: '#A0A89C' },
+  saveButton: { 
+    backgroundColor: colors.primary, 
+    height: 54, 
+    borderRadius: 27, 
+    justifyContent: 'center', 
+    alignItems: 'center', 
+    marginTop: 28, 
+    shadowColor: '#000', 
+    shadowOpacity: 0.1, 
+    shadowOffset: { width: 0, height: 4 }, 
+    shadowRadius: 8, 
+    elevation: 4 
+  },
+  saveButtonDisabled: { backgroundColor: '#A0A89C', shadowOpacity: 0 },
   saveButtonText: { color: '#FFFFFF', fontSize: 16, fontWeight: '700', fontFamily: fonts.headline },
 });
 
