@@ -7,8 +7,6 @@ import {
   TextInput,
   StyleSheet,
   ScrollView,
-  Modal,
-  Alert,
   ActivityIndicator,
   KeyboardAvoidingView,
   Platform,
@@ -27,6 +25,8 @@ import {
   type BotMatchResultResponse,
 } from '../api/competition';
 import { playSfx, playLoopSfx, stopSfx } from '../utils/sfx';
+import { AppModal } from '../components/common/AppModal';
+import { showConfirm } from '../components/common/AlertHost';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 const C = {
@@ -307,28 +307,25 @@ const BotCompetitionScreen = () => {
       .catch((err) => console.error('❌ [봇컴피티션] 재개 실패:', err.message));
   };
 
-  const handleQuit = () => {
-    const message = '지금 나가면 진행 상황이 사라지고 포인트는 돌려받을 수 없어요. 정말 나갈까요?';
-    if (Platform.OS === 'web') {
-      if (window.confirm(message)) {
-        setPaused(false);
-        pausedRef.current = false;
-        navigation.navigate('MainTab');
-      }
-      return;
+  const handleQuit = async () => {
+    // 확인창이 일시정지 창 위에 겹쳐 뜨지 않도록 일시정지 창을 먼저 닫는다.
+    // pausedRef 는 true 로 두므로 라운드 타이머는 계속 멈춰 있다.
+    setPaused(false);
+
+    const isConfirmed = await showConfirm({
+      title: '대결 그만두기',
+      message: '지금 나가면 진행 상황이 사라지고 포인트는 돌려받을 수 없어요. 정말 나갈까요?',
+      confirmText: '나가기',
+      cancelText: '계속하기',
+      destructive: true,
+    });
+
+    if (isConfirmed) {
+      pausedRef.current = false;
+      navigation.navigate('MainTab');
+    } else {
+      setPaused(true); // 계속하기를 골랐으면 일시정지 화면으로 돌아온다
     }
-    Alert.alert('대결 그만두기', message, [
-      { text: '계속하기', style: 'cancel' },
-      {
-        text: '나가기',
-        style: 'destructive',
-        onPress: () => {
-          setPaused(false);
-          pausedRef.current = false;
-          navigation.navigate('MainTab');
-        },
-      },
-    ]);
   };
 
   if (!quiz && phase === 'playing') {
@@ -641,25 +638,17 @@ const BotCompetitionScreen = () => {
         </TouchableOpacity>
       </View>
 
-      <Modal visible={paused} transparent animationType="fade" onRequestClose={handleResume}>
-        <View style={styles.pauseOverlay}>
-          <View style={styles.pauseBox}>
-            <Ionicons name="pause-circle" size={48} color={theme.colors.primary} />
-            <Text style={styles.pauseTitle}>일시정지</Text>
-            <Text style={styles.pauseDesc}>Q-Bot도 잠시 쉬는 중이에요</Text>
-            <TouchableOpacity
-              style={[styles.submitButton, { alignSelf: 'stretch', marginTop: 20 }]}
-              onPress={handleResume}
-              activeOpacity={0.85}
-            >
-              <Text style={styles.submitButtonText}>계속하기</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.quitButton} onPress={handleQuit} activeOpacity={0.7}>
-              <Text style={styles.quitButtonText}>그만두기</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      </Modal>
+      <AppModal
+        visible={paused}
+        icon="pause-circle"
+        title="일시정지"
+        message="Q-Bot도 잠시 쉬는 중이에요"
+        onRequestClose={handleResume}
+        buttons={[
+          { text: '계속하기', onPress: handleResume },
+          { text: '그만두기', variant: 'text', onPress: handleQuit },
+        ]}
+      />
     </ScreenWrapper>
   );
 };
@@ -1024,42 +1013,6 @@ const styles = StyleSheet.create({
     color: '#1a1a1a',
   },
 
-  pauseOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.45)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingHorizontal: 40,
-  },
-  pauseBox: {
-    alignSelf: 'stretch',
-    backgroundColor: theme.colors.white,
-    borderRadius: 24,
-    paddingHorizontal: 24,
-    paddingVertical: 28,
-    alignItems: 'center',
-  },
-  pauseTitle: {
-    fontSize: 20,
-    fontWeight: '800',
-    color: '#1a1a1a',
-    marginTop: 10,
-  },
-  pauseDesc: {
-    fontSize: 13,
-    fontWeight: '500',
-    color: '#999',
-    marginTop: 4,
-  },
-  quitButton: {
-    marginTop: 14,
-    paddingVertical: 6,
-  },
-  quitButtonText: {
-    fontSize: 14,
-    fontWeight: '700',
-    color: '#999',
-  },
 });
 
 export default BotCompetitionScreen;

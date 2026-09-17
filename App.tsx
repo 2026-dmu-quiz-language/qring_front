@@ -6,6 +6,7 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import { RootNavigator } from './src/navigation/RootNavigator'; 
 import { theme } from './src/constants/theme'; 
+import { AlertHost } from './src/components/common/AlertHost';
 
 const navTheme = {
   ...DefaultTheme,
@@ -30,6 +31,9 @@ export default function App() {
         <RootNavigator />
         
       </NavigationContainer>
+
+      {/* 앱 어디서든 showAlert, showConfirm 으로 띄우는 공통 알림창 */}
+      <AlertHost />
     </SafeAreaProvider>
   );
 }
