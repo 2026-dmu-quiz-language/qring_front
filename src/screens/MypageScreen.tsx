@@ -8,7 +8,6 @@ import {
   TouchableOpacity,
   StyleSheet,
   ActivityIndicator,
-  Alert,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import axios from 'axios';
@@ -18,6 +17,7 @@ import { ScreenWrapper } from '../components/layout/ScreenWrapper';
 import { Header } from '../components/layout/Header';
 import { playSfx, isSfxEnabled, setSfxEnabled } from '../utils/sfx';
 import { Toggle } from '../components/common/Toggle';
+import { showAlert, showConfirm } from '../components/common/AlertHost';
 
 // 💡 백엔드 기본 서버 주소 (본인 환경에 맞게 확인해주세요)
 const API_BASE_URL = 'https://q-ring.app/api/v1';
@@ -118,7 +118,7 @@ const MyPageScreen = ({ navigation }: any) => {
       }
     } catch (error: any) {
       console.error('마이페이지 정보 조회 에러:', error);
-      Alert.alert('알림', '마이페이지 정보를 불러오지 못했습니다.');
+      showAlert({ title: '알림', message: '마이페이지 정보를 불러오지 못했습니다.' });
     } finally {
       setIsLoading(false);
     }
@@ -197,7 +197,7 @@ const MyPageScreen = ({ navigation }: any) => {
                 item.isLogout && styles.menuRowLogout,
               ]}
               activeOpacity={0.7}
-              onPress={() => {
+              onPress={async () => {
                 // 소리 설정 줄은 누르면 바로 켜고 끈다. 끌 때 터치음이 나지 않도록 따로 처리한다.
                 if (item.id === 'sound') {
                   handleToggleSfx(!sfxOn);
@@ -215,13 +215,17 @@ const MyPageScreen = ({ navigation }: any) => {
                 } else if (item.id === 'info') {
                   navigation.navigate('AppInfoScreen');
                 } else if (item.isLogout) {
-                  Alert.alert('로그아웃', '정말 로그아웃 하시겠습니까?', [
-                    { text: '취소', style: 'cancel' },
-                    { text: '확인', style: 'destructive', onPress: async () => {
-                      await AsyncStorage.clear();
-                      navigation.navigate('Login');
-                    }}
-                  ]);
+                  const isConfirmed = await showConfirm({
+                    title: '로그아웃',
+                    message: '정말 로그아웃 하시겠습니까?',
+                    confirmText: '확인',
+                    cancelText: '취소',
+                    destructive: true,
+                  });
+                  if (isConfirmed) {
+                    await AsyncStorage.clear();
+                    navigation.navigate('Login');
+                  }
                 }
               }}
             >

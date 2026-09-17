@@ -7,7 +7,6 @@ import {
   ScrollView,
   TouchableOpacity,
   StyleSheet,
-  Alert,
   ActivityIndicator,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
@@ -16,6 +15,7 @@ import { theme } from '../../constants/theme';
 const { colors, fonts } = theme;
 import { ScreenWrapper } from '../../components/layout/ScreenWrapper';
 import { Header } from '../../components/layout/Header';
+import { showAlert } from '../../components/common/AlertHost';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 // 💡 백엔드 기본 서버 주소 (환경에 맞게 수정해주세요)
@@ -103,7 +103,7 @@ const LearningSettingsScreen = ({ navigation, route }: any) => {
       }
     } catch (error) {
       console.error('학습 설정 저장 에러:', error);
-      Alert.alert('오류', '학습 설정 저장 중 문제가 발생했습니다. 다시 시도해주세요.');
+      showAlert({ title: '오류', message: '학습 설정 저장 중 문제가 발생했습니다. 다시 시도해주세요.' });
     } finally {
       setIsSubmitting(false);
     }

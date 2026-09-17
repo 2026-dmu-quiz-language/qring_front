@@ -6,7 +6,6 @@ import {
   TouchableOpacity,
   StyleSheet,
   ScrollView,
-  Alert,
   ActivityIndicator,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
@@ -19,6 +18,7 @@ import { startBotMatch, type BotLevel } from '../api/competition';
 import { playSfx } from '../utils/sfx';
 import { getDashboard } from '../api/dashboard';
 import { getErrorMessage } from '../utils/errorMessage';
+import { showAlert } from '../components/common/AlertHost';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 // ─── 레벨 카드 정보 ───
@@ -87,7 +87,7 @@ const BotLevelSelectScreen = () => {
       );
       const status = err.response?.status ? ` (${err.response.status})` : '';
       setErrorMsg(`${getErrorMessage(err)}${status}`);
-      Alert.alert('매치 시작 실패', getErrorMessage(err));
+      showAlert({ title: '매치 시작 실패', message: getErrorMessage(err) });
     } finally {
       setStarting(false);
     }
