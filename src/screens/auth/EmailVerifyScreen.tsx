@@ -1,13 +1,14 @@
 // screens/auth/EmailVerifyScreen.tsx
 
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Alert } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { ScreenWrapper } from '../../components/layout/ScreenWrapper';
 import { Header } from '../../components/layout/Header';
 import { CustomInput } from '../../components/common/Input';
 import { CustomButton } from '../../components/common/Button';
+import { showAlert } from '../../components/common/AlertHost';
 
 const API_BASE_URL = 'https://q-ring.app/api/v1/auth';
 
@@ -18,7 +19,7 @@ const EmailVerifyScreen = ({ route, navigation }: any) => {
 
   // 🌟 1. 메일 확인 코드 API (POST)
   const handleVerify = async () => {
-    if (!code) return Alert.alert('알림', '인증 코드를 입력해 주세요.');
+    if (!code) return showAlert({ title: '알림', message: '인증 코드를 입력해 주세요.' });
 
     try {
       const response = await axios.post(`${API_BASE_URL}/verify-email`, {
@@ -33,15 +34,18 @@ const EmailVerifyScreen = ({ route, navigation }: any) => {
           await AsyncStorage.setItem('refreshToken', response.data.refreshToken);
         }
 
-        Alert.alert('인증 성공', '회원가입이 완벽하게 끝났습니다!', [
-          { text: '학습 시작하기', onPress: () => navigation.navigate('MainTab') }
-        ]);
+        await showAlert({
+          title: '인증 성공',
+          message: '회원가입이 완벽하게 끝났습니다!',
+          confirmText: '학습 시작하기',
+        });
+        navigation.navigate('MainTab');
       } else {
-        Alert.alert('인증 실패', '잘못된 코드입니다. 다시 확인해 주세요.');
+        showAlert({ title: '인증 실패', message: '잘못된 코드입니다. 다시 확인해 주세요.' });
       }
     } catch (error: any) {
       console.error('Verify Error:', error);
-      Alert.alert('오류', '인증에 실패했습니다. 코드를 다시 확인해 주세요.');
+      showAlert({ title: '오류', message: '인증에 실패했습니다. 코드를 다시 확인해 주세요.' });
     }
   };
 
@@ -53,13 +57,13 @@ const EmailVerifyScreen = ({ route, navigation }: any) => {
       });
 
       if (response.data.success) {
-        Alert.alert('재전송 완료', response.data.message || '인증 코드를 다시 발송했습니다.');
+        showAlert({ title: '재전송 완료', message: response.data.message || '인증 코드를 다시 발송했습니다.' });
       } else {
-        Alert.alert('재전송 실패', '코드 발송에 실패했습니다.');
+        showAlert({ title: '재전송 실패', message: '코드 발송에 실패했습니다.' });
       }
     } catch (error) {
       console.error('Resend Error:', error);
-      Alert.alert('에러', '재발송 요청 중 문제가 발생했습니다.');
+      showAlert({ title: '에러', message: '재발송 요청 중 문제가 발생했습니다.' });
     }
   };
 

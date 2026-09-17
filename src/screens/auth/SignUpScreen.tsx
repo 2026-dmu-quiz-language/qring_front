@@ -1,7 +1,7 @@
 // screens/auth/SignUpScreen.tsx
 
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Image, Alert } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Image } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import axios from 'axios';
 import { ScreenWrapper } from '../../components/layout/ScreenWrapper';
@@ -9,6 +9,7 @@ import { Header } from '../../components/layout/Header';
 import { CustomInput } from '../../components/common/Input';
 import { CustomButton } from '../../components/common/Button';
 import { theme } from '../../constants/theme';
+import { showAlert } from '../../components/common/AlertHost';
 
 // 백엔드 주소 (환경에 맞게 수정하세요)
 const API_BASE_URL = 'https://q-ring.app/api/v1/auth';
@@ -39,35 +40,35 @@ const SignUpScreen = ({ navigation }: any) => {
 
   // 🌟 1. 이메일 중복 확인 API (GET)
   const handleCheckEmail = async () => {
-    if (!email) return Alert.alert('알림', '이메일을 입력해 주세요.');
+    if (!email) return showAlert({ title: '알림', message: '이메일을 입력해 주세요.' });
     try {
       const response = await axios.get(`${API_BASE_URL}/check-email`, { params: { email } });
       if (response.data.available) {
         setIsEmailAvailable(true);
-        Alert.alert('확인', '사용 가능한 이메일입니다.');
+        showAlert({ title: '확인', message: '사용 가능한 이메일입니다.' });
       } else {
         setIsEmailAvailable(false);
-        Alert.alert('불가', '이미 사용 중인 이메일입니다.');
+        showAlert({ title: '불가', message: '이미 사용 중인 이메일입니다.' });
       }
     } catch (error) {
-      Alert.alert('에러', '중복 확인에 실패했습니다.');
+      showAlert({ title: '에러', message: '중복 확인에 실패했습니다.' });
     }
   };
 
   // 🌟 2. 닉네임 중복 확인 API (GET)
   const handleCheckNickname = async () => {
-    if (!nickname) return Alert.alert('알림', '닉네임을 입력해 주세요.');
+    if (!nickname) return showAlert({ title: '알림', message: '닉네임을 입력해 주세요.' });
     try {
       const response = await axios.get(`${API_BASE_URL}/check-nickname`, { params: { nickname } });
       if (response.data.available) {
         setIsNicknameAvailable(true);
-        Alert.alert('확인', '사용 가능한 닉네임입니다.');
+        showAlert({ title: '확인', message: '사용 가능한 닉네임입니다.' });
       } else {
         setIsNicknameAvailable(false);
-        Alert.alert('불가', '이미 사용 중인 닉네임입니다.');
+        showAlert({ title: '불가', message: '이미 사용 중인 닉네임입니다.' });
       }
     } catch (error) {
-      Alert.alert('에러', '중복 확인에 실패했습니다.');
+      showAlert({ title: '에러', message: '중복 확인에 실패했습니다.' });
     }
   };
 
@@ -81,17 +82,17 @@ const SignUpScreen = ({ navigation }: any) => {
 
     // (옵션) 유저가 언어를 선택 안 하고 넘어가려 할 때 방어하기
     if (!selectedLang) {
-      Alert.alert('알림', '학습할 언어를 선택해주세요!');
+      showAlert({ title: '알림', message: '학습할 언어를 선택해주세요!' });
       return;
     }
 
     if (!email || !password || !nickname) {
-      return Alert.alert('알림', '모든 정보를 입력해 주세요.');
+      return showAlert({ title: '알림', message: '모든 정보를 입력해 주세요.' });
     }
-    if (!isEmailAvailable) return Alert.alert('알림', '이메일 중복 확인을 해주세요.');
-    if (!isNicknameAvailable) return Alert.alert('알림', '닉네임 중복 확인을 해주세요.');
-    if (password !== passwordConfirm) return Alert.alert('알림', '비밀번호가 일치하지 않습니다.');
-    if (!agreedTerms || !agreedPrivacy) return Alert.alert('알림', '필수 약관에 모두 동의해 주세요.');
+    if (!isEmailAvailable) return showAlert({ title: '알림', message: '이메일 중복 확인을 해주세요.' });
+    if (!isNicknameAvailable) return showAlert({ title: '알림', message: '닉네임 중복 확인을 해주세요.' });
+    if (password !== passwordConfirm) return showAlert({ title: '알림', message: '비밀번호가 일치하지 않습니다.' });
+    if (!agreedTerms || !agreedPrivacy) return showAlert({ title: '알림', message: '필수 약관에 모두 동의해 주세요.' });
 
     // 레벨 코드를 int로 변환 ('Lv.1' -> 1)
     const levelCode = parseInt(selectedLevel.replace('Lv.', ''), 10);
@@ -106,13 +107,13 @@ const SignUpScreen = ({ navigation }: any) => {
       });
 
       // 🌟 조건문(if)을 아예 없앴습니다! 에러가 안 났다면 무조건 성공한 것입니다.
-      Alert.alert('메일 발송 완료', '인증 코드를 이메일로 전송했습니다.');
+      showAlert({ title: '메일 발송 완료', message: '인증 코드를 이메일로 전송했습니다.' });
       navigation.navigate('EmailVerify', { email: email });
         
     } catch (error: any) {
       // 실패하면 알아서 이쪽으로 빠집니다.
       const errorMessage = error.response?.data?.message || '회원가입에 실패했습니다.';
-      Alert.alert('회원가입 실패', errorMessage);
+      showAlert({ title: '회원가입 실패', message: errorMessage });
       console.log('🚫 회원가입 실패 상세 사유:', error.response?.data);
     }
   };

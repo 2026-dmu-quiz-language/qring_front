@@ -1,12 +1,13 @@
 // screens/auth/LoginScreen.tsx
 
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, Image, TouchableOpacity, Alert, Platform, Linking } from 'react-native';
+import { View, Text, StyleSheet, Image, TouchableOpacity, Platform, Linking } from 'react-native';
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { ScreenWrapper } from '../../components/layout/ScreenWrapper';
 import { CustomInput } from '../../components/common/Input';
 import { CustomButton } from '../../components/common/Button';
+import { showAlert } from '../../components/common/AlertHost';
 
 import * as WebBrowser from 'expo-web-browser';
 import * as AuthSession from 'expo-auth-session';
@@ -57,7 +58,7 @@ const LoginScreen = ({ navigation }: any) => {
   // 1. 일반 (로컬) 로그인
   // ==========================================
   const handleLogin = async () => {
-    if (!id || !password) return Alert.alert('알림', '아이디와 비밀번호를 입력해 주세요.');
+    if (!id || !password) return showAlert({ title: '알림', message: '아이디와 비밀번호를 입력해 주세요.' });
 
     try {
       const response = await axios.post(`${API_BASE_URL}/login`, {
@@ -75,7 +76,7 @@ const LoginScreen = ({ navigation }: any) => {
       }
     } catch (error: any) {
       const errorMessage = error.response?.data?.message || '아이디나 비밀번호를 확인해 주세요.';
-      Alert.alert('로그인 실패', errorMessage);
+      showAlert({ title: '로그인 실패', message: errorMessage });
     }
   };
 
@@ -131,7 +132,7 @@ const LoginScreen = ({ navigation }: any) => {
     sendSocialTokenToBackend(provider, tokenVal, config.REDIRECT_URI)
       .catch((error: any) => {
         const errorMessage = error.response?.data?.message || '소셜 로그인 중 오류가 발생했습니다.';
-        window.alert(`로그인 실패: ${errorMessage}`); // RN-web에서는 Alert.alert가 동작하지 않음
+        showAlert({ title: '로그인 실패', message: errorMessage });
       })
       .finally(() => setSocialLoading(false));
   }, []);
@@ -159,7 +160,7 @@ const LoginScreen = ({ navigation }: any) => {
       sendSocialTokenToBackend(provider, tokenVal, config.REDIRECT_URI)
         .catch((error: any) => {
           const errorMessage = error.response?.data?.message || '소셜 로그인 중 오류가 발생했습니다.';
-          Alert.alert('로그인 실패', errorMessage);
+          showAlert({ title: '로그인 실패', message: errorMessage });
         })
         .finally(() => setSocialLoading(false));
     };
@@ -178,7 +179,7 @@ const LoginScreen = ({ navigation }: any) => {
         provider === 'kakao' ? OAUTH_CONFIG.KAKAO : OAUTH_CONFIG.LINE;
 
       if (!config.CLIENT_ID) {
-        Alert.alert('설정 오류', `.env에 ${provider} 클라이언트 ID가 없습니다.`);
+        showAlert({ title: '설정 오류', message: `.env에 ${provider} 클라이언트 ID가 없습니다.` });
         return;
       }
 
@@ -218,14 +219,14 @@ const LoginScreen = ({ navigation }: any) => {
         : getUrlParam(result.url, 'code');
 
       if (!tokenVal) {
-        Alert.alert('로그인 실패', '인증 정보를 받아오지 못했습니다. 다시 시도해 주세요.');
+        showAlert({ title: '로그인 실패', message: '인증 정보를 받아오지 못했습니다. 다시 시도해 주세요.' });
         return;
       }
 
       await sendSocialTokenToBackend(provider, tokenVal, config.REDIRECT_URI);
     } catch (error: any) {
       const errorMessage = error.response?.data?.message || '소셜 로그인 중 오류가 발생했습니다.';
-      Alert.alert('로그인 실패', errorMessage);
+      showAlert({ title: '로그인 실패', message: errorMessage });
     } finally {
       setSocialLoading(false);
     }

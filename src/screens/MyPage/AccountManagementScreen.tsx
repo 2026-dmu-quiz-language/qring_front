@@ -9,7 +9,6 @@ import {
   TouchableOpacity,
   StyleSheet,
   Switch,
-  Alert,
   ActivityIndicator,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
@@ -19,6 +18,7 @@ import { theme } from '../../constants/theme';
 const { colors, fonts } = theme;
 import { ScreenWrapper } from '../../components/layout/ScreenWrapper';
 import { Header } from '../../components/layout/Header';
+import { showAlert, showConfirm } from '../../components/common/AlertHost';
 
 // 💡 백엔드 기본 서버 주소
 const BASE_URL = 'https://q-ring.app/api/v1';
@@ -70,7 +70,7 @@ const AccountManagementScreen = ({ navigation, route }: any) => {
       }
     } catch (error) {
       console.error('사용자 설정 조회 에러:', error);
-      Alert.alert('오류', '계정 정보를 불러오는데 실패했습니다.');
+      showAlert({ title: '오류', message: '계정 정보를 불러오는데 실패했습니다.' });
     } finally {
       setIsLoading(false);
     }
@@ -83,7 +83,7 @@ const AccountManagementScreen = ({ navigation, route }: any) => {
   // ─── [2] API: 닉네임 중복 확인 (토큰 제외) ───
   const handleCheckNickname = async () => {
     if (!nickname.trim()) {
-      Alert.alert('알림', '닉네임을 입력해주세요.');
+      showAlert({ title: '알림', message: '닉네임을 입력해주세요.' });
       return;
     }
     try {
@@ -95,13 +95,13 @@ const AccountManagementScreen = ({ navigation, route }: any) => {
 
       if (isAvailable) {
         setIsNicknameChecked(true);
-        Alert.alert('확인 완료', '사용 가능한 닉네임입니다.');
+        showAlert({ title: '확인 완료', message: '사용 가능한 닉네임입니다.' });
       } else {
-        Alert.alert('불가', '이미 사용 중인 닉네임입니다.');
+        showAlert({ title: '불가', message: '이미 사용 중인 닉네임입니다.' });
       }
     } catch (error) {
       console.error('닉네임 확인 에러:', error);
-      Alert.alert('오류', '닉네임 중복 확인 중 문제가 발생했습니다.');
+      showAlert({ title: '오류', message: '닉네임 중복 확인 중 문제가 발생했습니다.' });
     }
   };
 
@@ -109,13 +109,13 @@ const AccountManagementScreen = ({ navigation, route }: any) => {
   const handleUpdateAccount = async () => {
     // 🌟 [추가 1] 닉네임 입력란이 비어있는지 검증
     if (!nickname.trim()) {
-      Alert.alert('알림', '닉네임을 입력해주세요.');
+      showAlert({ title: '알림', message: '닉네임을 입력해주세요.' });
       return;
     }
 
     // 🌟 [추가 2] 닉네임이 기존과 다르게 변경되었는데, 중복 확인을 거치지 않은 경우 차단
     if (nickname.trim() !== originalNickname.trim() && !isNicknameChecked) {
-      Alert.alert('알림', '닉네임 중복 확인을 진행해주세요.');
+      showAlert({ title: '알림', message: '닉네임 중복 확인을 진행해주세요.' });
       return;
     }
 
@@ -125,11 +125,11 @@ const AccountManagementScreen = ({ navigation, route }: any) => {
     // 2. 비밀번호를 수정하려는 경우에만 검증 수행
     if (isChangingPassword) {
       if (!currentPassword || !newPassword || !confirmPassword) {
-        Alert.alert('알림', '비밀번호를 변경하려면 모든 비밀번호 항목을 입력해주세요.');
+        showAlert({ title: '알림', message: '비밀번호를 변경하려면 모든 비밀번호 항목을 입력해주세요.' });
         return;
       }
       if (newPassword !== confirmPassword) {
-        Alert.alert('오류', '새 비밀번호가 일치하지 않습니다.');
+        showAlert({ title: '오류', message: '새 비밀번호가 일치하지 않습니다.' });
         return;
       }
     }
@@ -153,7 +153,7 @@ const AccountManagementScreen = ({ navigation, route }: any) => {
         },
       });
 
-      Alert.alert('성공', '정보가 성공적으로 변경되었습니다.');
+      showAlert({ title: '성공', message: '정보가 성공적으로 변경되었습니다.' });
       setCurrentPassword('');
       setNewPassword('');
       setConfirmPassword('');
@@ -161,7 +161,7 @@ const AccountManagementScreen = ({ navigation, route }: any) => {
       
     } catch (error) {
       console.error('계정 정보 업데이트 에러:', error);
-      Alert.alert('오류', '정보 수정 중 문제가 발생했습니다.');
+      showAlert({ title: '오류', message: '정보 수정 중 문제가 발생했습니다.' });
     }
   };
 
@@ -169,26 +169,26 @@ const AccountManagementScreen = ({ navigation, route }: any) => {
     setIsPushEnabled(value);
   };
 
-  const handleDeleteAccount = () => {
-    Alert.alert('회원 탈퇴', '정말 탈퇴하시겠습니까?', [
-      { text: '취소', style: 'cancel' },
-      { 
-        text: '탈퇴', 
-        style: 'destructive',
-        onPress: async () => {
-          try {
-            const token = await getAuthToken();
-            await axios.delete(`${BASE_URL}/api/users/withdraw`, { 
-              headers: { Authorization: `Bearer ${token}` } 
-            });
-            Alert.alert('안내', '탈퇴 처리가 완료되었습니다.');
-            navigation.navigate('Login');
-          } catch (e) {
-            Alert.alert('오류', '탈퇴 처리 중 문제가 발생했습니다.');
-          }
-        }
-      }
-    ]);
+  const handleDeleteAccount = async () => {
+    const isConfirmed = await showConfirm({
+      title: '회원 탈퇴',
+      message: '정말 탈퇴하시겠습니까?',
+      confirmText: '탈퇴',
+      cancelText: '취소',
+      destructive: true,
+    });
+    if (!isConfirmed) return;
+
+    try {
+      const token = await getAuthToken();
+      await axios.delete(`${BASE_URL}/api/users/withdraw`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      await showAlert({ title: '안내', message: '탈퇴 처리가 완료되었습니다.' });
+      navigation.navigate('Login');
+    } catch (e) {
+      await showAlert({ title: '오류', message: '탈퇴 처리 중 문제가 발생했습니다.' });
+    }
   };
 
   return (

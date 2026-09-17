@@ -1,12 +1,13 @@
 // src/components/layout/Header.tsx
 import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Image, Modal, Alert } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, Image, Modal } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { theme } from '../../constants/theme';
 import { switchLanguage, checkLanguage } from '../../api/language';
+import { showAlert } from '../common/AlertHost';
 
 interface HeaderProps {
   title?: string;
@@ -120,12 +121,8 @@ export const Header = ({
       
       setProfileMenuVisible(false);
 
-      Alert.alert('로그아웃', '정상적으로 로그아웃 되었습니다.', [
-        { 
-          text: '확인', 
-          onPress: () => navigation.reset({ index: 0, routes: [{ name: 'Login' }] }) 
-        }
-      ]);
+      await showAlert({ title: '로그아웃', message: '정상적으로 로그아웃 되었습니다.' });
+      navigation.reset({ index: 0, routes: [{ name: 'Login' }] });
     }
   };
 

@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
 import { 
   View, Text, TextInput, StyleSheet, TouchableOpacity, 
-  ActivityIndicator, KeyboardAvoidingView, Platform, ScrollView, Alert
+  ActivityIndicator, KeyboardAvoidingView, Platform, ScrollView
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { startStorySession } from '../api/story';
+import { showAlert, showConfirm } from '../components/common/AlertHost';
 import { Header } from '../components/layout/Header'; 
 
 const TONE_OPTIONS = ['다정하게', '격식있게', '유머러스하게', '차분하게', '까칠하게', '열정적으로', '장난스럽게'];
@@ -35,31 +36,29 @@ export default function StoryCreateScreen({ navigation }: any) {
       navigation.replace('StoryChat', { storyData: response });
     } catch (error) {
       console.error('스토리 생성 실패:', error);
-      if (Platform.OS === 'web') window.alert('스토리 생성에 실패했습니다.');
-      else Alert.alert('오류', '스토리 생성에 실패했습니다.');
+      showAlert({ title: '오류', message: '스토리 생성에 실패했습니다.' });
     } finally {
       setLoading(false);
     }
   };
 
-  const handleCreateStory = () => {
+  const handleCreateStory = async () => {
     if (!characterName.trim() || !situationDescription.trim()) {
-      Platform.OS === 'web' ? window.alert('이름과 상황을 모두 입력해주세요.') : Alert.alert('알림', '이름과 상황을 모두 입력해주세요.');
+      await showAlert({ title: '알림', message: '이름과 상황을 모두 입력해주세요.' });
       return;
     }
 
     // 🌟 선택된 티어에 따라 안내 메시지 금액 변경
     const currentCost = modelTier === 'premium' ? 550 : 400;
-    const confirmMessage = `스토리 생성 버튼을 클릭하면 ${currentCost}포인트가 차감됩니다.\n계속하시겠습니까?`;
 
-    if (Platform.OS === 'web') {
-      if (window.confirm(confirmMessage)) executeStoryCreate();
-    } else {
-      Alert.alert('포인트 차감 안내', confirmMessage, [
-        { text: '취소', style: 'cancel' },
-        { text: '확인', onPress: executeStoryCreate },
-      ], { cancelable: false });
-    }
+    const isConfirmed = await showConfirm({
+      title: '포인트 차감 안내',
+      message: `스토리 생성 버튼을 클릭하면 ${currentCost}포인트가 차감됩니다.\n계속하시겠습니까?`,
+      confirmText: '확인',
+      cancelText: '취소',
+    });
+
+    if (isConfirmed) executeStoryCreate();
   };
 
   return (
