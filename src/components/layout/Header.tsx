@@ -172,7 +172,7 @@ export const Header = ({
           )}
           {rightType === 'menu' && (
             <TouchableOpacity onPress={handleRightPress} style={styles.iconButton}>
-              <Ionicons name="menu" size={30} color="#333" />
+              <Ionicons name="menu" size={30} color="#B7A07A" />
             </TouchableOpacity>
           )}
           {rightType === 'profile' && (
