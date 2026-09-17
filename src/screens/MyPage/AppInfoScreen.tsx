@@ -3,7 +3,7 @@
 // Flaticon 무료 아이콘은 제작자 이름과 함께 출처를 밝혀야 하는데,
 // 아이콘마다 옆에 적기 어려우면 이렇게 한곳에 모아도 된다.
 import React from 'react';
-import { View, Text, ScrollView, StyleSheet, Linking, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, Linking, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { theme } from '../../constants/theme';
 import { ScreenWrapper } from '../../components/layout/ScreenWrapper';
@@ -42,7 +42,8 @@ const AppInfoScreen = () => {
     <ScreenWrapper style={styles.wrapper}>
       <Header title="앱 정보" leftType="back" rightType="none" />
 
-      <ScrollView style={styles.scroll} contentContainerStyle={styles.content}>
+      {/* 🌟 ScrollView를 View로 변경하고 flex: 1을 주어 한 화면에 고정 */}
+      <View style={[styles.scroll, styles.content]}>
         {/* 앱 기본 정보 */}
         <View style={styles.card}>
           <View style={styles.headerTitleWrap}>
@@ -59,7 +60,7 @@ const AppInfoScreen = () => {
         </View>
 
         {/* 아이콘 출처 */}
-        <View style={[styles.card, styles.marginTop]}>
+        <View style={[styles.card, styles.marginTop, styles.flexCard]}>
           <View style={styles.headerTitleWrap}>
             <View style={styles.iconCircle}>
               <Ionicons name="image-outline" size={18} color={colors.primary} />
@@ -71,19 +72,22 @@ const AppInfoScreen = () => {
             이 앱은 Flaticon의 무료 아이콘을 사용합니다.
           </Text>
 
-          {ICON_CREDITS.map((credit) => (
-            <View key={credit.name} style={styles.creditRow}>
-              <Text style={styles.creditName}>{credit.name}</Text>
-              <Text style={styles.creditText}>Icon by {credit.author} - Flaticon</Text>
-            </View>
-          ))}
+          {/* 🌟 항목이 많아도 잘리지 않도록 균등 분배 영역 추가 */}
+          <View style={styles.creditListWrap}>
+            {ICON_CREDITS.map((credit) => (
+              <View key={credit.name} style={styles.creditRow}>
+                <Text style={styles.creditName}>{credit.name}</Text>
+                <Text style={styles.creditText}>Icon by {credit.author} - Flaticon</Text>
+              </View>
+            ))}
+          </View>
 
           <TouchableOpacity style={styles.linkRow} onPress={openFlaticon} activeOpacity={0.7}>
             <Text style={styles.linkText}>www.flaticon.com</Text>
             <Ionicons name="open-outline" size={14} color={colors.primary} />
           </TouchableOpacity>
         </View>
-      </ScrollView>
+      </View>
     </ScreenWrapper>
   );
 };
@@ -91,7 +95,8 @@ const AppInfoScreen = () => {
 const styles = StyleSheet.create({
   wrapper: { paddingHorizontal: 0, backgroundColor: colors.background },
   scroll: { flex: 1 },
-  content: { padding: 20, paddingBottom: 60 },
+  // 🌟 하단 여백을 살짝 줄여 한 화면 핏 조정
+  content: { padding: 20, paddingBottom: 40 },
   card: {
     backgroundColor: '#FFFFFF',
     borderRadius: 24,
@@ -103,6 +108,8 @@ const styles = StyleSheet.create({
     elevation: 2,
   },
   marginTop: { marginTop: 16 },
+  // 🌟 두 번째 카드가 남은 공간을 꽉 채우도록 설정
+  flexCard: { flex: 1, justifyContent: 'space-between' },
   headerTitleWrap: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 12 },
   iconCircle: {
     width: 32,
@@ -116,11 +123,15 @@ const styles = StyleSheet.create({
   row: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 6 },
   rowLabel: { fontSize: 14, color: '#6B7A68', fontFamily: fonts.label, fontWeight: '600' },
   rowValue: { fontSize: 14, color: '#2C3A29', fontWeight: '700' },
-  desc: { fontSize: 13, color: '#6B7A68', fontFamily: fonts.body, marginBottom: 12, lineHeight: 20 },
-  creditRow: { marginBottom: 12 },
+  desc: { fontSize: 13, color: '#6B7A68', fontFamily: fonts.body, marginBottom: 4, lineHeight: 20 },
+  
+  // 🌟 크레딧 리스트가 유연하게 배치되도록 래퍼 추가
+  creditListWrap: { flex: 1, justifyContent: 'space-evenly' },
+  creditRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   creditName: { fontSize: 12, color: '#9AA394', fontFamily: fonts.label, fontWeight: '600' },
-  creditText: { fontSize: 13, color: '#2C3A29', fontWeight: '600', marginTop: 2 },
-  linkRow: { flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 4 },
+  // 🌟 폰트 크기 미세 조정하여 겹침 방지
+  creditText: { fontSize: 12, color: '#2C3A29', fontWeight: '600', marginTop: 2 },
+  linkRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'flex-end', gap: 4, marginTop: 4 },
   linkText: { fontSize: 13, color: colors.primary, fontWeight: '700' },
 });
 
