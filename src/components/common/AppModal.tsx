@@ -93,7 +93,7 @@ const styles = StyleSheet.create({
   box: {
     width: '80%',
     maxWidth: 400, // 웹에서 창이 넓어도 과하게 커지지 않도록
-    backgroundColor: '#FFF',
+    backgroundColor: '#E9E9DB',
     borderRadius: 24,
     padding: 30,
     alignItems: 'center',
