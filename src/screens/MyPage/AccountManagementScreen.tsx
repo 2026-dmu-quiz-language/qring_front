@@ -20,14 +20,11 @@ import { ScreenWrapper } from '../../components/layout/ScreenWrapper';
 import { Header } from '../../components/layout/Header';
 import { showAlert, showConfirm } from '../../components/common/AlertHost';
 
-// 💡 백엔드 기본 서버 주소
 const BASE_URL = 'https://q-ring.app/api/v1';
 
 const AccountManagementScreen = ({ navigation, route }: any) => {
   const [userId, setUserId] = useState('');
   const [nickname, setNickname] = useState(route.params?.nickname || '');
-  
-  // 🌟 [추가] 닉네임 변경 여부를 감지하기 위해 초기 기존 닉네임을 기억하는 상태
   const [originalNickname, setOriginalNickname] = useState(route.params?.nickname || '');
 
   const [currentPassword, setCurrentPassword] = useState('');
@@ -44,7 +41,6 @@ const AccountManagementScreen = ({ navigation, route }: any) => {
     return token || '';
   };
 
-  // ─── [1] API: 화면 로드 시 사용자 설정 정보 조회 ───
   const fetchUserSettings = async () => {
     try {
       setIsLoading(true);
@@ -62,7 +58,6 @@ const AccountManagementScreen = ({ navigation, route }: any) => {
         if (!nickname && serverNick) {
           setNickname(serverNick);
         }
-        // 🌟 서버에서 받아온 기존 닉네임 저장
         if (serverNick) {
           setOriginalNickname(serverNick);
         }
@@ -80,7 +75,6 @@ const AccountManagementScreen = ({ navigation, route }: any) => {
     fetchUserSettings();
   }, []);
 
-  // ─── [2] API: 닉네임 중복 확인 (토큰 제외) ───
   const handleCheckNickname = async () => {
     if (!nickname.trim()) {
       showAlert({ title: '알림', message: '닉네임을 입력해주세요.' });
@@ -105,24 +99,19 @@ const AccountManagementScreen = ({ navigation, route }: any) => {
     }
   };
 
-  // ─── [3] API: 계정 정보 및 비밀번호 수정 ───
   const handleUpdateAccount = async () => {
-    // 🌟 [추가 1] 닉네임 입력란이 비어있는지 검증
     if (!nickname.trim()) {
       showAlert({ title: '알림', message: '닉네임을 입력해주세요.' });
       return;
     }
 
-    // 🌟 [추가 2] 닉네임이 기존과 다르게 변경되었는데, 중복 확인을 거치지 않은 경우 차단
     if (nickname.trim() !== originalNickname.trim() && !isNicknameChecked) {
       showAlert({ title: '알림', message: '닉네임 중복 확인을 진행해주세요.' });
       return;
     }
 
-    // 1. 사용자가 비밀번호를 수정하려고 시도했는지 확인
     const isChangingPassword = currentPassword || newPassword || confirmPassword;
 
-    // 2. 비밀번호를 수정하려는 경우에만 검증 수행
     if (isChangingPassword) {
       if (!currentPassword || !newPassword || !confirmPassword) {
         showAlert({ title: '알림', message: '비밀번호를 변경하려면 모든 비밀번호 항목을 입력해주세요.' });
@@ -136,7 +125,6 @@ const AccountManagementScreen = ({ navigation, route }: any) => {
 
     try {
       const token = await getAuthToken();
-
       const payload: any = {
         nickname: nickname.trim(),
         pushEnabled: isPushEnabled,
@@ -196,10 +184,12 @@ const AccountManagementScreen = ({ navigation, route }: any) => {
       <Header title="계정 관리" leftType="back" rightType="none" />
       {isLoading ? (
         <View style={styles.loadingContainer}>
+          {/* 🌟 로딩 색상 원본 유지 */}
           <ActivityIndicator size="large" color={colors.primary} />
         </View>
       ) : (
         <ScrollView style={styles.scroll} contentContainerStyle={styles.content}>
+          
           <Text style={styles.sectionTitle}>회원 정보 수정</Text>
           <View style={styles.card}>
             <Text style={styles.label}>아이디</Text>
@@ -207,6 +197,7 @@ const AccountManagementScreen = ({ navigation, route }: any) => {
               <Ionicons name="lock-closed-outline" size={18} color="#8A9A86" style={styles.inputIcon} />
               <Text style={styles.disabledInputText}>{userId || '아이디 없음'}</Text>
             </View>
+            
             <Text style={styles.label}>닉네임</Text>
             <View style={styles.rowContainer}>
               <TextInput 
@@ -226,9 +217,9 @@ const AccountManagementScreen = ({ navigation, route }: any) => {
                 <Text style={styles.smallButtonText}>확인</Text>
               </TouchableOpacity>
             </View>
+            
             <View style={styles.divider} />
             
-            {/* 비밀번호 변경 드롭다운 헤더 */}
             <TouchableOpacity 
               style={styles.dropdownHeader} 
               onPress={() => {
@@ -249,7 +240,6 @@ const AccountManagementScreen = ({ navigation, route }: any) => {
               />
             </TouchableOpacity>
 
-            {/* 드롭다운 열렸을 때만 비밀번호 입력 폼 노출 */}
             {isPasswordSectionOpen && (
               <View style={styles.dropdownContent}>
                 <TextInput style={styles.input} value={currentPassword} onChangeText={setCurrentPassword} placeholder="현재 비밀번호" placeholderTextColor="#A0A89C" secureTextEntry />
@@ -262,20 +252,29 @@ const AccountManagementScreen = ({ navigation, route }: any) => {
               <Text style={styles.fullButtonText}>변경 완료</Text>
             </TouchableOpacity>
           </View>
+
           <Text style={[styles.sectionTitle, styles.sectionMargin]}>알림 설정</Text>
           <View style={[styles.card, styles.rowCard]}>
             <View style={styles.textContainer}>
               <Text style={styles.pushTitle}>전체 푸시 알림</Text>
               <Text style={styles.pushSub}>다양한 소식을 알림으로 받습니다.</Text>
             </View>
-            <Switch trackColor={{ false: '#DCE2D6', true: colors.primary }} thumbColor={'#FFFFFF'} onValueChange={handleTogglePush} value={isPushEnabled} />
+            {/* 🌟 스위치 색상 원본 유지 */}
+            <Switch 
+              trackColor={{ false: '#DCE2D6', true: colors.primary }} 
+              thumbColor={'#FFFFFF'} 
+              onValueChange={handleTogglePush} 
+              value={isPushEnabled} 
+            />
           </View>
+
           <View style={styles.withdrawSection}>
             <Text style={styles.withdrawGuide}>ⓘ 탈퇴 시 모든 정보가 삭제됩니다.</Text>
             <TouchableOpacity style={styles.withdrawButton} onPress={handleDeleteAccount}>
               <Text style={styles.withdrawButtonText}>회원 탈퇴</Text>
             </TouchableOpacity>
           </View>
+
         </ScrollView>
       )}
     </ScreenWrapper>
@@ -283,39 +282,63 @@ const AccountManagementScreen = ({ navigation, route }: any) => {
 };
 
 const styles = StyleSheet.create({ 
-  wrapper: { paddingHorizontal: 0, backgroundColor: colors.background },
+  // 배경색은 새로운 UI의 베이지 톤
+  wrapper: { paddingHorizontal: 0, backgroundColor: '#E9E9DB' },
   loadingContainer: { flex: 1, justifyContent: 'center', alignItems: 'center' },
   scroll: { flex: 1 },
   content: { padding: 20, paddingBottom: 60 },
-  sectionTitle: { fontSize: 16, fontFamily: fonts.headline, fontWeight: '700', color: '#2C3A29', marginBottom: 12 },
-  sectionMargin: { marginTop: 24 },
-  card: { backgroundColor: '#FFFFFF', borderRadius: 24, padding: 20, shadowColor: '#000', shadowOpacity: 0.04, shadowOffset: { width: 0, height: 2 }, shadowRadius: 8, elevation: 2 },
+  
+  sectionTitle: { fontSize: 16, fontFamily: fonts?.headline, fontWeight: '700', color: '#2C3A29', marginBottom: 12, marginLeft: 4 },
+  sectionMargin: { marginTop: 28 },
+  
+  // 카드 스타일: 새로운 UI의 둥글고 푹신한 느낌 적용
+  card: { 
+    backgroundColor: '#FFFFFF', 
+    borderRadius: 24, 
+    padding: 24, 
+    shadowColor: '#000', 
+    shadowOpacity: 0.03, 
+    shadowOffset: { width: 0, height: 4 }, 
+    shadowRadius: 10, 
+    elevation: 2 
+  },
   rowCard: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  label: { fontSize: 13, fontFamily: fonts.label, fontWeight: '600', color: '#4E5E43', marginBottom: 8, marginTop: 12 },
-  disabledInputContainer: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#F0F2EE', borderRadius: 20, paddingHorizontal: 16, height: 48 },
+  
+  label: { fontSize: 13, fontFamily: fonts?.label, fontWeight: '600', color: '#4E5E43', marginBottom: 8, marginTop: 16 },
+  
+  // 입력창 느낌은 새로운 UI 적용
+  disabledInputContainer: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#F3F4EB', borderRadius: 20, paddingHorizontal: 16, height: 50 },
   inputIcon: { marginRight: 8 },
-  disabledInputText: { fontSize: 14, color: '#6B7A68', fontFamily: fonts.body },
-  rowContainer: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  disabledInputText: { fontSize: 14, color: '#6B7A68', fontFamily: fonts?.body },
+  
+  rowContainer: { flexDirection: 'row', alignItems: 'center', gap: 10 },
   flexInput: { flex: 1 },
-  input: { height: 48, borderWidth: 1, borderColor: '#DCE2D6', borderRadius: 20, paddingHorizontal: 16, fontSize: 14, color: '#2C3A29', fontFamily: fonts.body, backgroundColor: '#FFFFFF' },
-  marginTop: { marginTop: 10 },
-  smallButton: { backgroundColor: colors.primary, paddingHorizontal: 20, height: 48, borderRadius: 20, justifyContent: 'center', alignItems: 'center' },
+  input: { height: 50, borderWidth: 1, borderColor: '#E0E8D5', borderRadius: 20, paddingHorizontal: 16, fontSize: 14, color: '#333', fontFamily: fonts?.body, backgroundColor: '#FFFFFF' },
+  marginTop: { marginTop: 12 },
+  
+  // 🌟 버튼 색상을 원본(colors.primary)으로 유지
+  smallButton: { backgroundColor: colors.primary, paddingHorizontal: 20, height: 50, borderRadius: 20, justifyContent: 'center', alignItems: 'center' },
   smallButtonChecked: { backgroundColor: '#6B7A68' },
-  smallButtonText: { color: '#FFFFFF', fontSize: 14, fontWeight: '700', fontFamily: fonts.label },
-  divider: { height: 1, backgroundColor: '#E9E9DB', marginVertical: 20 },
+  smallButtonText: { color: '#FFFFFF', fontSize: 14, fontWeight: '700', fontFamily: fonts?.label },
+  
+  divider: { height: 1, backgroundColor: '#F3F4EB', marginVertical: 24 },
   
   dropdownHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 4 },
-  dropdownContent: { marginTop: 12 },
+  dropdownContent: { marginTop: 16 },
 
-  fullButton: { backgroundColor: colors.primary, height: 50, borderRadius: 25, justifyContent: 'center', alignItems: 'center', marginTop: 16 },
-  fullButtonText: { color: '#FFFFFF', fontSize: 15, fontWeight: '700', fontFamily: fonts.headline },
+  // 🌟 버튼 색상을 원본(colors.primary)으로 유지
+  fullButton: { backgroundColor: colors.primary, height: 54, borderRadius: 27, justifyContent: 'center', alignItems: 'center', marginTop: 24 },
+  fullButtonText: { color: '#FFFFFF', fontSize: 16, fontWeight: '700', fontFamily: fonts?.headline },
+  
   textContainer: { flex: 1 },
-  pushTitle: { fontSize: 15, fontWeight: '700', color: '#2C3A29', fontFamily: fonts.headline, marginBottom: 4 },
-  pushSub: { fontSize: 12, color: '#6B7A68', fontFamily: fonts.body },
-  withdrawSection: { alignItems: 'center', marginTop: 40, marginBottom: 20 },
-  withdrawGuide: { fontSize: 12, color: '#6B7A68', fontFamily: fonts.body, marginBottom: 12 },
-  withdrawButton: { borderWidth: 1, borderColor: colors.tertiary, paddingHorizontal: 24, paddingVertical: 10, borderRadius: 20, backgroundColor: 'transparent' },
-  withdrawButtonText: { fontSize: 13, color: '#5C4E3C', fontWeight: '600', fontFamily: fonts.label },
+  pushTitle: { fontSize: 15, fontWeight: '700', color: '#333', fontFamily: fonts?.headline, marginBottom: 4 },
+  pushSub: { fontSize: 12, color: '#888', fontFamily: fonts?.body },
+  
+  withdrawSection: { alignItems: 'center', marginTop: 50, marginBottom: 20 },
+  withdrawGuide: { fontSize: 12, color: '#888', fontFamily: fonts?.body, marginBottom: 12 },
+  // 🌟 회원탈퇴 버튼 테두리 및 텍스트 색상을 원본으로 유지
+  withdrawButton: { borderWidth: 1, borderColor: colors.tertiary, paddingHorizontal: 24, paddingVertical: 12, borderRadius: 20, backgroundColor: 'transparent' },
+  withdrawButtonText: { fontSize: 13, color: '#5C4E3C', fontWeight: '600', fontFamily: fonts?.label },
 });
 
 export default AccountManagementScreen;

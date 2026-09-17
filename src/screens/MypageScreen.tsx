@@ -4,46 +4,35 @@ import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
-  ScrollView,
   TouchableOpacity,
   StyleSheet,
   ActivityIndicator,
+  Image,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { theme } from '../constants/theme'
+import { theme } from '../constants/theme';
 import { ScreenWrapper } from '../components/layout/ScreenWrapper';
 import { Header } from '../components/layout/Header';
 import { playSfx, isSfxEnabled, setSfxEnabled } from '../utils/sfx';
-import { Toggle } from '../components/common/Toggle';
 import { showAlert, showConfirm } from '../components/common/AlertHost';
+import { Toggle } from '../components/common/Toggle'; // 🌟 기존에 사용하시던 Toggle 컴포넌트 복구
 
-// 💡 백엔드 기본 서버 주소 (본인 환경에 맞게 확인해주세요)
+// 💡 백엔드 기본 서버 주소
 const API_BASE_URL = 'https://q-ring.app/api/v1';
-
-// ─── 색상 ───
-const C = {
-  green: '#5a7247',
-  darkGreen: '#3C6933',
-  cardBg: '#FFFFFF',
-  cardBorder: '#d5d5c8',
-  badgeBg: '#edf7e6',
-  logoutBg: '#FEF2F2',
-  logoutText: '#BA1A1A',
-};
 
 // ─── 백엔드 응답 데이터 타입 정의 ───
 interface MyPageData {
   nickname: string;
   levelCode: number;
   levelDesc: string;
-  language: string; // 'ko', 'en', 'ja', 'zh' 등
+  language: string; 
   points: number;
   consecutiveDays: number;
 }
 
-// ─── 백엔드 언어 코드('en') -> 한글 명칭('영어') 변환 맵 ───
+// ─── 백엔드 언어 코드 -> 한글 명칭 변환 맵 ───
 const LANGUAGE_MAP: { [key: string]: string } = {
   ko: '한국어',
   en: '영어',
@@ -51,64 +40,40 @@ const LANGUAGE_MAP: { [key: string]: string } = {
   zh: '중국어',
 };
 
-// ─── 메뉴 아이템 타입 ───
-interface MenuItem {
-  id: string;
-  label: string;
-  icon: keyof typeof Ionicons.glyphMap;
-  hasNotification?: boolean;
-  isLogout?: boolean;
-}
+export default function MyPageScreen({ navigation }: any) {
+  // 🌟 [UI 로직] 프로필 이모지 배열 및 순환 상태
+  const emojis = [
+    require('../../assets/Qring-emoji1.png'),
+    require('../../assets/Qring-emoji2.png'),
+    require('../../assets/Qring-emoji3.png'),
+  ];
+  const [emojiIndex, setEmojiIndex] = useState(0);
 
-const MENU_ITEMS: MenuItem[] = [
-  { id: 'account', label: '계정 관리', icon: 'person-outline' },
-  { id: 'sound', label: '소리 설정', icon: 'volume-high-outline' },
-  { id: 'levelLang', label: '레벨 / 언어 변경', icon: 'options-outline' },
-  { id: 'info', label: '앱 정보', icon: 'information-circle-outline' },
-  { id: 'logout', label: '로그아웃', icon: 'log-out-outline', isLogout: true },
-];
-
-// ─── 메뉴 아이콘 ───
-const MenuIcon = ({ name, isLogout }: { name: keyof typeof Ionicons.glyphMap; isLogout?: boolean }) => {
-  const color = isLogout ? C.logoutText : C.green;
-  const bg = isLogout ? C.logoutBg : C.badgeBg;
-
-  return (
-    <View style={[styles.menuIconWrap, { backgroundColor: bg }]}>
-      <Ionicons name={name} size={20} color={color} />
-    </View>
-  );
-};
-
-// ─── 메인 컴포넌트 ───
-const MyPageScreen = ({ navigation }: any) => {
+  // 🌟 [기능 로직] API 데이터 및 로딩 상태
   const [userData, setUserData] = useState<MyPageData | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
 
-  // 효과음 설정은 서버가 아니라 기기에 저장된다. 모듈이 들고 있는 값을 화면 상태로 옮겨 온다.
+  // 🌟 [기능 로직] 효과음 상태 관리
   const [sfxOn, setSfxOn] = useState(isSfxEnabled());
 
   const handleToggleSfx = (next: boolean) => {
     setSfxOn(next);
     setSfxEnabled(next);
-    // 켤 때만 들려줘서 바로 확인할 수 있게 한다.
     if (next) playSfx('touch');
   };
 
-  // 🌟 마이페이지 API 호출 함수
+  // 🌟 [기능 로직] 마이페이지 API 호출
   const fetchMyPageData = async () => {
     try {
       setIsLoading(true);
-      // 저장된 토큰 가져오기 (없을 경우 임시 토큰 사용)
       const token = (await AsyncStorage.getItem('accessToken')) || 'your-auth-token-example';
 
-      // POST 방식으로 프론트가 토큰을 JSON 바디에 담아 전송
       const response = await axios.post(
         `${API_BASE_URL}/mypage`,
-        {}, // 바디 내용이 없으면 빈 객체 {} 전송
+        {}, 
         {
           headers: {
-            Authorization: `Bearer ${token}`, // 헤더에 토큰 첨부
+            Authorization: `Bearer ${token}`, 
           },
         }
       );
@@ -124,146 +89,170 @@ const MyPageScreen = ({ navigation }: any) => {
     }
   };
 
-  // 🌟 화면이 로드될 때 API 호출
+  // 🌟 컴포넌트 마운트 시 API 호출 및 이모지 순환 타이머 시작
   useEffect(() => {
     fetchMyPageData();
+
+    const timer = setInterval(() => {
+      setEmojiIndex((prev) => (prev + 1) % emojis.length);
+    }, 2000); 
+    
+    return () => clearInterval(timer);
   }, []);
 
-  // 로딩 중일 때 스피너 표시
+  // 로딩 중 UI
   if (isLoading) {
     return (
-      <ScreenWrapper style={{ paddingHorizontal: 0 }}>
+      <ScreenWrapper style={styles.container}>
         <Header title="마이페이지" leftType="back" rightType="none" />
         <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color={theme.colors.primary} />
+          <ActivityIndicator size="large" color="#5D7341" />
           <Text style={styles.loadingText}>정보를 불러오는 중...</Text>
         </View>
       </ScreenWrapper>
     );
   }
 
-  // 데이터 조회 실패 시 기본값 fallback 처리
+  // 데이터 매핑 (기본값 Fallback)
   const nickname = userData?.nickname || '사용자';
   const levelCode = userData?.levelCode || 1;
-  const levelDesc = userData?.levelDesc || '기초';
+  const levelDesc = userData?.levelDesc || '기초 단어 암기 수준';
   const points = userData?.points || 0;
   const consecutiveDays = userData?.consecutiveDays || 0;
-  
-  // 백엔드 언어 코드('en')를 한글 명칭('영어')으로 변환 (매칭 안 되면 '영어' 기본값)
   const userLangKorean = userData?.language ? (LANGUAGE_MAP[userData.language] || '영어') : '영어';
 
   return (
-    <ScreenWrapper style={{ paddingHorizontal: 0 }}>
+    <ScreenWrapper style={styles.container}>
       <Header title="마이페이지" leftType="back" rightType="none" />
-
-      <ScrollView
-        style={styles.scroll}
-        contentContainerStyle={styles.scrollContent}
-        showsVerticalScrollIndicator={false}
-      >
-        {/* 프로필 영역 */}
+      
+      {/* 🌟 ScrollView를 View로 변경하고 flex: 1 적용, 한 화면에 꽉 차게 핏되도록 여백 조정 */}
+      <View style={styles.content}>
+        
+        {/* --- 프로필 섹션 --- */}
         <View style={styles.profileSection}>
-          <View style={styles.profileImageWrap}>
-            <View style={styles.profileImage} />
-            <View style={styles.editBadge}>
-              <Ionicons name="pencil" size={12} color="#fff" />
-            </View>
+          <View style={styles.profileImageWrapper}>
+            <Image 
+              source={emojis[emojiIndex]} 
+              style={styles.profileImage} 
+              resizeMode="cover" 
+            />
+            <TouchableOpacity style={styles.editButton} activeOpacity={0.8}>
+              <Ionicons name="pencil" size={14} color="#FFF" />
+            </TouchableOpacity>
           </View>
-          <Text style={styles.userName}>{nickname}</Text>
+          <Text style={styles.profileName}>{nickname}</Text>
           <View style={styles.levelBadge}>
-            <Text style={styles.levelBadgeText}>Lv.{levelCode} {levelDesc}</Text>
+            <Text style={styles.levelText}>Lv.{levelCode} {levelDesc}</Text>
           </View>
         </View>
 
-        {/* 스탯 카드 (누적 점수 대신 API 응답인 보유 포인트 & 연속 학습일 매핑) */}
+        {/* --- 스탯 섹션 --- */}
         <View style={styles.statsRow}>
           <View style={styles.statCard}>
-            <Text style={styles.statValue1}>{points.toLocaleString()}</Text>
+            <Text style={styles.statValue}>{points.toLocaleString()}</Text>
             <Text style={styles.statLabel}>보유 포인트 (P)</Text>
           </View>
           <View style={styles.statCard}>
-            <Text style={styles.statValue2}>{consecutiveDays}</Text>
+            <Text style={styles.statValueRight}>{consecutiveDays}</Text>
             <Text style={styles.statLabel}>연속 학습일</Text>
           </View>
         </View>
 
-        {/* 메뉴 리스트 */}
-        <View style={styles.menuList}>
-          {MENU_ITEMS.map((item) => (
-            <TouchableOpacity
-              key={item.id}
-              style={[
-                styles.menuRow,
-                item.isLogout && styles.menuRowLogout,
-              ]}
-              activeOpacity={0.7}
-              onPress={async () => {
-                // 소리 설정 줄은 누르면 바로 켜고 끈다. 끌 때 터치음이 나지 않도록 따로 처리한다.
-                if (item.id === 'sound') {
-                  handleToggleSfx(!sfxOn);
-                  return;
-                }
-                playSfx('touch');
-                if (item.id === 'account') {
-                  navigation.navigate('AccountManagementScreen', { nickname: nickname });
-                } else if (item.id === 'levelLang') {
-                  // 🌟 API로 받아온 실제 언어(한글명)와 레벨 정보를 파라미터로 실어서 넘겨줍니다!
-                  navigation.navigate('LearningSettingsScreen', {
-                    userLang: userLangKorean,
-                    userLevel: levelCode,
-                  });
-                } else if (item.id === 'info') {
-                  navigation.navigate('AppInfoScreen');
-                } else if (item.isLogout) {
-                  const isConfirmed = await showConfirm({
-                    title: '로그아웃',
-                    message: '정말 로그아웃 하시겠습니까?',
-                    confirmText: '확인',
-                    cancelText: '취소',
-                    destructive: true,
-                  });
-                  if (isConfirmed) {
-                    await AsyncStorage.clear();
-                    navigation.navigate('Login');
-                  }
-                }
-              }}
-            >
-              <View style={styles.menuLeft}>
-                <MenuIcon name={item.icon} isLogout={item.isLogout} />
-                <Text style={[
-                  styles.menuLabel,
-                  item.isLogout && { color: C.logoutText },
-                ]}>
-                  {item.label}
-                </Text>
-              </View>
-              <View style={styles.menuRight}>
-                {item.hasNotification && <View style={styles.notificationDot} />}
-                {item.id === 'sound' ? (
-                  <Toggle value={sfxOn} onChange={handleToggleSfx} />
-                ) : (
-                  !item.isLogout && (
-                    <Ionicons name="chevron-forward" size={18} color="#bbb" />
-                  )
-                )}
-              </View>
-            </TouchableOpacity>
-          ))}
+        {/* --- 메뉴 리스트 --- */}
+        <View style={styles.menuContainer}>
+          
+          <TouchableOpacity 
+            style={styles.menuItem} 
+            activeOpacity={0.7}
+            onPress={() => {
+              playSfx('touch');
+              navigation.navigate('AccountManagementScreen', { nickname: nickname });
+            }}
+          >
+            <View style={styles.menuIconWrap}>
+              <Ionicons name="person-outline" size={20} color="#5D7341" />
+            </View>
+            <Text style={styles.menuText}>계정 관리</Text>
+            <Ionicons name="chevron-forward" size={18} color="#CCC" />
+          </TouchableOpacity>
+
+          <View style={styles.menuItem}>
+            <View style={styles.menuIconWrap}>
+              <Ionicons name="volume-medium-outline" size={20} color="#5D7341" />
+            </View>
+            <Text style={styles.menuText}>소리 설정</Text>
+            {/* 🌟 React Native의 기본 Switch 대신 원래 쓰시던 커스텀 Toggle 컴포넌트로 교체 */}
+            <Toggle value={sfxOn} onChange={handleToggleSfx} />
+          </View>
+
+          <TouchableOpacity 
+            style={styles.menuItem} 
+            activeOpacity={0.7}
+            onPress={() => {
+              playSfx('touch');
+              navigation.navigate('LearningSettingsScreen', {
+                userLang: userLangKorean,
+                userLevel: levelCode,
+              });
+            }}
+          >
+            <View style={styles.menuIconWrap}>
+              <Ionicons name="options-outline" size={20} color="#5D7341" />
+            </View>
+            <Text style={styles.menuText}>레벨 / 언어 변경</Text>
+            <Ionicons name="chevron-forward" size={18} color="#CCC" />
+          </TouchableOpacity>
+
+          <TouchableOpacity 
+            style={styles.menuItem} 
+            activeOpacity={0.7}
+            onPress={() => {
+              playSfx('touch');
+              navigation.navigate('AppInfoScreen');
+            }}
+          >
+            <View style={styles.menuIconWrap}>
+              <Ionicons name="information-circle-outline" size={20} color="#5D7341" />
+            </View>
+            <Text style={styles.menuText}>앱 정보</Text>
+            <Ionicons name="chevron-forward" size={18} color="#CCC" />
+          </TouchableOpacity>
+
+          <TouchableOpacity 
+            style={styles.menuItem} 
+            activeOpacity={0.7}
+            onPress={async () => {
+              playSfx('touch');
+              const isConfirmed = await showConfirm({
+                title: '로그아웃',
+                message: '정말 로그아웃 하시겠습니까?',
+                confirmText: '확인',
+                cancelText: '취소',
+                destructive: true,
+              });
+              if (isConfirmed) {
+                await AsyncStorage.clear();
+                navigation.navigate('Login');
+              }
+            }}
+          >
+            <View style={[styles.menuIconWrap, { backgroundColor: '#FBE8E8' }]}>
+              <Ionicons name="log-out-outline" size={20} color="#E57373" />
+            </View>
+            <Text style={[styles.menuText, { color: '#E57373' }]}>로그아웃</Text>
+          </TouchableOpacity>
+
         </View>
-      </ScrollView>
+      </View>
     </ScreenWrapper>
   );
-};
+}
 
-// ─── 스타일 ───
 const styles = StyleSheet.create({
-  scroll: {
-    flex: 1,
-  },
-  scrollContent: {
-    padding: 20,
-    paddingBottom: 120,
+  container: { 
+    flex: 1, 
+    backgroundColor: '#E9E9DB',
+    paddingHorizontal: 0,
   },
   loadingContainer: {
     flex: 1,
@@ -276,129 +265,139 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '500',
   },
-
-  // 프로필
-  profileSection: {
-    alignItems: 'center',
-    marginBottom: 24,
+  
+  // 🌟 View로 감싸고 flex: 1 할당하여 화면에 핏되게 함
+  content: { 
+    flex: 1,
+    paddingHorizontal: 20, 
+    paddingTop: 10, 
+    paddingBottom: 24, // 하단 네비게이션 바를 고려한 여백
+    justifyContent: 'space-between', // 상/중/하단 요소가 균형있게 퍼지도록
   },
-  profileImageWrap: {
+  
+  // --- 프로필 스타일 ---
+  profileSection: { 
+    alignItems: 'center', 
+    marginBottom: 16, 
+  },
+  profileImageWrapper: { 
+    width: 90, // 화면 핏을 위해 소폭 축소
+    height: 90, 
+    borderRadius: 45, 
+    backgroundColor: '#FFFFFF', 
     position: 'relative',
-    marginBottom: 14,
+    marginBottom: 10,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 5,
+    elevation: 2,
   },
-  profileImage: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
-    backgroundColor: '#ccc',
+  profileImage: { 
+    width: '100%', 
+    height: '100%', 
+    borderRadius: 45 
   },
-  editBadge: {
+  editButton: {
     position: 'absolute',
-    bottom: 2,
-    right: 2,
-    width: 28,
-    height: 28,
-    borderRadius: 14,
-    backgroundColor: C.green,
+    right: 0,
+    bottom: 0,
+    backgroundColor: '#5D7341',
+    width: 26,
+    height: 26,
+    borderRadius: 13,
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 2,
-    borderColor: theme.colors.background,
+    borderColor: '#E9E9DB',
   },
-  userName: {
-    fontSize: 22,
-    fontWeight: '800',
-    color: '#1a1a1a',
+  profileName: { 
+    fontSize: 22, 
+    fontWeight: '800', 
+    color: '#333', 
+    marginBottom: 8 
   },
-  levelBadge: {
-    backgroundColor: C.green,
-    borderRadius: 14,
-    paddingHorizontal: 14,
-    paddingVertical: 6,
-    marginTop: 8,
+  levelBadge: { 
+    backgroundColor: '#5D7341', 
+    paddingHorizontal: 12, 
+    paddingVertical: 5, 
+    borderRadius: 16 
   },
-  levelBadgeText: {
-    fontSize: 13,
-    fontWeight: '600',
-    color: '#fff',
-  },
-
-  // 스탯
-  statsRow: {
-    flexDirection: 'row',
-    gap: 12,
-    marginBottom: 20,
-  },
-  statCard: {
-    flex: 1,
-    backgroundColor: C.cardBg,
-    borderRadius: 25,
-    borderColor: C.cardBorder,
-    alignItems: 'center',
-    paddingVertical: 18,
-  },
-  statValue1: {
-    fontSize: 24,
-    fontWeight: '800',
-    color: '#3C6933',
-  },
-  statValue2: {
-    fontSize: 24,
-    fontWeight: '800',
-    color: '#BA1A1A',
-  },
-  statLabel: {
-    fontSize: 12,
-    color: '#999',
-    fontWeight: '500',
-    marginTop: 4,
+  levelText: { 
+    color: '#FFF', 
+    fontSize: 12, 
+    fontWeight: '600' 
   },
 
-  // 메뉴
-  menuList: {
-    gap: 10,
+  // --- 스탯 (포인트, 학습일) 스타일 ---
+  statsRow: { 
+    flexDirection: 'row', 
+    gap: 12, 
+    marginBottom: 20 
   },
-  menuRow: {
-    backgroundColor: C.cardBg,
-    borderRadius: 25,
-    flexDirection: 'row',
+  statCard: { 
+    flex: 1, 
+    backgroundColor: '#F5F4E6', 
+    borderRadius: 20, 
+    paddingVertical: 18, // 세로 공간 확보를 위해 소폭 축소
     alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    paddingVertical: 16,
+    justifyContent: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.05,
+    shadowRadius: 15,
+    elevation: 3,
   },
-  menuRowLogout: {
-    borderColor: '#f5d5d5',
-    backgroundColor: '#fff',
+  statValue: { 
+    fontSize: 24, 
+    fontWeight: '800', 
+    color: '#3C6933', 
+    marginBottom: 4 
   },
-  menuLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
+  statValueRight: { 
+    fontSize: 24, 
+    fontWeight: '800', 
+    color: '#E5534B', 
+    marginBottom: 4 
+  },
+  statLabel: { 
+    fontSize: 12, 
+    fontWeight: '600', 
+    color: '#888' 
+  },
+
+  // --- 메뉴 리스트 스타일 ---
+  menuContainer: { 
+    flex: 1, 
+    justifyContent: 'flex-start',
+  },
+  menuItem: { 
+    flexDirection: 'row', 
+    alignItems: 'center', 
+    backgroundColor: '#FFFFFF', 
+    paddingVertical: 12, // 한 화면 핏을 위한 패딩 조절
+    paddingHorizontal: 16, 
+    borderRadius: 18, 
+    marginBottom: 10,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.03,
+    shadowRadius: 8,
+    elevation: 2,
   },
   menuIconWrap: {
     width: 36,
     height: 36,
     borderRadius: 18,
+    backgroundColor: '#edf7e6', 
     justifyContent: 'center',
     alignItems: 'center',
+    marginRight: 12,
   },
-  menuLabel: {
-    fontSize: 15,
-    fontWeight: '600',
-    color: '#1a1a1a',
-  },
-  menuRight: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-  },
-  notificationDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: '#dc3545',
+  menuText: { 
+    flex: 1, 
+    fontSize: 15, 
+    fontWeight: '700', 
+    color: '#333' 
   },
 });
-
-export default MyPageScreen;

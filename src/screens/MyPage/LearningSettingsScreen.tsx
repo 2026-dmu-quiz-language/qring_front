@@ -33,7 +33,7 @@ const LEVELS: LevelOption[] = [
   { level: 3, label: 'Lv.3', subLabel: '고급' },
 ];
 
-// 🌟 수정 1: 스페인어 제거
+// 🌟 스페인어 제거됨
 const LANGUAGES = ['일본어', '중국어', '영어'];
 
 const LearningSettingsScreen = ({ navigation, route }: any) => {
@@ -41,7 +41,7 @@ const LearningSettingsScreen = ({ navigation, route }: any) => {
   const [currentLang, setCurrentLang] = useState(route?.params?.userLang || '영어');
   const [currentLevel, setCurrentLevel] = useState(route?.params?.userLevel || 2);
 
-  // 🌟 수정 2: 초기값을 빈 문자열로 두어, 사용자가 하단에서 '새 언어'를 직접 선택했는지 구분
+  // 🌟 초기값을 빈 문자열로 두어, 사용자가 하단에서 '새 언어'를 직접 선택했는지 구분
   const [selectedNewLang, setSelectedNewLang] = useState('');
   const [selectedNewLevel, setSelectedNewLevel] = useState(currentLevel);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -62,7 +62,7 @@ const LearningSettingsScreen = ({ navigation, route }: any) => {
     }
   }, [route?.params]);
 
-  // ─── 백엔드 언어 이름 -> 코드 변환 맵 (스페인어 제거) ───
+  // ─── 백엔드 언어 이름 -> 코드 변환 맵 ───
   const LANGUAGE_CODE_MAP: { [key: string]: string } = {
     '일본어': 'JA',
     '중국어': 'ZH',
@@ -75,7 +75,7 @@ const LearningSettingsScreen = ({ navigation, route }: any) => {
       setIsSubmitting(true);
       const token = await getAuthToken();
 
-      // 🌟 수정 3: 하단에서 새 언어를 선택했다면 하단 설정 저장, 아니면 상단(현재 언어)의 변경된 레벨 저장
+      // 🌟 하단에서 새 언어를 선택했다면 하단 설정 저장, 아니면 상단(현재 언어)의 변경된 레벨 저장
       const targetLang = selectedNewLang ? selectedNewLang : currentLang;
       const targetLevel = selectedNewLang ? selectedNewLevel : currentLevel;
 
@@ -142,7 +142,7 @@ const LearningSettingsScreen = ({ navigation, route }: any) => {
                   key={`cur-${item.level}`}
                   style={[styles.levelCard, isSelected ? styles.levelCardSelected : styles.levelCardDefault]}
                   onPress={() => {
-                    // 🌟 수정 4: 상단 레벨 클릭 시 하단 동기화(setSelectedNewLevel) 제거
+                    // 상단 레벨 클릭 시 하단 동기화(setSelectedNewLevel) 제거
                     setCurrentLevel(item.level);
                     setSelectedNewLang(''); // 상단을 조작하면 하단 새 언어 선택 상태 해제
                   }}
@@ -167,7 +167,7 @@ const LearningSettingsScreen = ({ navigation, route }: any) => {
 
           {/* 언어 칩 리스트 */}
           <View style={styles.langChipContainer}>
-            {/* 🌟 수정 5: 현재 설정된 언어(currentLang)를 필터링하여 목록에서 제외 */}
+            {/* 현재 설정된 언어(currentLang)를 필터링하여 목록에서 제외 */}
             {LANGUAGES.filter(lang => lang !== currentLang).map((lang) => {
               const isSelected = selectedNewLang === lang;
               return (
@@ -230,35 +230,75 @@ const LearningSettingsScreen = ({ navigation, route }: any) => {
 };
 
 const styles = StyleSheet.create({
-  wrapper: { paddingHorizontal: 0, backgroundColor: colors.background },
+  // 🌟 전체 배경색을 베이지 톤으로 통일
+  wrapper: { paddingHorizontal: 0, backgroundColor: '#E9E9DB' },
   scroll: { flex: 1 },
   content: { padding: 20, paddingBottom: 60 },
-  card: { backgroundColor: '#FFFFFF', borderRadius: 24, padding: 20, shadowColor: '#000', shadowOpacity: 0.04, shadowOffset: { width: 0, height: 2 }, shadowRadius: 8, elevation: 2 },
-  marginTop: { marginTop: 16 },
-  cardHeaderRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 },
-  headerTitleWrap: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 12 },
-  iconCircle: { width: 32, height: 32, borderRadius: 16, backgroundColor: '#EDF7E6', justifyContent: 'center', alignItems: 'center' },
-  plusCircle: { backgroundColor: '#F0F2EE' },
-  cardTitle: { fontSize: 16, fontWeight: '700', color: '#2C3A29', fontFamily: fonts.headline },
-  langBadge: { backgroundColor: colors.primary, paddingHorizontal: 12, paddingVertical: 4, borderRadius: 12 },
-  langBadgeText: { color: '#FFFFFF', fontSize: 12, fontWeight: '600', fontFamily: fonts.label },
-  subLabel: { fontSize: 13, color: '#6B7A68', fontFamily: fonts.label, fontWeight: '600', marginBottom: 10, marginTop: 8 },
+  
+  // 🌟 카드 스타일: 둥글고 화사한 화이트 톤, 부드러운 그림자
+  card: { 
+    backgroundColor: '#FFFFFF', 
+    borderRadius: 24, 
+    padding: 24, 
+    shadowColor: '#000', 
+    shadowOpacity: 0.03, 
+    shadowOffset: { width: 0, height: 4 }, 
+    shadowRadius: 10, 
+    elevation: 2 
+  },
+  marginTop: { marginTop: 20 },
+  
+  cardHeaderRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 },
+  headerTitleWrap: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+  
+  // 🌟 아이콘을 감싸는 동그란 원형 포인트 색상
+  iconCircle: { width: 36, height: 36, borderRadius: 18, backgroundColor: '#EDF7E6', justifyContent: 'center', alignItems: 'center' },
+  plusCircle: { backgroundColor: '#F3F4EB' },
+  
+  cardTitle: { fontSize: 16, fontWeight: '700', color: '#2C3A29', fontFamily: fonts?.headline },
+  
+  // 🌟 현재 언어를 보여주는 배지 스타일
+  langBadge: { backgroundColor: colors.primary, paddingHorizontal: 12, paddingVertical: 6, borderRadius: 14 },
+  langBadgeText: { color: '#FFFFFF', fontSize: 12, fontWeight: '600', fontFamily: fonts?.label },
+  
+  subLabel: { fontSize: 13, color: '#4E5E43', fontFamily: fonts?.label, fontWeight: '600', marginBottom: 12, marginTop: 8 },
+  
+  // 🌟 레벨 선택 버튼 (비선택시 부드러운 베이지/아이보리 톤 적용)
   levelRow: { flexDirection: 'row', gap: 10 },
-  levelCard: { flex: 1, paddingVertical: 18, borderRadius: 16, alignItems: 'center', justifyContent: 'center' },
-  levelCardDefault: { backgroundColor: '#F5F5EC' },
-  levelCardSelected: { backgroundColor: colors.secondary },
-  levelText: { fontSize: 16, fontWeight: '800', color: '#2C3A29', fontFamily: fonts.headline },
-  levelSubText: { fontSize: 12, color: '#6B7A68', fontWeight: '500', marginTop: 2, fontFamily: fonts.body },
+  levelCard: { flex: 1, paddingVertical: 18, borderRadius: 20, alignItems: 'center', justifyContent: 'center' },
+  levelCardDefault: { backgroundColor: '#F5F4E6' },
+  levelCardSelected: { backgroundColor: colors.primary },
+  
+  // 🌟 레벨 텍스트 스타일 (색상 대비 강화)
+  levelText: { fontSize: 16, fontWeight: '800', color: '#3C6933', fontFamily: fonts?.headline },
+  levelSubText: { fontSize: 12, color: '#888', fontWeight: '600', marginTop: 4, fontFamily: fonts?.body },
   textWhite: { color: '#FFFFFF' },
-  textWhiteSub: { color: '#EDF7E6' },
-  langChipContainer: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 16 },
-  langChip: { paddingHorizontal: 16, paddingVertical: 8, borderRadius: 20, borderWidth: 1, borderColor: '#DCE2D6', backgroundColor: '#FFFFFF' },
+  textWhiteSub: { color: '#E0E8D5' },
+  
+  // 🌟 새 언어 선택 칩 영역
+  langChipContainer: { flexDirection: 'row', flexWrap: 'wrap', gap: 10, marginBottom: 20, marginTop: 4 },
+  langChip: { paddingHorizontal: 18, paddingVertical: 10, borderRadius: 20, borderWidth: 1, borderColor: '#E0E8D5', backgroundColor: '#FFFFFF' },
   langChipSelected: { borderColor: colors.primary, backgroundColor: '#EDF7E6' },
-  langChipText: { fontSize: 13, color: '#6B7A68', fontFamily: fonts.label, fontWeight: '600' },
+  
+  langChipText: { fontSize: 14, color: '#6B7A68', fontFamily: fonts?.label, fontWeight: '600' },
   langChipTextSelected: { color: colors.primary, fontWeight: '700' },
-  saveButton: { backgroundColor: colors.primary, height: 54, borderRadius: 27, justifyContent: 'center', alignItems: 'center', marginTop: 24, shadowColor: colors.primary, shadowOpacity: 0.3, shadowOffset: { width: 0, height: 4 }, shadowRadius: 8, elevation: 4 },
-  saveButtonDisabled: { backgroundColor: '#A0A89C' },
-  saveButtonText: { color: '#FFFFFF', fontSize: 16, fontWeight: '700', fontFamily: fonts.headline },
+  
+  // 🌟 하단 저장 버튼 
+  saveButton: { 
+    backgroundColor: colors.primary, 
+    height: 54, 
+    borderRadius: 27, 
+    justifyContent: 'center', 
+    alignItems: 'center', 
+    marginTop: 28, 
+    shadowColor: '#000', 
+    shadowOpacity: 0.1, 
+    shadowOffset: { width: 0, height: 4 }, 
+    shadowRadius: 8, 
+    elevation: 4 
+  },
+  saveButtonDisabled: { backgroundColor: '#A0A89C', shadowOpacity: 0 },
+  saveButtonText: { color: '#FFFFFF', fontSize: 16, fontWeight: '700', fontFamily: fonts?.headline },
 });
 
 export default LearningSettingsScreen;
