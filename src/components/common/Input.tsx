@@ -1,6 +1,7 @@
 // src/components/common/Input.tsx
 import React from 'react';
-import { View, TextInput, StyleSheet, TextInputProps } from 'react-native';
+import { View, StyleSheet, TextInputProps } from 'react-native';
+import { TextInput } from './Text';
 import { Ionicons } from '@expo/vector-icons';
 import { theme } from '../../constants/theme';
 
@@ -12,10 +13,10 @@ interface CustomInputProps extends TextInputProps {
 export const CustomInput = ({ iconName, placeholder, ...props }: CustomInputProps) => {
   return (
     <View style={styles.container}>
-      <Ionicons name={iconName} size={20} color="#888" style={styles.icon} />
+      <Ionicons name={iconName} size={20} color={theme.colors.textMuted} style={styles.icon} />
       <TextInput
         placeholder={placeholder}
-        placeholderTextColor="#888"
+        placeholderTextColor={theme.colors.textMuted}
         style={styles.input}
         {...props}
       />
@@ -25,7 +26,7 @@ export const CustomInput = ({ iconName, placeholder, ...props }: CustomInputProp
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: '#F3F4EB', 
+    backgroundColor: theme.colors.surfaceAlt, 
     flexDirection: 'row',
     alignItems: 'center',
     borderRadius: 15,

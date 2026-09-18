@@ -1,6 +1,7 @@
 // src/components/layout/Header.tsx
 import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Image, Modal } from 'react-native';
+import { View, TouchableOpacity, StyleSheet, Image, Modal } from 'react-native';
+import { Text } from '../common/Text';
 import { useNavigation } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import axios from 'axios';
@@ -137,7 +138,7 @@ export const Header = ({
               onPress={onLeftPress || (() => navigation.goBack())} 
               style={styles.iconButton}
             >
-              <Ionicons name="chevron-back" size={26} color="#333" />
+              <Ionicons name="chevron-back" size={26} color={theme.colors.text} />
             </TouchableOpacity>
           )}
           {leftType === 'close' && (
@@ -145,7 +146,7 @@ export const Header = ({
               onPress={onLeftPress || (() => navigation.goBack())} 
               style={styles.iconButton}
             >
-              <Ionicons name="close" size={26} color="#333" />
+              <Ionicons name="close" size={26} color={theme.colors.text} />
             </TouchableOpacity>
           )}
         </View>
@@ -172,12 +173,12 @@ export const Header = ({
           )}
           {rightType === 'menu' && (
             <TouchableOpacity onPress={handleRightPress} style={styles.iconButton}>
-              <Ionicons name="menu" size={30} color="#B7A07A" />
+              <Ionicons name="menu" size={30} color={theme.colors.tertiary} />
             </TouchableOpacity>
           )}
           {rightType === 'profile' && (
             <TouchableOpacity onPress={handleRightPress} style={styles.iconButton}>
-              <Ionicons name="person-circle" size={28} color="#333" />
+              <Ionicons name="person-circle" size={28} color={theme.colors.text} />
             </TouchableOpacity>
           )}
         </View>
@@ -198,7 +199,7 @@ export const Header = ({
           
         <View style={styles.menuContainer}>
           <View style={styles.menuHeader}>
-            <Ionicons name="person-circle" size={32} color="#CCC" />
+            <Ionicons name="person-circle" size={32} color={theme.colors.textDisabled} />
             <Text style={styles.menuUserName}>{displayName} 님</Text>
           </View>
           
@@ -245,7 +246,7 @@ export const Header = ({
           <View style={styles.menuDivider} />
 
           <TouchableOpacity style={styles.menuItem} onPress={handleLogout}>
-            <Ionicons name="log-out-outline" size={20} color="#dc3545" />
+            <Ionicons name="log-out-outline" size={20} color={theme.colors.danger} />
             <Text style={styles.menuLogoutText}>로그아웃</Text>
           </TouchableOpacity>
         </View>
@@ -275,7 +276,7 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 16, 
     fontWeight: 'bold',
-    color: '#333',
+    color: theme.colors.text,
   },
   iconButton: { padding: 4 },
   sproutCircle: { width: 32, height: 32, borderRadius: 16, backgroundColor: theme.colors.lightPeach, alignItems: 'center', justifyContent: 'center' },
@@ -291,12 +292,12 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: 60, 
     right: 15, 
-    backgroundColor: '#FFF',
+    backgroundColor: theme.colors.surface,
     borderRadius: 16,
     paddingVertical: 10,
     paddingHorizontal: 15,
     minWidth: 160,
-    shadowColor: '#000',
+    shadowColor: theme.colors.shadow,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.15,
     shadowRadius: 10,
@@ -311,11 +312,11 @@ const styles = StyleSheet.create({
   menuUserName: {
     fontSize: 15,
     fontWeight: 'bold',
-    color: '#333',
+    color: theme.colors.text,
   },
   menuDivider: {
     height: 1,
-    backgroundColor: '#F0F0F0',
+    backgroundColor: theme.colors.border,
     marginBottom: 10,
   },
   menuItem: {
@@ -327,24 +328,24 @@ const styles = StyleSheet.create({
   menuItemText: {
     fontSize: 15,
     fontWeight: '600',
-    color: '#333',
+    color: theme.colors.text,
   },
   menuLogoutText: {
     fontSize: 15,
     fontWeight: '600',
-    color: '#dc3545',
+    color: theme.colors.danger,
   },
   langSectionLabel: {
     fontSize: 12,
     fontWeight: '600',
-    color: '#999',
+    color: theme.colors.textHint,
     marginBottom: 8,
   },
   langTrack: {
     flexDirection: 'row',
     padding: 3,
     borderRadius: 12,
-    backgroundColor: '#EEF0E6',
+    backgroundColor: theme.colors.surfaceAlt,
     marginBottom: 4,
   },
   langSegment: {
@@ -355,8 +356,8 @@ const styles = StyleSheet.create({
     borderRadius: 9,
   },
   langSegmentActive: {
-    backgroundColor: '#FFFFFF',
-    shadowColor: '#000',
+    backgroundColor: theme.colors.surface,
+    shadowColor: theme.colors.shadow,
     shadowOpacity: 0.08,
     shadowOffset: { width: 0, height: 1 },
     shadowRadius: 3,
@@ -365,13 +366,13 @@ const styles = StyleSheet.create({
   langLabel: {
     fontSize: 12,
     fontWeight: '600',
-    color: '#8A8F80',
+    color: theme.colors.greenMuted,
   },
   langLabelActive: {
     color: theme.colors.primary,
     fontWeight: '700',
   },
   langLabelDisabled: {
-    color: '#C9CCC0',
+    color: theme.colors.greenBorder,
   },
 });

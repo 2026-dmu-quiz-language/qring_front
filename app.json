@@ -4,7 +4,7 @@
     "slug": "qring_front",
     "scheme": "qring",
     "version": "1.0.1",
-    "backgroundColor": "#E9E9DB", 
+    "backgroundColor": "#E9E9DB",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
@@ -39,7 +39,8 @@
           "recordAudioAndroid": false
         }
       ],
-      "expo-status-bar"
+      "expo-status-bar",
+      "expo-font"
     ],
     "extra": {
       "eas": {

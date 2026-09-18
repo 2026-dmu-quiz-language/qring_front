@@ -1,7 +1,8 @@
 import React from 'react';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { BottomTabNav } from './BottomTabNav';
-import { Button, Text } from 'react-native';
+import { Button } from 'react-native';
+import { Text } from '../components/common/Text';
 import { ScreenWrapper } from '../components/layout/ScreenWrapper';
 import SplashScreen from '../screens/auth/SplashScreen'; 
 import LoginScreen from '../screens/auth/LoginScreen';

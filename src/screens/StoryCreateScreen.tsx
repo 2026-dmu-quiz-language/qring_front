@@ -1,11 +1,13 @@
 import React, { useState } from 'react';
 import { 
-  View, Text, TextInput, StyleSheet, TouchableOpacity, 
+  View, StyleSheet, TouchableOpacity, 
   ActivityIndicator, KeyboardAvoidingView, Platform, ScrollView
 } from 'react-native';
+import { Text, TextInput } from '../components/common/Text';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { startStorySession } from '../api/story';
+import { theme } from '../constants/theme';
 import { showAlert, showConfirm } from '../components/common/AlertHost';
 import { Header } from '../components/layout/Header'; 
 
@@ -70,12 +72,12 @@ export default function StoryCreateScreen({ navigation }: any) {
             
             <View style={styles.inputSection}>
               <Text style={styles.label}>상대방의 이름은 무엇인가요?</Text>
-              <TextInput style={styles.textInput} placeholder="예: 지민, John" placeholderTextColor="#999" value={characterName} onChangeText={setCharacterName} />
+              <TextInput style={styles.textInput} placeholder="예: 지민, John" placeholderTextColor={theme.colors.textHint} value={characterName} onChangeText={setCharacterName} />
             </View>
 
             <View style={styles.inputSection}>
               <Text style={styles.label}>어떤 상황을 원하시나요?</Text>
-              <TextInput style={[styles.textInput, styles.textArea]} placeholder="예: 뉴욕 카페에서 수다 떠는 상황" placeholderTextColor="#999" value={situationDescription} onChangeText={setSituationDescription} multiline textAlignVertical="top" />
+              <TextInput style={[styles.textInput, styles.textArea]} placeholder="예: 뉴욕 카페에서 수다 떠는 상황" placeholderTextColor={theme.colors.textHint} value={situationDescription} onChangeText={setSituationDescription} multiline textAlignVertical="top" />
             </View>
 
             <View style={styles.inputSection}>
@@ -105,8 +107,8 @@ export default function StoryCreateScreen({ navigation }: any) {
         </ScrollView>
         <View style={styles.footer}>
           <TouchableOpacity style={[styles.submitButton, loading && styles.submitButtonDisabled]} onPress={handleCreateStory} disabled={loading}>
-            {loading ? <ActivityIndicator color="#FFF" /> : (
-              <><Ionicons name="sparkles" size={20} color="#FFF" style={styles.btnIcon} /><Text style={styles.submitButtonText}>스토리 생성하기</Text></>
+            {loading ? <ActivityIndicator color={theme.colors.surface} /> : (
+              <><Ionicons name="sparkles" size={20} color={theme.colors.surface} style={styles.btnIcon} /><Text style={styles.submitButtonText}>스토리 생성하기</Text></>
             )}
           </TouchableOpacity>
         </View>
@@ -116,21 +118,21 @@ export default function StoryCreateScreen({ navigation }: any) {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#EBEBE0' },
+  container: { flex: 1, backgroundColor: theme.colors.background },
   scrollContent: { padding: 20 },
-  formCard: { backgroundColor: '#FFF', borderRadius: 30, padding: 24, shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.05, shadowRadius: 10, elevation: 3 },
+  formCard: { backgroundColor: theme.colors.surface, borderRadius: 30, padding: 24, shadowColor: theme.colors.shadow, shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.05, shadowRadius: 10, elevation: 3 },
   inputSection: { marginBottom: 32 },
-  label: { fontSize: 16, color: '#333', fontWeight: '600', marginBottom: 12 },
-  textInput: { backgroundColor: '#EBEBE0', borderRadius: 12, paddingHorizontal: 16, paddingVertical: 14, fontSize: 15, color: '#333' },
+  label: { fontSize: 16, color: theme.colors.text, fontWeight: '600', marginBottom: 12 },
+  textInput: { backgroundColor: theme.colors.background, borderRadius: 12, paddingHorizontal: 16, paddingVertical: 14, fontSize: 15, color: theme.colors.text },
   textArea: { height: 100, paddingTop: 14 },
   chipContainer: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
-  chip: { backgroundColor: '#F0F0E8', paddingVertical: 10, paddingHorizontal: 16, borderRadius: 20 },
-  chipActive: { backgroundColor: '#5D7341' },
-  chipText: { color: '#666', fontSize: 14, fontWeight: '500' },
-  chipTextActive: { color: '#FFF', fontWeight: 'bold' },
+  chip: { backgroundColor: theme.colors.surfaceAlt, paddingVertical: 10, paddingHorizontal: 16, borderRadius: 20 },
+  chipActive: { backgroundColor: theme.colors.primary },
+  chipText: { color: theme.colors.textSub, fontSize: 14, fontWeight: '500' },
+  chipTextActive: { color: theme.colors.surface, fontWeight: 'bold' },
   footer: { paddingHorizontal: 20, paddingBottom: 30, paddingTop: 10 },
-  submitButton: { backgroundColor: '#6B8E23', flexDirection: 'row', justifyContent: 'center', alignItems: 'center', paddingVertical: 18, borderRadius: 30, shadowColor: '#6B8E23', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.3, shadowRadius: 8, elevation: 4 },
+  submitButton: { backgroundColor: theme.colors.primary, flexDirection: 'row', justifyContent: 'center', alignItems: 'center', paddingVertical: 18, borderRadius: 30, shadowColor: theme.colors.primary, shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.3, shadowRadius: 8, elevation: 4 },
   submitButtonDisabled: { opacity: 0.7 },
   btnIcon: { marginRight: 8 },
-  submitButtonText: { color: '#FFF', fontSize: 18, fontWeight: 'bold' }
+  submitButtonText: { color: theme.colors.surface, fontSize: 18, fontWeight: 'bold' }
 });

@@ -1,15 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import {
   View,
-  Text,
   ScrollView,
   TouchableOpacity,
-  TextInput,
   StyleSheet,
   ActivityIndicator,
   KeyboardAvoidingView,
   Platform,
 } from 'react-native';
+import { Text, TextInput } from '../components/common/Text';
 import { useRoute, useNavigation } from '@react-navigation/native';
 import type { RouteProp } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
@@ -197,7 +196,7 @@ const WrongNoteQuizScreen = () => {
           showsVerticalScrollIndicator={false}
         >
           <View style={styles.incorrectBadge}>
-            <Ionicons name="close-circle" size={16} color="#dc3545" />
+            <Ionicons name="close-circle" size={16} color={theme.colors.danger} />
             <Text style={styles.incorrectText}>Incorrect</Text>
           </View>
 
@@ -220,7 +219,7 @@ const WrongNoteQuizScreen = () => {
                   submitted && !isCorrect && styles.textInputWrong,
                 ]}
                 placeholder="답을 입력하세요"
-                placeholderTextColor="#aaa"
+                placeholderTextColor={theme.colors.textHint}
                 value={answer}
                 onChangeText={setAnswer}
                 editable={!submitted}
@@ -314,18 +313,18 @@ const styles = StyleSheet.create({
   errorText: {
     fontSize: 15,
     fontWeight: '700',
-    color: '#dc3545',
+    color: theme.colors.danger,
   },
   completedTitle: {
     fontSize: 22,
     fontWeight: '800',
-    color: '#1a1a1a',
+    color: theme.colors.textStrong,
     marginTop: 16,
   },
   completedScore: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#888',
+    color: theme.colors.textMuted,
     marginTop: 8,
   },
 
@@ -334,7 +333,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     alignSelf: 'flex-start',
     gap: 4,
-    backgroundColor: '#FEF2F2',
+    backgroundColor: theme.colors.dangerSurface,
     borderRadius: 12,
     paddingHorizontal: 10,
     paddingVertical: 5,
@@ -343,19 +342,19 @@ const styles = StyleSheet.create({
   incorrectText: {
     fontSize: 13,
     fontWeight: '700',
-    color: '#dc3545',
+    color: theme.colors.danger,
   },
 
   question: {
     fontSize: 20,
     fontWeight: '800',
-    color: '#1a1a1a',
+    color: theme.colors.textStrong,
     lineHeight: 30,
     marginBottom: 20,
   },
 
   hintBox: {
-    backgroundColor: '#F5F9F0',
+    backgroundColor: theme.colors.greenTint,
     borderRadius: 16,
     padding: 16,
     marginBottom: 24,
@@ -373,19 +372,19 @@ const styles = StyleSheet.create({
   },
   hintContent: {
     fontSize: 14,
-    color: '#555',
+    color: theme.colors.textSub,
     lineHeight: 20,
   },
 
   textInput: {
     borderWidth: 1.5,
-    borderColor: '#E8E8E8',
+    borderColor: theme.colors.border,
     borderRadius: 16,
     paddingHorizontal: 18,
     paddingVertical: 14,
     fontSize: 15,
-    color: '#333',
-    backgroundColor: '#FAFAFA',
+    color: theme.colors.text,
+    backgroundColor: theme.colors.surface,
     marginBottom: 20,
   },
   textInputCorrect: {
@@ -393,8 +392,8 @@ const styles = StyleSheet.create({
     backgroundColor: theme.colors.primary + '15',
   },
   textInputWrong: {
-    borderColor: '#dc3545',
-    backgroundColor: '#fef2f2',
+    borderColor: theme.colors.danger,
+    backgroundColor: theme.colors.dangerSurface,
   },
   correctAnswerBox: {
     backgroundColor: theme.colors.primary + '15',
@@ -413,7 +412,7 @@ const styles = StyleSheet.create({
   correctAnswerText: {
     fontSize: 15,
     fontWeight: '700',
-    color: '#1a1a1a',
+    color: theme.colors.textStrong,
   },
 
   optionsWrap: { gap: 12, marginBottom: 20 },
@@ -426,24 +425,24 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     borderWidth: 1.5,
   },
-  optionDefault: { borderColor: '#E8E8E8', backgroundColor: '#FFFFFF' },
+  optionDefault: { borderColor: theme.colors.border, backgroundColor: theme.colors.surface },
   optionSelected: {
     borderColor: theme.colors.primary,
-    backgroundColor: '#F9FAF5',
+    backgroundColor: theme.colors.surfaceAlt,
   },
   optionCorrect: {
     borderColor: theme.colors.primary,
     backgroundColor: theme.colors.primary + '15',
   },
-  optionWrong: { borderColor: '#dc3545', backgroundColor: '#fef2f2' },
-  optionText: { fontSize: 15, fontWeight: '600', color: '#333', flex: 1 },
+  optionWrong: { borderColor: theme.colors.danger, backgroundColor: theme.colors.dangerSurface },
+  optionText: { fontSize: 15, fontWeight: '600', color: theme.colors.text, flex: 1 },
 
   radio: {
     width: 24,
     height: 24,
     borderRadius: 12,
     borderWidth: 2,
-    borderColor: '#D0D0D0',
+    borderColor: theme.colors.textDisabled,
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -455,18 +454,18 @@ const styles = StyleSheet.create({
     borderColor: theme.colors.primary,
     backgroundColor: theme.colors.primary,
   },
-  radioWrong: { borderColor: '#dc3545', backgroundColor: '#dc3545' },
+  radioWrong: { borderColor: theme.colors.danger, backgroundColor: theme.colors.danger },
   radioInner: {
     width: 10,
     height: 10,
     borderRadius: 5,
-    backgroundColor: '#fff',
+    backgroundColor: theme.colors.surface,
   },
 
   progressText: {
     textAlign: 'center',
     fontSize: 13,
-    color: '#999',
+    color: theme.colors.textHint,
     fontWeight: '600',
   },
 
@@ -482,12 +481,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   submitButtonDisabled: {
-    backgroundColor: '#C5D1BC',
+    backgroundColor: theme.colors.greenBorder,
   },
   submitButtonText: {
     fontSize: 16,
     fontWeight: '700',
-    color: '#fff',
+    color: theme.colors.surface,
   },
 });
 

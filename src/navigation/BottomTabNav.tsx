@@ -1,6 +1,7 @@
 import React from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { View, Text, StyleSheet, Platform, TouchableOpacity } from 'react-native';
+import { View, StyleSheet, Platform, TouchableOpacity } from 'react-native';
+import { Text } from '../components/common/Text';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context'; 
 import { theme } from '../constants/theme';
@@ -27,9 +28,9 @@ export const BottomTabNav = () => {
         ),
         
         tabBarStyle: {
-          backgroundColor: '#FFFFFF',
+          backgroundColor: theme.colors.surface,
           borderTopWidth: 1,
-          borderTopColor: '#EFEFEF',
+          borderTopColor: theme.colors.border,
           height: Platform.OS === 'ios' ? 55 + insets.bottom : 60 + (insets.bottom > 0 ? insets.bottom : 10),
           paddingBottom: insets.bottom > 0 ? insets.bottom : 6,
           paddingTop: 6,
@@ -65,7 +66,7 @@ export const BottomTabNav = () => {
               <Ionicons
                 name={iconName}
                 size={22} 
-                color={focused ? theme.colors.primary : '#888'}
+                color={focused ? theme.colors.primary : theme.colors.textMuted}
               />
               <Text style={[styles.tabLabel, focused && styles.tabLabelActive]}>
                 {label}
@@ -96,7 +97,7 @@ const styles = StyleSheet.create({
   },
   tabLabel: {
     fontSize: 10,
-    color: '#888',
+    color: theme.colors.textMuted,
     marginTop: 2, 
     fontWeight: '600',
   },

@@ -5,7 +5,8 @@
 // 이 파일은 보여주기만 한다. 화면 흐름 중간에서 알림을 띄우고 답을 기다리려면
 // AlertHost의 showAlert, showConfirm을 쓰면 된다.
 import React from 'react';
-import { Modal, View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { Modal, View, TouchableOpacity, StyleSheet } from 'react-native';
+import { Text } from './Text';
 import { Ionicons } from '@expo/vector-icons';
 import { theme } from '../../constants/theme';
 
@@ -93,12 +94,12 @@ const styles = StyleSheet.create({
   box: {
     width: '80%',
     maxWidth: 400, // 웹에서 창이 넓어도 과하게 커지지 않도록
-    backgroundColor: '#E9E9DB',
+    backgroundColor: theme.colors.background,
     borderRadius: 24,
     padding: 30,
     alignItems: 'center',
     elevation: 5,
-    shadowColor: '#000',
+    shadowColor: theme.colors.shadow,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.25,
     shadowRadius: 4,
@@ -109,7 +110,7 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 22,
     fontWeight: '800',
-    color: '#1a1a1a',
+    color: theme.colors.textStrong,
     textAlign: 'center',
     marginBottom: 12,
   },
@@ -118,7 +119,7 @@ const styles = StyleSheet.create({
   },
   message: {
     fontSize: 15,
-    color: '#555',
+    color: theme.colors.textSub,
     textAlign: 'center',
     lineHeight: 22,
     marginBottom: 24,
@@ -131,12 +132,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   dangerButton: {
-    backgroundColor: '#dc3545',
+    backgroundColor: theme.colors.danger,
   },
   filledButtonLabel: {
     fontSize: 16,
     fontWeight: '700',
-    color: '#FFF',
+    color: theme.colors.surface,
   },
   textButton: {
     paddingVertical: 10,
@@ -145,7 +146,7 @@ const styles = StyleSheet.create({
   textButtonLabel: {
     fontSize: 14,
     fontWeight: '700',
-    color: '#999',
+    color: theme.colors.textHint,
   },
   buttonGap: {
     marginTop: 8,

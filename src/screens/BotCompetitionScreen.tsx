@@ -1,16 +1,15 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
   View,
-  Text,
   Image,
   TouchableOpacity,
-  TextInput,
   StyleSheet,
   ScrollView,
   ActivityIndicator,
   KeyboardAvoidingView,
   Platform,
 } from 'react-native';
+import { Text, TextInput } from '../components/common/Text';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import type { RouteProp } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
@@ -30,19 +29,19 @@ import { showConfirm } from '../components/common/AlertHost';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 const C = {
-  darkGreen: '#4E5E43',
-  chipGreen: '#6F9F63',
-  chipGreenShadow: '#4F7A45',
-  barTrack: '#D9DBC9',
+  darkGreen: theme.colors.primary,
+  chipGreen: theme.colors.primary,
+  chipGreenShadow: theme.colors.primary,
+  barTrack: theme.colors.greenChip,
   botBarFill: '#D3E3A6',
-  usedChipBg: '#E2E3D6',
-  usedChipText: '#B4B5A3',
-  dashedBorder: '#C9CBB4',
-  buttonBg: '#B7A07A',
-  buttonText: '#FBF6EA',
+  usedChipBg: theme.colors.greenChip,
+  usedChipText: theme.colors.greenMutedLight,
+  dashedBorder: theme.colors.greenBorder,
+  buttonBg: theme.colors.tertiary,
+  buttonText: theme.colors.surfaceAlt,
   vsBg: '#EDE5D2',
-  vsText: '#9B8A6B',
-  wrong: '#dc3545',
+  vsText: theme.colors.tertiary,
+  wrong: theme.colors.danger,
 };
 
 const parseJsonArray = (value: string | null): string[] => {
@@ -572,7 +571,7 @@ const BotCompetitionScreen = () => {
                   (wrongFlash || roundWinner === 'bot') && styles.textInputWrong,
                 ]}
                 placeholder="답을 입력하세요"
-                placeholderTextColor="#aaa"
+                placeholderTextColor={theme.colors.textHint}
                 value={answerText}
                 onChangeText={setAnswerText}
                 editable={roundWinner === null && !paused}
@@ -683,7 +682,7 @@ const styles = StyleSheet.create({
   sectionText: {
     fontSize: 13,
     fontWeight: '700',
-    color: '#888',
+    color: theme.colors.textMuted,
   },
 
   vsSection: {
@@ -713,7 +712,7 @@ const styles = StyleSheet.create({
     height: 64,
     borderRadius: 32,
     borderWidth: 3,
-    borderColor: '#DDDED2',
+    borderColor: theme.colors.greenChip,
     backgroundColor: theme.colors.white,
     justifyContent: 'center',
     alignItems: 'center',
@@ -752,17 +751,17 @@ const styles = StyleSheet.create({
   myName: {
     fontSize: 15,
     fontWeight: '800',
-    color: '#1a1a1a',
+    color: theme.colors.textStrong,
   },
   botName: {
     fontSize: 15,
     fontWeight: '700',
-    color: '#555',
+    color: theme.colors.textSub,
   },
   percentText: {
     fontSize: 11,
     fontWeight: '700',
-    color: '#999',
+    color: theme.colors.textHint,
   },
   barTrack: {
     height: 10,
@@ -792,7 +791,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 24,
     paddingVertical: 24,
     marginBottom: 24,
-    shadowColor: '#000',
+    shadowColor: theme.colors.shadow,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.05,
     shadowRadius: 15,
@@ -804,13 +803,13 @@ const styles = StyleSheet.create({
   botTimerLabel: {
     fontSize: 11,
     fontWeight: '700',
-    color: '#999',
+    color: theme.colors.textHint,
     marginBottom: 6,
   },
   botTimerTrack: {
     height: 6,
     borderRadius: 3,
-    backgroundColor: '#F0F1E8',
+    backgroundColor: theme.colors.surfaceAlt,
     overflow: 'hidden',
   },
   botTimerFill: {
@@ -821,14 +820,14 @@ const styles = StyleSheet.create({
   questionText: {
     fontSize: 18,
     fontWeight: '800',
-    color: '#2b2b2b',
+    color: theme.colors.textStrong,
     textAlign: 'center',
     marginBottom: 8,
   },
   questionSub: {
     fontSize: 13,
     fontWeight: '500',
-    color: '#ABAC9C',
+    color: theme.colors.greenMutedLight,
     textAlign: 'center',
     marginBottom: 20,
   },
@@ -874,28 +873,28 @@ const styles = StyleSheet.create({
     paddingVertical: 15,
     borderRadius: 16,
     borderWidth: 1.5,
-    borderColor: '#E8E8E8',
-    backgroundColor: '#FAFAFA',
+    borderColor: theme.colors.border,
+    backgroundColor: theme.colors.surface,
   },
   optionSelected: {
     borderColor: C.chipGreen,
-    backgroundColor: '#F9FAF5',
+    backgroundColor: theme.colors.surfaceAlt,
   },
   optionCorrect: {
     borderColor: C.chipGreen,
     backgroundColor: C.chipGreen + '15',
   },
-  optionText: { fontSize: 15, fontWeight: '600', color: '#333' },
+  optionText: { fontSize: 15, fontWeight: '600', color: theme.colors.text },
 
   textInput: {
     borderWidth: 1.5,
-    borderColor: '#E8E8E8',
+    borderColor: theme.colors.border,
     borderRadius: 16,
     paddingHorizontal: 18,
     paddingVertical: 14,
     fontSize: 15,
-    color: '#333',
-    backgroundColor: '#FAFAFA',
+    color: theme.colors.text,
+    backgroundColor: theme.colors.surface,
   },
   textInputCorrect: {
     borderColor: C.chipGreen,
@@ -903,7 +902,7 @@ const styles = StyleSheet.create({
   },
   textInputWrong: {
     borderColor: C.wrong,
-    backgroundColor: '#fef2f2',
+    backgroundColor: theme.colors.dangerSurface,
   },
 
   feedbackText: {
@@ -927,7 +926,7 @@ const styles = StyleSheet.create({
     borderRadius: 22,
     paddingHorizontal: 20,
     paddingVertical: 12,
-    shadowColor: '#000',
+    shadowColor: theme.colors.shadow,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.06,
     shadowRadius: 6,
@@ -941,7 +940,7 @@ const styles = StyleSheet.create({
   bankChipText: {
     fontSize: 15,
     fontWeight: '700',
-    color: '#333',
+    color: theme.colors.text,
   },
   bankChipTextUsed: {
     color: C.usedChipText,
@@ -974,20 +973,20 @@ const styles = StyleSheet.create({
   resultTitle: {
     fontSize: 26,
     fontWeight: '800',
-    color: '#1a1a1a',
+    color: theme.colors.textStrong,
     marginBottom: 6,
   },
   resultScore: {
     fontSize: 16,
     fontWeight: '700',
-    color: '#888',
+    color: theme.colors.textMuted,
     marginBottom: 20,
   },
   resultSubText: {
     marginTop: 14,
     fontSize: 14,
     fontWeight: '600',
-    color: '#888',
+    color: theme.colors.textMuted,
   },
   resultCard: {
     alignSelf: 'stretch',
@@ -1005,12 +1004,12 @@ const styles = StyleSheet.create({
   resultLabel: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#888',
+    color: theme.colors.textMuted,
   },
   resultValue: {
     fontSize: 15,
     fontWeight: '800',
-    color: '#1a1a1a',
+    color: theme.colors.textStrong,
   },
 
 });

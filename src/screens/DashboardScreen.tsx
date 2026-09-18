@@ -1,13 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import {
   View,
-  Text,
   ScrollView,
   TouchableOpacity,
   StyleSheet,
   ActivityIndicator,
   Image,
 } from 'react-native';
+import { Text } from '../components/common/Text';
 import Svg, { Path } from 'react-native-svg';
 import { Ionicons } from '@expo/vector-icons';
 import { theme } from '../constants/theme';
@@ -19,10 +19,10 @@ import { getErrorMessage } from '../utils/errorMessage';
 import { playSfx } from '../utils/sfx';
 
 const C = {
-  darkGreen: '#3C6933',
+  darkGreen: theme.colors.primary,
   cardBorder: 'transparent',
-  badgeBg: '#edf7e6',
-  streakInactive: '#d5d5c8',
+  badgeBg: theme.colors.greenTint,
+  streakInactive: theme.colors.greenChip,
 };
 
 const WEEKDAY_LABELS = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
@@ -91,7 +91,7 @@ const DashboardScreen = () => {
     return(
       <ScreenWrapper>
         <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center'}}>
-          <Text style={{ fontSize: 16, fontWeight: '700', color: '#dc3545'}}>{error}</Text>
+          <Text style={{ fontSize: 16, fontWeight: '700', color: theme.colors.danger}}>{error}</Text>
         </View>
       </ScreenWrapper>
     );
@@ -102,7 +102,7 @@ const DashboardScreen = () => {
       <ScreenWrapper>
         <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
           <ActivityIndicator size="large" color={theme.colors.primary} />
-          <Text style={{ marginTop: 12, color: '#888' }}>로딩 중...</Text>
+          <Text style={{ marginTop: 12, color: theme.colors.textMuted }}>로딩 중...</Text>
         </View>
       </ScreenWrapper>
     );
@@ -231,30 +231,30 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     padding: 15, 
     marginBottom: 20, 
-    shadowColor: '#000',
+    shadowColor: theme.colors.shadow,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.05,
     shadowRadius: 15,
     elevation: 3,
   },
   streakHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 },
-  streakTitle: { fontSize: 14, fontWeight: '700', color: '#1a1a1a' },
-  daysBadge: { backgroundColor: '#edf7e6', borderRadius: 12, paddingHorizontal: 8, paddingVertical: 4 },
+  streakTitle: { fontSize: 14, fontWeight: '700', color: theme.colors.textStrong },
+  daysBadge: { backgroundColor: theme.colors.greenTint, borderRadius: 12, paddingHorizontal: 8, paddingVertical: 4 },
   daysBadgeText: { fontSize: 11, fontWeight: '700', color: C.darkGreen },
   weekRow: { flexDirection: 'row', justifyContent: 'space-around' },
   weekDay: { alignItems: 'center', gap: 3 },
-  weekDot: { width: 32, height: 32, borderRadius: 16, backgroundColor: '#f0f0e8', justifyContent: 'center', alignItems: 'center' }, 
-  weekDotDone: { backgroundColor: '#edf7e6' },
-  weekLabel: { fontSize: 11, fontWeight: '600', color: '#999' },
+  weekDot: { width: 32, height: 32, borderRadius: 16, backgroundColor: theme.colors.surfaceAlt, justifyContent: 'center', alignItems: 'center' }, 
+  weekDotDone: { backgroundColor: theme.colors.greenTint },
+  weekLabel: { fontSize: 11, fontWeight: '600', color: theme.colors.textHint },
 
   achievementSection: {
     alignItems: 'center',
-    backgroundColor: '#EFEFE1',
+    backgroundColor: theme.colors.surfaceAlt,
     borderRadius: 20,
     padding: 15, 
     paddingTop: 16, 
     marginBottom: 20, 
-    shadowColor: '#000',
+    shadowColor: theme.colors.shadow,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.05,
     shadowRadius: 15,
@@ -262,8 +262,8 @@ const styles = StyleSheet.create({
   },
   gaugeWrap: { alignItems: 'center', width: '100%', marginBottom: -10 },
   arcPercent: { fontSize: 26, fontWeight: '800', color: C.darkGreen, marginTop: -38 }, 
-  achievementTitle: { fontSize: 15, fontWeight: '800', color: '#1a1a1a', marginTop: 8 },
-  achievementDesc: { fontSize: 11, color: '#888', textAlign: 'center', lineHeight: 17, marginTop: 4 },
+  achievementTitle: { fontSize: 15, fontWeight: '800', color: theme.colors.textStrong, marginTop: 8 },
+  achievementDesc: { fontSize: 11, color: theme.colors.textMuted, textAlign: 'center', lineHeight: 17, marginTop: 4 },
 
   ctaButton: {
     backgroundColor: theme.colors.primary,
@@ -271,13 +271,13 @@ const styles = StyleSheet.create({
     paddingVertical: 15, 
     alignItems: 'center',
     marginBottom: 20, 
-    shadowColor: '#000',
+    shadowColor: theme.colors.shadow,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.05,
     shadowRadius: 15,
     elevation: 3,
   },
-  ctaTitle: { fontSize: 17, fontWeight: '800', color: '#fff' },
+  ctaTitle: { fontSize: 17, fontWeight: '800', color: theme.colors.surface },
   ctaSub: { fontSize: 11, fontWeight: '500', color: 'rgba(255,255,255,0.7)', marginTop: 3 },
 
   botCompButton: {
@@ -289,14 +289,14 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     gap: 10,
     marginBottom: 20,
-    shadowColor: '#000',
+    shadowColor: theme.colors.shadow,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.05,
     shadowRadius: 15,
     elevation: 3,
   },
   botCompIcon: { width: 34, height: 34 },
-  botCompTitle: { fontSize: 17, fontWeight: '800', color: '#fff' },
+  botCompTitle: { fontSize: 17, fontWeight: '800', color: theme.colors.surface },
   botCompSub: { fontSize: 11, fontWeight: '500', color: 'rgba(255,255,255,0.7)', marginTop: 3 },
 
   mascotSection: {
@@ -312,13 +312,13 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     marginRight: 6,
     marginBottom: 20, 
-    shadowColor: '#000',
+    shadowColor: theme.colors.shadow,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.05,
     shadowRadius: 8,
     elevation: 2,
   },
-  speechText: { fontSize: 12, fontWeight: '600', color: '#333', lineHeight: 18 },
+  speechText: { fontSize: 12, fontWeight: '600', color: theme.colors.text, lineHeight: 18 },
   speechTail: {
     position: 'absolute',
     right: -6,
@@ -340,25 +340,25 @@ const styles = StyleSheet.create({
   pointCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#F5F4E6',
+    backgroundColor: theme.colors.surfaceAlt,
     borderRadius: 24,
     paddingVertical: 18,
     paddingHorizontal: 20,
     marginBottom: 18,
   },
-  pointLabel: { fontSize: 12, fontWeight: '600', color: '#8A8F80' },
-  pointValue: { fontSize: 22, fontWeight: '900', color: '#1a1a1a', marginTop: 4 },
+  pointLabel: { fontSize: 12, fontWeight: '600', color: theme.colors.greenMuted },
+  pointValue: { fontSize: 22, fontWeight: '900', color: theme.colors.textStrong, marginTop: 4 },
   pointIcon: { width: 44, height: 44 },
 
   // 카드 없이 여백으로만 나누는 보조 값 줄
   summaryRow: { flexDirection: 'row', alignItems: 'center' },
   summaryItem: { flex: 1, alignItems: 'center' },
-  summaryDivider: { width: 1, height: 28, backgroundColor: '#DEDECF' },
-  summaryLabel: { fontSize: 11, fontWeight: '500', color: '#999', marginBottom: 6 },
-  summaryValue: { fontSize: 15, fontWeight: '800', color: '#1a1a1a' },
-  summaryValueWarning: { color: '#C97A7A' },
+  summaryDivider: { width: 1, height: 28, backgroundColor: theme.colors.greenChip },
+  summaryLabel: { fontSize: 11, fontWeight: '500', color: theme.colors.textHint, marginBottom: 6 },
+  summaryValue: { fontSize: 15, fontWeight: '800', color: theme.colors.textStrong },
+  summaryValueWarning: { color: theme.colors.dangerSoft },
   // 오답 라벨. 경고 빨강(#dc3545)은 화면에서 튀어서 한 단계 연한 색으로 낮춘다.
-  summaryLabelWarning: { color: '#C97A7A' },
+  summaryLabelWarning: { color: theme.colors.dangerSoft },
   levelRow: { flexDirection: 'row', alignItems: 'center', gap: 4 },
   levelIcon: { width: 20, height: 20 },
 });

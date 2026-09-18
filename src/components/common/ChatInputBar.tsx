@@ -4,28 +4,28 @@
 import React from 'react';
 import {
   View,
-  Text,
-  TextInput,
   TouchableOpacity,
   ActivityIndicator,
   StyleSheet,
 } from 'react-native';
+import { Text, TextInput } from './Text';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { theme } from '../../constants/theme';
 import { useKeyboardVisible } from '../../utils/useKeyboardVisible';
 
 const PLACEHOLDER = '메시지 입력';
 
 const COLORS = {
   // 바 뒤는 비워서 화면 배경이 그대로 보이게 하고, 알약만 흰색으로 띄운다.
-  pillBackground: '#FFFFFF',
+  pillBackground: theme.colors.surface,
   // 흰 알약과도, 베이지 화면 배경과도 구분되는 연한 초록. 스토리 보관함의 + 동그라미와 같은 색이다.
-  plusBackground: '#E0E8D5',
+  plusBackground: theme.colors.greenChip,
   // 전송 버튼과 같은 초록으로 맞춘다.
-  plusIcon: '#6B8E23',
-  text: '#333333',
-  placeholder: '#999999',
-  sendBackground: '#6B8E23',
+  plusIcon: theme.colors.primary,
+  text: theme.colors.text,
+  placeholder: theme.colors.textHint,
+  sendBackground: theme.colors.primary,
 };
 
 interface ChatInputBarProps {
@@ -89,9 +89,9 @@ export const ChatInputBar = ({
           activeOpacity={0.7}
         >
           {sending ? (
-            <ActivityIndicator size="small" color="#FFFFFF" />
+            <ActivityIndicator size="small" color={theme.colors.surface} />
           ) : (
-            <Ionicons name="send" size={16} color="#FFFFFF" style={styles.sendIcon} />
+            <Ionicons name="send" size={16} color={theme.colors.surface} style={styles.sendIcon} />
           )}
         </TouchableOpacity>
       </View>

@@ -3,9 +3,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import {
   View,
-  Text,
   ScrollView,
-  TextInput,
   TouchableOpacity,
   Pressable,
   StyleSheet,
@@ -14,6 +12,7 @@ import {
   KeyboardAvoidingView,
   Platform,
 } from 'react-native';
+import { Text, TextInput } from '../components/common/Text';
 import { useRoute, useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { RouteProp } from '@react-navigation/native';
@@ -162,7 +161,7 @@ const ChoiceQuiz = ({ quiz, hint, onComplete }: { quiz: Quiz; hint: string; onCo
       <Modal transparent visible={isModalVisible} animationType="fade">
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
-            <Text style={[styles.modalTitle, { color: isCorrect ? theme.colors.primary : '#dc3545' }]}>
+            <Text style={[styles.modalTitle, { color: isCorrect ? theme.colors.primary : theme.colors.danger }]}>
               {isCorrect ? '정답입니다! 🎉' : tryCount >= 3 ? '기회를 모두 사용했어요 😢' : '아쉽네요! 🥲'}
             </Text>
             <Text style={styles.modalDesc}>
@@ -173,7 +172,7 @@ const ChoiceQuiz = ({ quiz, hint, onComplete }: { quiz: Quiz; hint: string; onCo
                   : `오답입니다. (${tryCount}/3)\n다시 한번 확인해 볼까요?`}
             </Text>
             <TouchableOpacity
-              style={[styles.modalButton, { backgroundColor: isCorrect ? theme.colors.primary : '#dc3545' }]}
+              style={[styles.modalButton, { backgroundColor: isCorrect ? theme.colors.primary : theme.colors.danger }]}
               onPress={() => {
                 setModalVisible(false);
                 if (isCorrect || tryCount >= 3) {
@@ -234,7 +233,7 @@ const SubjectiveQuiz = ({ quiz, hint, onComplete }: { quiz: Quiz; hint: string; 
       <TextInput
         style={styles.textInput}
         placeholder="답을 입력하세요"
-        placeholderTextColor="#aaa"
+        placeholderTextColor={theme.colors.textHint}
         value={answer}
         onChangeText={setAnswer}
         editable={!submitted}
@@ -257,7 +256,7 @@ const SubjectiveQuiz = ({ quiz, hint, onComplete }: { quiz: Quiz; hint: string; 
       <Modal transparent visible={isModalVisible} animationType="fade">
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
-            <Text style={[styles.modalTitle, { color: isCorrect ? theme.colors.primary : '#dc3545' }]}>
+            <Text style={[styles.modalTitle, { color: isCorrect ? theme.colors.primary : theme.colors.danger }]}>
               {isCorrect ? '정답입니다! 🎉' : tryCount >= 3 ? '기회를 모두 사용했어요 😢' : '아쉽네요! 🥲'}
             </Text>
             <Text style={styles.modalDesc}>
@@ -268,7 +267,7 @@ const SubjectiveQuiz = ({ quiz, hint, onComplete }: { quiz: Quiz; hint: string; 
                   : `오답입니다. (${tryCount}/3)\n다시 도전해볼까요?`}
             </Text>
             <TouchableOpacity
-              style={[styles.modalButton, { backgroundColor: isCorrect ? theme.colors.primary : '#dc3545' }]}
+              style={[styles.modalButton, { backgroundColor: isCorrect ? theme.colors.primary : theme.colors.danger }]}
               onPress={() => {
                 setModalVisible(false);
                 if (isCorrect || tryCount >= 3) {
@@ -436,10 +435,10 @@ const ChatLearnScreen = () => {
       <ScreenWrapper>
         <Header title={episodeTitle} leftType="back" rightType="menu" />
         <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', paddingHorizontal: 30 }}>
-          <Text style={{ fontSize: 16, fontWeight: '700', color: '#dc3545', marginBottom: 8 }}>
+          <Text style={{ fontSize: 16, fontWeight: '700', color: theme.colors.danger, marginBottom: 8 }}>
             데이터를 불러올 수 없습니다
           </Text>
-          <Text style={{ fontSize: 13, color: '#888', textAlign: 'center', lineHeight: 20 }}>
+          <Text style={{ fontSize: 13, color: theme.colors.textMuted, textAlign: 'center', lineHeight: 20 }}>
             {error}
           </Text>
         </View>
@@ -527,18 +526,18 @@ const styles = StyleSheet.create({
   avatar: {
     width: 38, height: 38, borderRadius: 19, backgroundColor: theme.colors.white, marginRight: 12,
     justifyContent: 'center', alignItems: 'center',
-    elevation: 2, shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.1, shadowRadius: 2,
+    elevation: 2, shadowColor: theme.colors.shadow, shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.1, shadowRadius: 2,
   },
   bubble: { //채팅 버블
     backgroundColor: theme.colors.white, borderRadius: 20, borderTopLeftRadius: 4, paddingHorizontal: 16, paddingVertical: 12,
-    maxWidth: '75%', elevation: 1, shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.05, shadowRadius: 2,
+    maxWidth: '75%', elevation: 1, shadowColor: theme.colors.shadow, shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.05, shadowRadius: 2,
   },
   bubbleText: { fontSize: 15, color: theme.colors.text, lineHeight: 22 },
 
   quizCard: {
     left: 0, 
     right: 0, 
-    backgroundColor: '#FFFFFF',
+    backgroundColor: theme.colors.surface,
     borderTopLeftRadius: 32, 
     borderTopRightRadius: 32, 
     paddingHorizontal: 24, 
@@ -550,41 +549,41 @@ const styles = StyleSheet.create({
     shadowRadius: 15, 
     elevation: 20,
   },
-  dragHandle: { width: 40, height: 5, borderRadius: 3, backgroundColor: '#E0E0E0', alignSelf: 'center', marginBottom: 20 },
+  dragHandle: { width: 40, height: 5, borderRadius: 3, backgroundColor: theme.colors.border, alignSelf: 'center', marginBottom: 20 },
   quizLabel: { fontSize: 13, fontWeight: '600', color: theme.colors.primary, marginBottom: 6 },
-  quizQuestion: { fontSize: 15, color: '#555', lineHeight: 22, marginBottom: 24 },
+  quizQuestion: { fontSize: 15, color: theme.colors.textSub, lineHeight: 22, marginBottom: 24 },
 
   optionsWrap: { gap: 12, marginBottom: 24 },
   optionRow: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 18, paddingVertical: 16,
     borderRadius: 16, borderWidth: 1.5,
   },
-  optionDefault: { borderColor: '#E8E8E8', backgroundColor: '#FFFFFF' },
-  optionSelected: { borderColor: theme.colors.primary, backgroundColor: '#F9FAF5' },
+  optionDefault: { borderColor: theme.colors.border, backgroundColor: theme.colors.surface },
+  optionSelected: { borderColor: theme.colors.primary, backgroundColor: theme.colors.surfaceAlt },
   optionCorrect: { borderColor: theme.colors.primary, backgroundColor: theme.colors.primary + '15' },
-  optionWrong: { borderColor: '#dc3545', backgroundColor: '#fef2f2' },
-  optionText: { fontSize: 15, fontWeight: '600', color: '#333' },
+  optionWrong: { borderColor: theme.colors.danger, backgroundColor: theme.colors.dangerSurface },
+  optionText: { fontSize: 15, fontWeight: '600', color: theme.colors.text },
 
   radio: { width: 24, height: 24, borderRadius: 12, borderWidth: 2, justifyContent: 'center', alignItems: 'center' },
-  radioDefault: { borderColor: '#D0D0D0' },
+  radioDefault: { borderColor: theme.colors.textDisabled },
   radioSelected: { borderColor: theme.colors.primary, backgroundColor: theme.colors.primary },
   radioCorrect: { borderColor: theme.colors.primary, backgroundColor: theme.colors.primary },
-  radioWrong: { borderColor: '#dc3545', backgroundColor: '#dc3545' },
-  radioInner: { width: 10, height: 10, borderRadius: 5, backgroundColor: '#fff' },
+  radioWrong: { borderColor: theme.colors.danger, backgroundColor: theme.colors.danger },
+  radioInner: { width: 10, height: 10, borderRadius: 5, backgroundColor: theme.colors.surface },
 
   textInput: {
-    borderWidth: 1.5, borderColor: '#E8E8E8', borderRadius: 16, paddingHorizontal: 18, paddingVertical: 14,
-    fontSize: 15, color: '#333', backgroundColor: '#FAFAFA', marginBottom: 24,
+    borderWidth: 1.5, borderColor: theme.colors.border, borderRadius: 16, paddingHorizontal: 18, paddingVertical: 14,
+    fontSize: 15, color: theme.colors.text, backgroundColor: theme.colors.surface, marginBottom: 24,
   },
 
   nextButton: { backgroundColor: theme.colors.primary, borderRadius: 18, paddingVertical: 16, alignItems: 'center' },
-  nextButtonDisabled: { backgroundColor: '#C5D1BC' },
-  nextButtonText: { fontSize: 16, fontWeight: '700', color: '#FFFFFF' },
+  nextButtonDisabled: { backgroundColor: theme.colors.greenBorder },
+  nextButtonText: { fontSize: 16, fontWeight: '700', color: theme.colors.surface },
 
   hintButton: { marginTop: 16, alignItems: 'center' },
-  hintText: { fontSize: 13, fontWeight: '600', color: '#888', textDecorationLine: 'underline' },
+  hintText: { fontSize: 13, fontWeight: '600', color: theme.colors.textMuted, textDecorationLine: 'underline' },
   hintBox: {
-    backgroundColor: '#F5F9F0', borderRadius: 12, padding: 12, marginBottom: 16,
+    backgroundColor: theme.colors.greenTint, borderRadius: 12, padding: 12, marginBottom: 16,
     borderLeftWidth: 3, borderLeftColor: theme.colors.primary,
   },
   hintContent: { fontSize: 13, color: theme.colors.primary, lineHeight: 20 },
@@ -597,28 +596,28 @@ const styles = StyleSheet.create({
   resultButton: {
     backgroundColor: theme.colors.primary, borderRadius: 18, paddingVertical: 16, alignItems: 'center',
   },
-  resultButtonText: { fontSize: 16, fontWeight: '700', color: '#FFFFFF' },
+  resultButtonText: { fontSize: 16, fontWeight: '700', color: theme.colors.surface },
 
   modalOverlay: { flex: 1, backgroundColor: 'rgba(0, 0, 0, 0.4)', justifyContent: 'center', alignItems: 'center' },
   modalContent: {
-    width: '80%', backgroundColor: '#FFF', borderRadius: 24, padding: 30, alignItems: 'center',
-    elevation: 5, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.25, shadowRadius: 4,
+    width: '80%', backgroundColor: theme.colors.surface, borderRadius: 24, padding: 30, alignItems: 'center',
+    elevation: 5, shadowColor: theme.colors.shadow, shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.25, shadowRadius: 4,
   },
   modalTitle: { fontSize: 22, fontWeight: '800', marginBottom: 12 },
-  modalDesc: { fontSize: 15, color: '#555', textAlign: 'center', lineHeight: 22, marginBottom: 24 },
+  modalDesc: { fontSize: 15, color: theme.colors.textSub, textAlign: 'center', lineHeight: 22, marginBottom: 24 },
   modalButton: { width: '100%', borderRadius: 16, paddingVertical: 14, alignItems: 'center' },
-  modalButtonText: { fontSize: 16, fontWeight: '700', color: '#FFF' },
+  modalButtonText: { fontSize: 16, fontWeight: '700', color: theme.colors.surface },
 
   resultModalContent: {
-    width: '80%', backgroundColor: '#FFF', borderRadius: 24, padding: 30, alignItems: 'center',
-    elevation: 5, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.25, shadowRadius: 4,
+    width: '80%', backgroundColor: theme.colors.surface, borderRadius: 24, padding: 30, alignItems: 'center',
+    elevation: 5, shadowColor: theme.colors.shadow, shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.25, shadowRadius: 4,
   },
-  resultModalTitle: { fontSize: 24, fontWeight: '900', color: '#1a1a1a', marginBottom: 12 },
-  resultModalDesc: { fontSize: 15, color: '#666', textAlign: 'center', lineHeight: 22, marginBottom: 24 },
+  resultModalTitle: { fontSize: 24, fontWeight: '900', color: theme.colors.textStrong, marginBottom: 12 },
+  resultModalDesc: { fontSize: 15, color: theme.colors.textSub, textAlign: 'center', lineHeight: 22, marginBottom: 24 },
   resultModalButton: {
     width: '100%', backgroundColor: theme.colors.primary, borderRadius: 16, paddingVertical: 16, alignItems: 'center',
   },
-  resultModalButtonText: { fontSize: 16, fontWeight: '700', color: '#FFF' },
+  resultModalButtonText: { fontSize: 16, fontWeight: '700', color: theme.colors.surface },
 
 });
 

@@ -1,7 +1,8 @@
 // screens/auth/LoginScreen.tsx
 
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, Image, TouchableOpacity, Platform, Linking } from 'react-native';
+import { View, StyleSheet, Image, TouchableOpacity, Platform, Linking } from 'react-native';
+import { Text } from '../../components/common/Text';
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { ScreenWrapper } from '../../components/layout/ScreenWrapper';
@@ -13,6 +14,7 @@ import * as WebBrowser from 'expo-web-browser';
 import * as AuthSession from 'expo-auth-session';
 import * as Crypto from 'expo-crypto';
 import { OAUTH_CONFIG } from '../../constants/oauth';
+import { theme } from '../../constants/theme';
 
 WebBrowser.maybeCompleteAuthSession();
 
@@ -281,7 +283,7 @@ const LoginScreen = ({ navigation }: any) => {
         </View> 
 
         <TouchableOpacity onPress={() => navigation.navigate('SignUp')} style={styles.signUpLink}>
-          <Text style={styles.signUpText}>계정이 없으신가요? <Text style={{ fontWeight: 'bold', color: '#6F9F63' }}>회원가입</Text></Text>
+          <Text style={styles.signUpText}>계정이 없으신가요? <Text style={{ fontWeight: 'bold', color: theme.colors.primary }}>회원가입</Text></Text>
         </TouchableOpacity>
 
       </View>
@@ -292,20 +294,20 @@ const LoginScreen = ({ navigation }: any) => {
 const styles = StyleSheet.create({
   container: { flex: 1, alignItems: 'center', paddingHorizontal: 20, justifyContent: 'center' },
   logo: { width: 150, height: 80, marginBottom: 10 },
-  title: { fontSize: 28, fontWeight: 'bold', color: '#333' },
-  subTitle: { fontSize: 14, color: '#666', marginBottom: 30 },
+  title: { fontSize: 28, fontWeight: 'bold', color: theme.colors.text },
+  subTitle: { fontSize: 14, color: theme.colors.textSub, marginBottom: 30 },
   inputSection: { width: '100%', marginBottom: 20 },
-  label: { fontSize: 12, fontWeight: 'bold', color: '#333', marginBottom: 5, marginLeft: 5 },
+  label: { fontSize: 12, fontWeight: 'bold', color: theme.colors.text, marginBottom: 5, marginLeft: 5 },
   forgotBtn: { alignSelf: 'center', marginTop: 15, marginBottom: 10 }, 
-  forgotText: { fontSize: 13, color: '#888', textDecorationLine: 'underline' },
+  forgotText: { fontSize: 13, color: theme.colors.textMuted, textDecorationLine: 'underline' },
   dividerContainer: { flexDirection: 'row', alignItems: 'center', marginVertical: 30, width: '80%' },
-  line: { flex: 1, height: 1, backgroundColor: '#DDD' },
-  orText: { marginHorizontal: 10, color: '#AAA', fontSize: 12 },
+  line: { flex: 1, height: 1, backgroundColor: theme.colors.textDisabled },
+  orText: { marginHorizontal: 10, color: theme.colors.textHint, fontSize: 12 },
   socialContainer: { flexDirection: 'row', gap: 20, marginBottom: 30 },
   socialCircle: { width: 52, height: 52, borderRadius: 26, alignItems: 'center', justifyContent: 'center' },
   socialIcon: { width: 48, height: 48, resizeMode: 'contain' as const },
   signUpLink: { marginTop: 10 },
-  signUpText: { color: '#666' },
+  signUpText: { color: theme.colors.textSub },
 });
 
 export default LoginScreen;
