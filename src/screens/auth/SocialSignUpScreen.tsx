@@ -1,7 +1,8 @@
 // screens/auth/SocialSignUpScreen.tsx
 
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Image } from 'react-native';
+import { View, StyleSheet, TouchableOpacity, ScrollView, Image } from 'react-native';
+import { Text } from '../../components/common/Text';
 import { Ionicons } from '@expo/vector-icons';
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -11,6 +12,8 @@ import { CustomButton } from '../../components/common/Button';
 import { CustomInput } from '../../components/common/Input'; // 🌟 CustomInput 임포트 추가
 import { theme } from '../../constants/theme';
 import { showAlert } from '../../components/common/AlertHost';
+import { DocumentModal } from '../../components/common/DocumentModal';
+import { TERMS_OF_SERVICE, PRIVACY_POLICY } from '../../constants/legal';
 
 const API_BASE_URL = 'https://q-ring.app/api/v1/auth'; 
 
@@ -31,6 +34,9 @@ const SocialSignUpScreen = ({ navigation }: any) => {
 
   const [agreedTerms, setAgreedTerms] = useState(false);
   const [agreedPrivacy, setAgreedPrivacy] = useState(false);
+
+  // 약관 '보기'로 띄운 문서. null 이면 팝업이 닫힌 상태다.
+  const [openDocument, setOpenDocument] = useState<'terms' | 'privacy' | null>(null);
 
   const toggleAllAgreements = () => {
     const isAllAgreed = agreedTerms && agreedPrivacy;
@@ -181,28 +187,44 @@ const SocialSignUpScreen = ({ navigation }: any) => {
         {/* 약관 동의 */}
         <View style={styles.agreementSection}>
           <TouchableOpacity style={styles.agreeRowAll} onPress={toggleAllAgreements}>
-            <Ionicons name={agreedTerms && agreedPrivacy ? "checkmark-circle" : "checkmark-circle-outline"} size={24} color={agreedTerms && agreedPrivacy ? theme.colors.primary : "#CCC"} />
+            <Ionicons name={agreedTerms && agreedPrivacy ? "checkmark-circle" : "checkmark-circle-outline"} size={24} color={agreedTerms && agreedPrivacy ? theme.colors.primary : theme.colors.textDisabled} />
             <Text style={styles.agreeTextAll}>약관 전체 동의</Text>
           </TouchableOpacity>
           <View style={styles.divider} />
           <View style={styles.agreeRow}>
             <TouchableOpacity style={styles.agreeLeft} onPress={() => setAgreedTerms(!agreedTerms)}>
-              <Ionicons name="checkmark" size={20} color={agreedTerms ? theme.colors.primary : "#CCC"} />
+              <Ionicons name="checkmark" size={20} color={agreedTerms ? theme.colors.primary : theme.colors.textDisabled} />
               <Text style={styles.agreeText}>(필수) 서비스 이용약관 동의</Text>
             </TouchableOpacity>
-            <TouchableOpacity><Text style={styles.detailText}>보기</Text></TouchableOpacity>
+            <TouchableOpacity onPress={() => setOpenDocument('terms')}>
+              <Text style={styles.detailText}>보기</Text>
+            </TouchableOpacity>
           </View>
           <View style={styles.agreeRow}>
             <TouchableOpacity style={styles.agreeLeft} onPress={() => setAgreedPrivacy(!agreedPrivacy)}>
-              <Ionicons name="checkmark" size={20} color={agreedPrivacy ? theme.colors.primary : "#CCC"} />
+              <Ionicons name="checkmark" size={20} color={agreedPrivacy ? theme.colors.primary : theme.colors.textDisabled} />
               <Text style={styles.agreeText}>(필수) 개인정보 처리방침 동의</Text>
             </TouchableOpacity>
-            <TouchableOpacity><Text style={styles.detailText}>보기</Text></TouchableOpacity>
+            <TouchableOpacity onPress={() => setOpenDocument('privacy')}>
+              <Text style={styles.detailText}>보기</Text>
+            </TouchableOpacity>
           </View>
         </View>
 
         <CustomButton title="설정 완료 및 시작하기 ➔" onPress={handlePreferencesSubmit} />
       </ScrollView>
+
+      <DocumentModal
+        visible={openDocument !== null}
+        document={openDocument === 'terms' ? TERMS_OF_SERVICE : PRIVACY_POLICY}
+        onClose={() => setOpenDocument(null)}
+        onAgree={() => {
+          // 읽고 바로 동의할 수 있게 해당 항목을 켜준다.
+          if (openDocument === 'terms') setAgreedTerms(true);
+          else setAgreedPrivacy(true);
+          setOpenDocument(null);
+        }}
+      />
     </ScreenWrapper>
   );
 };
@@ -211,37 +233,37 @@ const SocialSignUpScreen = ({ navigation }: any) => {
 const styles = StyleSheet.create({
   scrollContainer: { padding: 20, paddingBottom: 100 },
   logoImage: { width: 120, height: 40, marginBottom: 10, alignSelf: 'flex-start' },
-  title: { fontSize: 18, color: '#333', lineHeight: 26, marginBottom: 20, fontWeight: '500' },
+  title: { fontSize: 18, color: theme.colors.text, lineHeight: 26, marginBottom: 20, fontWeight: '500' },
   
   inputSection: { marginBottom: 20 },
-  label: { fontSize: 14, fontWeight: 'bold', color: '#333', marginBottom: 8 },
+  label: { fontSize: 14, fontWeight: 'bold', color: theme.colors.text, marginBottom: 8 },
   idInputRow: { flexDirection: 'row', alignItems: 'flex-start', gap: 10 },
   idInputWrap: { flex: 1 },
   idCheckButton: { height: 50, backgroundColor: theme.colors.primary, paddingHorizontal: 15, borderRadius: 15, justifyContent: 'center', alignItems: 'center' },
   idCheckText: { color: theme.colors.white, fontWeight: 'bold', fontSize: 13 },
 
-  settingBox: { backgroundColor: '#F3F4EB', borderRadius: 30, padding: 25, marginBottom: 20 },
-  settingTitle: { fontSize: 16, fontWeight: 'bold', marginBottom: 20, color: '#333' },
-  subLabel: { fontSize: 14, color: '#555', marginBottom: 12, marginTop: 10, fontWeight: '600' },
+  settingBox: { backgroundColor: theme.colors.surfaceAlt, borderRadius: 30, padding: 25, marginBottom: 20 },
+  settingTitle: { fontSize: 16, fontWeight: 'bold', marginBottom: 20, color: theme.colors.text },
+  subLabel: { fontSize: 14, color: theme.colors.textSub, marginBottom: 12, marginTop: 10, fontWeight: '600' },
   row: { flexDirection: 'row', gap: 10, marginBottom: 20 },
   chip: { flex: 1, alignItems: 'center', paddingVertical: 12, borderRadius: 25, backgroundColor: theme.colors.white },
   chipActive: { backgroundColor: theme.colors.secondary }, 
-  chipText: { color: '#666', fontSize: 15 },
+  chipText: { color: theme.colors.textSub, fontSize: 15 },
   chipTextActive: { color: theme.colors.white, fontWeight: 'bold' },
   levelCard: { flex: 1, aspectRatio: 1, alignItems: 'center', justifyContent: 'center', borderRadius: 100, backgroundColor: theme.colors.white },
   levelCardActive: { backgroundColor: theme.colors.secondary },
-  levelTag: { fontSize: 11, color: '#888', marginBottom: 4, fontWeight: '600' },
+  levelTag: { fontSize: 11, color: theme.colors.textMuted, marginBottom: 4, fontWeight: '600' },
   levelTagActive: { color: 'rgba(255, 255, 255, 0.9)' }, 
-  levelText: { fontSize: 18, fontWeight: 'bold', color: '#333' },
+  levelText: { fontSize: 18, fontWeight: 'bold', color: theme.colors.text },
   levelTextActive: { color: theme.colors.white },
   
   agreementSection: { marginBottom: 30, paddingHorizontal: 5 },
   agreeRowAll: { flexDirection: 'row', alignItems: 'center', marginBottom: 15 },
   agreeRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 },
   agreeLeft: { flexDirection: 'row', alignItems: 'center' },
-  agreeTextAll: { fontSize: 16, fontWeight: 'bold', color: '#333', marginLeft: 10 },
-  agreeText: { fontSize: 14, color: '#555', marginLeft: 10 },
-  detailText: { fontSize: 13, color: '#888', textDecorationLine: 'underline' },
+  agreeTextAll: { fontSize: 16, fontWeight: 'bold', color: theme.colors.text, marginLeft: 10 },
+  agreeText: { fontSize: 14, color: theme.colors.textSub, marginLeft: 10 },
+  detailText: { fontSize: 13, color: theme.colors.textMuted, textDecorationLine: 'underline' },
   divider: { height: 1, backgroundColor: '#D8D8CA', marginBottom: 15 },
 });
 

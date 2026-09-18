@@ -1,6 +1,7 @@
 // src/screens/auth/SplashScreen.tsx
 import React, { useEffect } from 'react';
-import { View, Text, Image, StyleSheet, StatusBar, Platform } from 'react-native';
+import { View, Image, StyleSheet, StatusBar, Platform } from 'react-native';
+import { Text } from '../../components/common/Text';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
 import { theme } from '../../constants/theme';
@@ -114,7 +115,7 @@ const styles = StyleSheet.create({
   subText: {
     marginTop: 20,
     fontSize: 16,
-    color: '#3A3A3A', // 시안과 비슷한 진회색
+    color: theme.colors.text, // 시안과 비슷한 진회색
     fontFamily: theme.fonts.body, // 앞서 정리한 본문용 폰트 적용
     fontWeight: '500',
   },

@@ -1,13 +1,13 @@
 import React, { useState, useCallback } from 'react';
 import {
   View,
-  Text,
   ScrollView,
   TouchableOpacity,
   StyleSheet,
   Image,
   ActivityIndicator,
 } from 'react-native';
+import { Text } from '../components/common/Text';
 import { useNavigation } from '@react-navigation/native';
 import { useFocusEffect } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -189,7 +189,7 @@ const StoryHomeScreen = () => {
                     <Text
                       style={[
                         styles.chipLabel,
-                        { color: isActive ? theme.colors.primary : '#666' },
+                        { color: isActive ? theme.colors.primary : theme.colors.textSub },
                       ]}
                     >
                       {cat.label}
@@ -223,13 +223,13 @@ const StoryHomeScreen = () => {
                     {ep.thumbnailUrl ? (
                       <Image source={{ uri: ep.thumbnailUrl }} style={styles.cardImage} resizeMode="cover" />
                     ) : (
-                      <View style={[styles.cardImage, { backgroundColor: '#EFEFE1' }]} />
+                      <View style={[styles.cardImage, { backgroundColor: theme.colors.surfaceAlt }]} />
                     )}
 
                     {isLocked && (
                       <View style={styles.lockedOverlay}>
                         <View style={styles.lockIconCircle}>
-                          <Ionicons name="lock-closed" size={18} color="#FFF" />
+                          <Ionicons name="lock-closed" size={18} color={theme.colors.surface} />
                         </View>
                         <Text style={styles.lockedText}>
                           학습하려면 <Text style={styles.lockedPointsText}>{ep.requiredPoints || 0} P</Text>가 필요해요
@@ -279,14 +279,14 @@ const StoryHomeScreen = () => {
 const styles = StyleSheet.create({
   body: { flex: 1 },
   bodyContent: { padding: 20, paddingBottom: 150 },
-  title: { fontSize: 22, fontWeight: '800', color: '#333', lineHeight: 30 },
-  subtitle: { marginTop: 6, fontSize: 14, color: '#888' },
+  title: { fontSize: 22, fontWeight: '800', color: theme.colors.text, lineHeight: 30 },
+  subtitle: { marginTop: 6, fontSize: 14, color: theme.colors.textMuted },
   loadingWrap: { marginTop: 50, alignItems: 'center' },
-  emptyText: { marginTop: 40, textAlign: 'center', color: '#999', fontSize: 15 },
+  emptyText: { marginTop: 40, textAlign: 'center', color: theme.colors.textHint, fontSize: 15 },
   chipRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 20, marginBottom: 10 },
   chip: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 18, paddingVertical: 10, borderRadius: 25 },
-  chipActive: { backgroundColor: '#E0E8D5', borderWidth: 1, borderColor: theme.colors.primary },
-  chipInactive: { backgroundColor: '#F3F4EB', borderWidth: 1, borderColor: 'transparent' },
+  chipActive: { backgroundColor: theme.colors.greenChip, borderWidth: 1, borderColor: theme.colors.primary },
+  chipInactive: { backgroundColor: theme.colors.surfaceAlt, borderWidth: 1, borderColor: 'transparent' },
   chipIcon: { width: 16, height: 16 },
   chipLabel: { fontSize: 14, fontWeight: '600' },
   card: {
@@ -295,7 +295,7 @@ const styles = StyleSheet.create({
     backgroundColor: theme.colors.white,
     borderWidth: 0, 
     marginTop: 20,
-    shadowColor: '#000',
+    shadowColor: theme.colors.shadow,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.05, 
     shadowRadius: 15,
@@ -312,14 +312,14 @@ const styles = StyleSheet.create({
     width: '100%',
   },
   cardInfo: { padding: 20 },
-  cardTitle: { fontSize: 17, fontWeight: 'bold', color: '#333' },
+  cardTitle: { fontSize: 17, fontWeight: 'bold', color: theme.colors.text },
   cardMeta: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 12 },
   badgeWrap: { flexDirection: 'row', gap: 8 },
-  badge: { backgroundColor: '#edf7e6', paddingHorizontal: 10, paddingVertical: 4, borderRadius: 12 },
+  badge: { backgroundColor: theme.colors.greenTint, paddingHorizontal: 10, paddingVertical: 4, borderRadius: 12 },
   badgeText: { fontSize: 12, fontWeight: 'bold', color: theme.colors.primary },
-  badgeCompleted: { flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: '#F0F0F0', paddingHorizontal: 10, paddingVertical: 4, borderRadius: 12 },
+  badgeCompleted: { flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: theme.colors.border, paddingHorizontal: 10, paddingVertical: 4, borderRadius: 12 },
   badgeCheckIcon: { width: 14, height: 14 },
-  badgeTextCompleted: { fontSize: 12, fontWeight: 'bold', color: '#666' },
+  badgeTextCompleted: { fontSize: 12, fontWeight: 'bold', color: theme.colors.textSub },
   lockedOverlay: {
     ...StyleSheet.absoluteFill,
     backgroundColor: 'rgba(0, 0, 0, 0.65)',
@@ -338,7 +338,7 @@ const styles = StyleSheet.create({
     marginBottom: 6,
   },
   lockedText: {
-    color: '#FFFFFF',
+    color: theme.colors.surface,
     fontSize: 14,
     fontWeight: 'bold',
     textAlign: 'center',
@@ -348,13 +348,13 @@ const styles = StyleSheet.create({
     color: '#EDD59E', 
   },
   unlockButton: {
-    backgroundColor: '#5D7341', 
+    backgroundColor: theme.colors.primary, 
     paddingVertical: 8,
     paddingHorizontal: 16,
     borderRadius: 20,
   },
   unlockButtonText: {
-    color: '#FFFFFF',
+    color: theme.colors.surface,
     fontSize: 13,
     fontWeight: '600',
   },

@@ -1,13 +1,13 @@
 import React, { useEffect, useState } from 'react';
 import {
   View,
-  Text,
   Image,
   TouchableOpacity,
   StyleSheet,
   ScrollView,
   ActivityIndicator,
 } from 'react-native';
+import { Text } from '../components/common/Text';
 import { useNavigation } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import { theme } from '../constants/theme';
@@ -187,7 +187,7 @@ const BotLevelSelectScreen = () => {
           activeOpacity={0.85}
         >
           {starting ? (
-            <ActivityIndicator size="small" color="#fff" />
+            <ActivityIndicator size="small" color={theme.colors.surface} />
           ) : (
             <Text style={styles.startButtonText}>
               {selected ? `대결 시작 (${cost} P)` : '봇 레벨을 선택하세요'}
@@ -219,13 +219,13 @@ const styles = StyleSheet.create({
   introTitle: {
     fontSize: 18,
     fontWeight: '800',
-    color: '#1a1a1a',
+    color: theme.colors.textStrong,
     marginBottom: 4,
   },
   introDesc: {
     fontSize: 13,
     fontWeight: '500',
-    color: '#888',
+    color: theme.colors.textMuted,
     lineHeight: 18,
   },
 
@@ -244,7 +244,7 @@ const styles = StyleSheet.create({
   pointLabel: {
     fontSize: 14,
     fontWeight: '700',
-    color: '#555',
+    color: theme.colors.textSub,
   },
   pointValue: {
     fontSize: 16,
@@ -268,7 +268,7 @@ const styles = StyleSheet.create({
   },
   levelCardSelected: {
     borderColor: theme.colors.primary,
-    backgroundColor: '#F9FAF5',
+    backgroundColor: theme.colors.surfaceAlt,
   },
   levelIcon: {
     width: 34,
@@ -277,16 +277,16 @@ const styles = StyleSheet.create({
   levelTitle: {
     fontSize: 16,
     fontWeight: '800',
-    color: '#1a1a1a',
+    color: theme.colors.textStrong,
     marginBottom: 3,
   },
   levelDesc: {
     fontSize: 12,
     fontWeight: '500',
-    color: '#999',
+    color: theme.colors.textHint,
   },
   costBadge: {
-    backgroundColor: '#F0F1E8',
+    backgroundColor: theme.colors.surfaceAlt,
     borderRadius: 12,
     paddingHorizontal: 10,
     paddingVertical: 6,
@@ -297,10 +297,10 @@ const styles = StyleSheet.create({
   costText: {
     fontSize: 13,
     fontWeight: '800',
-    color: '#8a8a7a',
+    color: theme.colors.greenMuted,
   },
   costTextSelected: {
-    color: '#fff',
+    color: theme.colors.surface,
   },
   checkMark: {
     position: 'absolute',
@@ -311,7 +311,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     fontSize: 13,
     fontWeight: '700',
-    color: '#dc3545',
+    color: theme.colors.danger,
     marginBottom: 10,
   },
   notEnoughRow: {
@@ -326,7 +326,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     fontSize: 13,
     fontWeight: '700',
-    color: '#dc3545',
+    color: theme.colors.danger,
   },
 
   bottomBar: {
@@ -346,7 +346,7 @@ const styles = StyleSheet.create({
   startButtonText: {
     fontSize: 16,
     fontWeight: '700',
-    color: '#FBF6EA',
+    color: theme.colors.surfaceAlt,
   },
 });
 

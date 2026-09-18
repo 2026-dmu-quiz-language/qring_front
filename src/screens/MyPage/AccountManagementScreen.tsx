@@ -3,8 +3,6 @@
 import React, { useState, useEffect } from 'react';
 import {
   View,
-  Text,
-  TextInput,
   ScrollView,
   TouchableOpacity,
   StyleSheet,
@@ -13,6 +11,7 @@ import {
   Platform,
   KeyboardAvoidingView
 } from 'react-native';
+import { Text, TextInput } from '../../components/common/Text';
 import { Ionicons } from '@expo/vector-icons';
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -210,7 +209,7 @@ const AccountManagementScreen = ({ navigation, route }: any) => {
             <View style={styles.card}>
               <Text style={styles.label}>아이디</Text>
               <View style={styles.disabledInputContainer}>
-                <Ionicons name="lock-closed-outline" size={18} color="#8A9A86" style={styles.inputIcon} />
+                <Ionicons name="lock-closed-outline" size={18} color={colors.greenMuted} style={styles.inputIcon} />
                 <Text style={styles.disabledInputText}>{userId || '아이디 없음'}</Text>
               </View>
               
@@ -224,7 +223,7 @@ const AccountManagementScreen = ({ navigation, route }: any) => {
                       setIsNicknameChecked(false);
                   }} 
                   placeholder="닉네임" 
-                  placeholderTextColor="#A0A89C" 
+                  placeholderTextColor={colors.greenMutedLight} 
                 />
                 <TouchableOpacity 
                   style={[styles.smallButton, isNicknameChecked && styles.smallButtonChecked]} 
@@ -252,15 +251,15 @@ const AccountManagementScreen = ({ navigation, route }: any) => {
                 <Ionicons 
                   name={isPasswordSectionOpen ? "chevron-up" : "chevron-down"} 
                   size={20} 
-                  color="#4E5E43" 
+                  color={colors.primary} 
                 />
               </TouchableOpacity>
 
               {isPasswordSectionOpen && (
                 <View style={styles.dropdownContent}>
-                  <TextInput style={styles.input} value={currentPassword} onChangeText={setCurrentPassword} placeholder="현재 비밀번호" placeholderTextColor="#A0A89C" secureTextEntry />
-                  <TextInput style={[styles.input, styles.marginTop]} value={newPassword} onChangeText={setNewPassword} placeholder="새 비밀번호" placeholderTextColor="#A0A89C" secureTextEntry />
-                  <TextInput style={[styles.input, styles.marginTop]} value={confirmPassword} onChangeText={setConfirmPassword} placeholder="비밀번호 확인" placeholderTextColor="#A0A89C" secureTextEntry />
+                  <TextInput style={styles.input} value={currentPassword} onChangeText={setCurrentPassword} placeholder="현재 비밀번호" placeholderTextColor={colors.greenMutedLight} secureTextEntry />
+                  <TextInput style={[styles.input, styles.marginTop]} value={newPassword} onChangeText={setNewPassword} placeholder="새 비밀번호" placeholderTextColor={colors.greenMutedLight} secureTextEntry />
+                  <TextInput style={[styles.input, styles.marginTop]} value={confirmPassword} onChangeText={setConfirmPassword} placeholder="비밀번호 확인" placeholderTextColor={colors.greenMutedLight} secureTextEntry />
                 </View>
               )}
 
@@ -276,8 +275,8 @@ const AccountManagementScreen = ({ navigation, route }: any) => {
                 <Text style={styles.pushSub}>다양한 소식을 알림으로 받습니다.</Text>
               </View>
               <Switch 
-                trackColor={{ false: '#DCE2D6', true: colors.primary }} 
-                thumbColor={'#FFFFFF'} 
+                trackColor={{ false: colors.greenChip, true: colors.primary }} 
+                thumbColor={colors.surface} 
                 onValueChange={handleTogglePush} 
                 value={isPushEnabled} 
               />
@@ -303,14 +302,14 @@ const styles = StyleSheet.create({
   scroll: { flex: 1 },
   content: { padding: 20, paddingBottom: 60 },
   
-  sectionTitle: { fontSize: 16, fontFamily: fonts?.headline, fontWeight: '700', color: '#2C3A29', marginBottom: 12, marginLeft: 4 },
+  sectionTitle: { fontSize: 16, fontFamily: fonts?.headline, fontWeight: '700', color: colors.titleGreen, marginBottom: 12, marginLeft: 4 },
   sectionMargin: { marginTop: 28 },
   
   card: { 
-    backgroundColor: '#FFFFFF', 
+    backgroundColor: colors.surface, 
     borderRadius: 24, 
     padding: 24, 
-    shadowColor: '#000', 
+    shadowColor: colors.shadow, 
     shadowOpacity: 0.03, 
     shadowOffset: { width: 0, height: 4 }, 
     shadowRadius: 10, 
@@ -318,35 +317,35 @@ const styles = StyleSheet.create({
   },
   rowCard: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   
-  label: { fontSize: 13, fontFamily: fonts?.label, fontWeight: '600', color: '#4E5E43', marginBottom: 8, marginTop: 16 },
+  label: { fontSize: 13, fontFamily: fonts?.label, fontWeight: '600', color: colors.primary, marginBottom: 8, marginTop: 16 },
   
-  disabledInputContainer: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#F3F4EB', borderRadius: 20, paddingHorizontal: 16, height: 50 },
+  disabledInputContainer: { flexDirection: 'row', alignItems: 'center', backgroundColor: colors.surfaceAlt, borderRadius: 20, paddingHorizontal: 16, height: 50 },
   inputIcon: { marginRight: 8 },
-  disabledInputText: { fontSize: 14, color: '#6B7A68', fontFamily: fonts?.body },
+  disabledInputText: { fontSize: 14, color: colors.greenMuted, fontFamily: fonts?.body },
   
   rowContainer: { flexDirection: 'row', alignItems: 'center', gap: 10 },
   flexInput: { flex: 1 },
-  input: { height: 50, borderWidth: 1, borderColor: '#E0E8D5', borderRadius: 20, paddingHorizontal: 16, fontSize: 14, color: '#333', fontFamily: fonts?.body, backgroundColor: '#FFFFFF' },
+  input: { height: 50, borderWidth: 1, borderColor: colors.greenChip, borderRadius: 20, paddingHorizontal: 16, fontSize: 14, color: colors.text, fontFamily: fonts?.body, backgroundColor: colors.surface },
   marginTop: { marginTop: 12 },
   
   smallButton: { backgroundColor: colors.primary, paddingHorizontal: 20, height: 50, borderRadius: 20, justifyContent: 'center', alignItems: 'center' },
-  smallButtonChecked: { backgroundColor: '#6B7A68' },
-  smallButtonText: { color: '#FFFFFF', fontSize: 14, fontWeight: '700', fontFamily: fonts?.label },
+  smallButtonChecked: { backgroundColor: colors.greenMuted },
+  smallButtonText: { color: colors.surface, fontSize: 14, fontWeight: '700', fontFamily: fonts?.label },
   
-  divider: { height: 1, backgroundColor: '#F3F4EB', marginVertical: 24 },
+  divider: { height: 1, backgroundColor: colors.surfaceAlt, marginVertical: 24 },
   
   dropdownHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 4 },
   dropdownContent: { marginTop: 16 },
 
   fullButton: { backgroundColor: colors.primary, height: 54, borderRadius: 27, justifyContent: 'center', alignItems: 'center', marginTop: 24 },
-  fullButtonText: { color: '#FFFFFF', fontSize: 16, fontWeight: '700', fontFamily: fonts?.headline },
+  fullButtonText: { color: colors.surface, fontSize: 16, fontWeight: '700', fontFamily: fonts?.headline },
   
   textContainer: { flex: 1 },
-  pushTitle: { fontSize: 15, fontWeight: '700', color: '#333', fontFamily: fonts?.headline, marginBottom: 4 },
-  pushSub: { fontSize: 12, color: '#888', fontFamily: fonts?.body },
+  pushTitle: { fontSize: 15, fontWeight: '700', color: colors.text, fontFamily: fonts?.headline, marginBottom: 4 },
+  pushSub: { fontSize: 12, color: colors.textMuted, fontFamily: fonts?.body },
   
   withdrawSection: { alignItems: 'center', marginTop: 50, marginBottom: 20 },
-  withdrawGuide: { fontSize: 12, color: '#888', fontFamily: fonts?.body, marginBottom: 12 },
+  withdrawGuide: { fontSize: 12, color: colors.textMuted, fontFamily: fonts?.body, marginBottom: 12 },
   withdrawButton: { borderWidth: 1, borderColor: colors.tertiary, paddingHorizontal: 24, paddingVertical: 12, borderRadius: 20, backgroundColor: 'transparent' },
   withdrawButtonText: { fontSize: 13, color: '#5C4E3C', fontWeight: '600', fontFamily: fonts?.label },
 });

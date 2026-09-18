@@ -3,7 +3,8 @@
 // Flaticon 무료 아이콘은 제작자 이름과 함께 출처를 밝혀야 하는데,
 // 아이콘마다 옆에 적기 어려우면 이렇게 한곳에 모아도 된다.
 import React from 'react';
-import { View, Text, StyleSheet, Linking, TouchableOpacity } from 'react-native';
+import { View, StyleSheet, Linking, TouchableOpacity } from 'react-native';
+import { Text } from '../../components/common/Text';
 import { Ionicons } from '@expo/vector-icons';
 import { theme } from '../../constants/theme';
 import { ScreenWrapper } from '../../components/layout/ScreenWrapper';
@@ -102,10 +103,10 @@ const styles = StyleSheet.create({
   // 하단 여백은 기기마다 달라서 JSX 에서 insets 로 직접 넣는다.
   content: { padding: 20 },
   card: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: colors.surface,
     borderRadius: 24,
     padding: 20,
-    shadowColor: '#000',
+    shadowColor: colors.shadow,
     shadowOpacity: 0.04,
     shadowOffset: { width: 0, height: 2 },
     shadowRadius: 8,
@@ -119,22 +120,22 @@ const styles = StyleSheet.create({
     width: 32,
     height: 32,
     borderRadius: 16,
-    backgroundColor: '#EDF7E6',
+    backgroundColor: colors.greenTint,
     justifyContent: 'center',
     alignItems: 'center',
   },
-  cardTitle: { fontSize: 16, fontWeight: '700', color: '#2C3A29', fontFamily: fonts.headline },
+  cardTitle: { fontSize: 16, fontWeight: '700', color: colors.titleGreen, fontFamily: fonts.headline },
   row: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 6 },
-  rowLabel: { fontSize: 14, color: '#6B7A68', fontFamily: fonts.label, fontWeight: '600' },
-  rowValue: { fontSize: 14, color: '#2C3A29', fontWeight: '700' },
-  desc: { fontSize: 13, color: '#6B7A68', fontFamily: fonts.body, marginBottom: 4, lineHeight: 20 },
+  rowLabel: { fontSize: 14, color: colors.greenMuted, fontFamily: fonts.label, fontWeight: '600' },
+  rowValue: { fontSize: 14, color: colors.titleGreen, fontWeight: '700' },
+  desc: { fontSize: 13, color: colors.greenMuted, fontFamily: fonts.body, marginBottom: 4, lineHeight: 20 },
   
   // 🌟 크레딧 리스트가 유연하게 배치되도록 래퍼 추가
   creditListWrap: { flex: 1, justifyContent: 'space-evenly' },
   creditRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  creditName: { fontSize: 12, color: '#9AA394', fontFamily: fonts.label, fontWeight: '600' },
+  creditName: { fontSize: 12, color: colors.greenMutedLight, fontFamily: fonts.label, fontWeight: '600' },
   // 🌟 폰트 크기 미세 조정하여 겹침 방지
-  creditText: { fontSize: 12, color: '#2C3A29', fontWeight: '600', marginTop: 2 },
+  creditText: { fontSize: 12, color: colors.titleGreen, fontWeight: '600', marginTop: 2 },
   linkRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'flex-end', gap: 4, marginTop: 4 },
   linkText: { fontSize: 13, color: colors.primary, fontWeight: '700' },
 });

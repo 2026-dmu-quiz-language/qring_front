@@ -1,7 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { 
-  View, 
-  Text, 
+  View,  
   StyleSheet, 
   TouchableOpacity, 
   FlatList,
@@ -9,6 +8,7 @@ import {
   Platform,
   Keyboard
 } from 'react-native';
+import { Text } from '../components/common/Text';
 import { useSafeAreaInsets } from 'react-native-safe-area-context'; 
 import { Ionicons } from '@expo/vector-icons';
 import { playSfx } from '../utils/sfx';
@@ -329,7 +329,7 @@ export default function StoryChatScreen({ route, navigation }: any) {
           {!isUser && item.isQuiz && item.quiz ? (
             <View style={styles.quizContainer}>
               <View style={styles.quizHeader}>
-                <Ionicons name="sparkles" size={16} color="#A69463" />
+                <Ionicons name="sparkles" size={16} color={theme.colors.tertiary} />
                 <Text style={styles.quizHeaderText}>{item.quiz.question}</Text>
               </View>
               <View style={styles.quizOptionsBox}>
@@ -374,7 +374,7 @@ export default function StoryChatScreen({ route, navigation }: any) {
     // 🌟 1. 충돌의 원인이던 SafeAreaView 태그를 아예 제거하고 최상단을 KeyboardAvoidingView로 감쌌습니다.
     // 이렇게 하면 억지로 오프셋 계산할 필요 없이(offset=0) OS가 알아서 키보드 높이만큼 완벽하게 밀어줍니다!
     <KeyboardAvoidingView 
-      style={{ flex: 1, backgroundColor: '#E9E9DB' }} 
+      style={{ flex: 1, backgroundColor: theme.colors.background }} 
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       keyboardVerticalOffset={0}
     >
@@ -385,7 +385,7 @@ export default function StoryChatScreen({ route, navigation }: any) {
           <View style={styles.topBar}>
             <View style={styles.leftSection}>
               <TouchableOpacity onPress={handleBack} style={styles.iconButton}>
-                <Ionicons name="chevron-back" size={26} color="#333" />
+                <Ionicons name="chevron-back" size={26} color={theme.colors.text} />
               </TouchableOpacity>
             </View>
             <View style={styles.centerSection}>
@@ -447,14 +447,14 @@ const styles = StyleSheet.create({
   leftSection: { width: 40, alignItems: 'flex-start' },
   centerSection: { flex: 1, alignItems: 'center' },
   rightSection: { width: 40, alignItems: 'flex-end' },
-  title: { fontSize: 16, fontWeight: 'bold', color: '#333' },
+  title: { fontSize: 16, fontWeight: 'bold', color: theme.colors.text },
   iconButton: { padding: 4, marginLeft: -5 },
   
   // 🌟 채팅 리스트 안쪽 하단 패딩 확보 (마지막 메시지가 입력창에 가리지 않게 넉넉히 40px 부여)
   chatArea: { paddingHorizontal: 20, paddingTop: 20, paddingBottom: 40 },
   
   timeLabelContainer: { alignItems: 'center', marginBottom: 20 },
-  timeLabel: { backgroundColor: '#E0E1D6', color: '#555', fontSize: 12, paddingVertical: 4, paddingHorizontal: 12, borderRadius: 12, overflow: 'hidden' },
+  timeLabel: { backgroundColor: theme.colors.greenChip, color: theme.colors.textSub, fontSize: 12, paddingVertical: 4, paddingHorizontal: 12, borderRadius: 12, overflow: 'hidden' },
   
   bubbleRow: { flexDirection: 'row', alignItems: 'flex-start', marginBottom: 16 },
   bubbleRowLeft: { justifyContent: 'flex-start' },
@@ -463,24 +463,24 @@ const styles = StyleSheet.create({
   avatar: {
     width: 38, height: 38, borderRadius: 19, backgroundColor: theme.colors.white, marginRight: 12,
     justifyContent: 'center', alignItems: 'center',
-    elevation: 2, shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.1, shadowRadius: 2,
+    elevation: 2, shadowColor: theme.colors.shadow, shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.1, shadowRadius: 2,
   },
   profileText: { color: theme.colors.primary, fontWeight: 'bold', fontSize: 16 },
   
   messageContentWrapper: { maxWidth: '75%' },
   bubble: { 
     paddingHorizontal: 16, paddingVertical: 12, borderRadius: 20,
-    elevation: 1, shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.05, shadowRadius: 2,
+    elevation: 1, shadowColor: theme.colors.shadow, shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.05, shadowRadius: 2,
   },
   assistantBubble: { backgroundColor: theme.colors.white, borderTopLeftRadius: 4 },
   userBubble: { backgroundColor: theme.colors.primary, borderTopRightRadius: 4 },
   
-  bubbleText: { fontSize: 15, color: '#333', lineHeight: 22 },
+  bubbleText: { fontSize: 15, color: theme.colors.text, lineHeight: 22 },
   userBubbleText: { color: theme.colors.white, fontWeight: '500' },
   
-  translationText: { fontSize: 13, color: '#888', marginTop: 8 },
-  resultCorrect: { fontSize: 12, color: '#5D7341', fontWeight: 'bold', marginTop: 6, alignSelf: 'flex-end' },
-  resultWrong: { fontSize: 12, color: '#E57373', fontWeight: 'bold', marginTop: 6, alignSelf: 'flex-end' },
+  translationText: { fontSize: 13, color: theme.colors.textMuted, marginTop: 8 },
+  resultCorrect: { fontSize: 12, color: theme.colors.primary, fontWeight: 'bold', marginTop: 6, alignSelf: 'flex-end' },
+  resultWrong: { fontSize: 12, color: theme.colors.dangerSoft, fontWeight: 'bold', marginTop: 6, alignSelf: 'flex-end' },
   
   inputContainer: { 
     paddingHorizontal: 16, 
@@ -490,12 +490,12 @@ const styles = StyleSheet.create({
 
   quizContainer: { marginTop: 12, width: '100%' },
   quizHeader: { flexDirection: 'row', alignItems: 'center', marginBottom: 8, paddingHorizontal: 4 },
-  quizHeaderText: { fontSize: 13, color: '#A69463', fontWeight: '600', marginLeft: 6, flexShrink: 1 },
-  quizOptionsBox: { backgroundColor: '#FAF9F4', borderRadius: 12, padding: 12, borderWidth: 1, borderColor: '#EFEFEF' },
-  quizOptionBtn: { backgroundColor: '#FFFFFF', borderWidth: 1, borderColor: '#E6E6E6', borderRadius: 8, paddingVertical: 12, paddingHorizontal: 16, marginBottom: 8 },
-  quizOptionText: { fontSize: 14, color: '#333', fontWeight: '500' },
+  quizHeaderText: { fontSize: 13, color: theme.colors.tertiary, fontWeight: '600', marginLeft: 6, flexShrink: 1 },
+  quizOptionsBox: { backgroundColor: theme.colors.surfaceAlt, borderRadius: 12, padding: 12, borderWidth: 1, borderColor: theme.colors.border },
+  quizOptionBtn: { backgroundColor: theme.colors.surface, borderWidth: 1, borderColor: theme.colors.border, borderRadius: 8, paddingVertical: 12, paddingHorizontal: 16, marginBottom: 8 },
+  quizOptionText: { fontSize: 14, color: theme.colors.text, fontWeight: '500' },
   tilesWrapper: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 4 },
-  tileBtn: { backgroundColor: '#FFFFFF', borderWidth: 1, borderColor: '#C5D0B5', borderRadius: 20, paddingVertical: 8, paddingHorizontal: 14, shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.05, shadowRadius: 2, elevation: 1 },
-  tileText: { fontSize: 14, color: '#5D7341', fontWeight: '600' },
-  quizHint: { fontSize: 13, color: '#888', lineHeight: 20 },
+  tileBtn: { backgroundColor: theme.colors.surface, borderWidth: 1, borderColor: theme.colors.greenBorder, borderRadius: 20, paddingVertical: 8, paddingHorizontal: 14, shadowColor: theme.colors.shadow, shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.05, shadowRadius: 2, elevation: 1 },
+  tileText: { fontSize: 14, color: theme.colors.primary, fontWeight: '600' },
+  quizHint: { fontSize: 13, color: theme.colors.textMuted, lineHeight: 20 },
 });

@@ -3,11 +3,11 @@
 import React, { useState, useEffect } from 'react';
 import {
   View,
-  Text,
   TouchableOpacity,
   StyleSheet,
   ActivityIndicator
 } from 'react-native';
+import { Text } from '../../components/common/Text';
 import { Ionicons } from '@expo/vector-icons';
 import axios from 'axios';
 import { theme } from '../../constants/theme';
@@ -225,7 +225,7 @@ const LearningSettingsScreen = ({ navigation, route }: any) => {
           disabled={isSubmitting}
         >
           {isSubmitting ? (
-            <ActivityIndicator color="#FFFFFF" />
+            <ActivityIndicator color={colors.surface} />
           ) : (
             <Text style={styles.saveButtonText}>설정 저장하기</Text>
           )}
@@ -243,10 +243,10 @@ const styles = StyleSheet.create({
   // 하단 여백은 기기마다 달라서 JSX 에서 insets 로 직접 넣는다.
   content: { flex: 1, padding: 20, justifyContent: 'space-between' },
   card: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: colors.surface,
     borderRadius: 24,
     padding: 20,
-    shadowColor: '#000',
+    shadowColor: colors.shadow,
     shadowOpacity: 0.04,
     shadowOffset: { width: 0, height: 2 },
     shadowRadius: 8,
@@ -259,27 +259,27 @@ const styles = StyleSheet.create({
     width: 32,
     height: 32,
     borderRadius: 16,
-    backgroundColor: '#EDF7E6',
+    backgroundColor: colors.greenTint,
     justifyContent: 'center',
     alignItems: 'center',
   },
-  plusCircle: { backgroundColor: '#F0F2EE' },
-  cardTitle: { fontSize: 16, fontWeight: '700', color: '#2C3A29', fontFamily: fonts.headline },
+  plusCircle: { backgroundColor: colors.headerIconBackground },
+  cardTitle: { fontSize: 16, fontWeight: '700', color: colors.titleGreen, fontFamily: fonts.headline },
   langBadge: { backgroundColor: colors.primary, paddingHorizontal: 12, paddingVertical: 4, borderRadius: 12 },
-  langBadgeText: { color: '#FFFFFF', fontSize: 12, fontWeight: '600', fontFamily: fonts.label },
-  subLabel: { fontSize: 13, color: '#6B7A68', fontFamily: fonts.label, fontWeight: '600', marginBottom: 10, marginTop: 8 },
+  langBadgeText: { color: colors.surface, fontSize: 12, fontWeight: '600', fontFamily: fonts.label },
+  subLabel: { fontSize: 13, color: colors.greenMuted, fontFamily: fonts.label, fontWeight: '600', marginBottom: 10, marginTop: 8 },
   levelRow: { flexDirection: 'row', gap: 10 },
   levelCard: { flex: 1, paddingVertical: 18, borderRadius: 20, alignItems: 'center', justifyContent: 'center' },
-  levelCardDefault: { backgroundColor: '#F5F4E6' },
+  levelCardDefault: { backgroundColor: colors.surfaceAlt },
   levelCardSelected: { backgroundColor: colors.primary },
-  levelText: { fontSize: 16, fontWeight: '800', color: '#3C6933', fontFamily: fonts.headline },
-  levelSubText: { fontSize: 12, color: '#888', fontWeight: '600', marginTop: 4, fontFamily: fonts.body },
-  textWhite: { color: '#FFFFFF' },
-  textWhiteSub: { color: '#E0E8D5' },
+  levelText: { fontSize: 16, fontWeight: '800', color: colors.primary, fontFamily: fonts.headline },
+  levelSubText: { fontSize: 12, color: colors.textMuted, fontWeight: '600', marginTop: 4, fontFamily: fonts.label },
+  textWhite: { color: colors.surface },
+  textWhiteSub: { color: colors.greenChip },
   langChipContainer: { flexDirection: 'row', flexWrap: 'wrap', gap: 10, marginBottom: 20, marginTop: 4 },
-  langChip: { paddingHorizontal: 18, paddingVertical: 10, borderRadius: 20, borderWidth: 1, borderColor: '#E0E8D5', backgroundColor: '#FFFFFF' },
-  langChipSelected: { borderColor: colors.primary, backgroundColor: '#EDF7E6' },
-  langChipText: { fontSize: 14, color: '#6B7A68', fontFamily: fonts.label, fontWeight: '600' },
+  langChip: { paddingHorizontal: 18, paddingVertical: 10, borderRadius: 20, borderWidth: 1, borderColor: colors.greenChip, backgroundColor: colors.surface },
+  langChipSelected: { borderColor: colors.primary, backgroundColor: colors.greenTint },
+  langChipText: { fontSize: 14, color: colors.greenMuted, fontFamily: fonts.label, fontWeight: '600' },
   langChipTextSelected: { color: colors.primary, fontWeight: '700' },
   saveButton: { 
     backgroundColor: colors.primary, 
@@ -288,14 +288,14 @@ const styles = StyleSheet.create({
     justifyContent: 'center', 
     alignItems: 'center', 
     marginTop: 28, 
-    shadowColor: '#000', 
+    shadowColor: colors.shadow, 
     shadowOpacity: 0.1, 
     shadowOffset: { width: 0, height: 4 }, 
     shadowRadius: 8, 
     elevation: 4 
   },
-  saveButtonDisabled: { backgroundColor: '#A0A89C', shadowOpacity: 0 },
-  saveButtonText: { color: '#FFFFFF', fontSize: 16, fontWeight: '700', fontFamily: fonts.headline },
+  saveButtonDisabled: { backgroundColor: colors.greenMutedLight, shadowOpacity: 0 },
+  saveButtonText: { color: colors.surface, fontSize: 16, fontWeight: '700', fontFamily: fonts.headline },
 });
 
 export default LearningSettingsScreen;
