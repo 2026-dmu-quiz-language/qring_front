@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { View, StyleSheet, FlatList, ActivityIndicator, SafeAreaView } from 'react-native';
+import { View, StyleSheet, FlatList, ActivityIndicator } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { Text } from '../components/common/Text';
 import { Ionicons } from '@expo/vector-icons';
 import { fetchStoryRecord, StoryRecordResponse, TimelineItem } from '../api/story';
@@ -89,17 +90,17 @@ export default function StoryRecordScreen({ route, navigation }: any) {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: theme.colors.surfaceAlt },
+  container: { flex: 1, backgroundColor: theme.colors.background },
   chatContainer: { paddingHorizontal: 20, paddingTop: 10, paddingBottom: 40 },
   messageRow: { flexDirection: 'row', marginBottom: 16, alignItems: 'flex-start' },
   messageRowLeft: { justifyContent: 'flex-start' },
   messageRowRight: { justifyContent: 'flex-end' },
-  profileAvatar: { width: 36, height: 36, borderRadius: 18, backgroundColor: theme.colors.greenChip, justifyContent: 'center', alignItems: 'center', marginRight: 12 },
+  profileAvatar: { width: 36, height: 36, borderRadius: 18, backgroundColor: theme.colors.white, justifyContent: 'center', alignItems: 'center', marginRight: 12, elevation: 2, shadowColor: theme.colors.shadow, shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.1, shadowRadius: 2 },
   profileText: { color: theme.colors.primary, fontWeight: 'bold' },
   messageBubble: { maxWidth: '75%', paddingHorizontal: 16, paddingVertical: 12, shadowColor: theme.colors.shadow, shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.05, shadowRadius: 3, elevation: 1 },
   assistantBubble: { backgroundColor: theme.colors.surface, borderRadius: 16, borderTopLeftRadius: 4 },
-  userBubble: { backgroundColor: theme.colors.secondary, borderRadius: 16, borderTopRightRadius: 4 },
-  messageText: { fontSize: 15, lineHeight: 22, color: theme.colors.text }, userMessageText: { color: theme.colors.textStrong, fontWeight: '500' }, translationText: { fontSize: 13, color: theme.colors.textMuted, marginTop: 8 },
+  userBubble: { backgroundColor: theme.colors.primary, borderRadius: 16, borderTopRightRadius: 4 },
+  messageText: { fontSize: 15, lineHeight: 22, color: theme.colors.text }, userMessageText: { color: theme.colors.surface, fontWeight: '500' }, translationText: { fontSize: 13, color: theme.colors.textMuted, marginTop: 8 },
   quizContainer: { marginLeft: 48, marginRight: 20, marginBottom: 20 }, quizHeader: { flexDirection: 'row', alignItems: 'center', marginBottom: 8, paddingHorizontal: 4 }, quizHeaderText: { fontSize: 13, color: theme.colors.tertiary, fontWeight: '600', marginLeft: 6 },
   quizOptionsBox: { backgroundColor: theme.colors.surfaceAlt, borderRadius: 12, padding: 12, borderWidth: 1, borderColor: theme.colors.border }, quizOptionBtn: { backgroundColor: theme.colors.surface, borderWidth: 1, borderColor: theme.colors.border, borderRadius: 8, paddingVertical: 12, paddingHorizontal: 16, marginBottom: 8 }, quizOptionText: { fontSize: 14, color: theme.colors.text, fontWeight: '500' },
   // 🌟 연장 이벤트 스타일
