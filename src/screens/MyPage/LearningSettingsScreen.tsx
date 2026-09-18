@@ -6,8 +6,7 @@ import {
   Text,
   TouchableOpacity,
   StyleSheet,
-  ActivityIndicator,
-  Platform
+  ActivityIndicator
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import axios from 'axios';
@@ -15,6 +14,7 @@ import { theme } from '../../constants/theme';
 const { colors, fonts } = theme;
 import { ScreenWrapper } from '../../components/layout/ScreenWrapper';
 import { Header } from '../../components/layout/Header';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { showAlert } from '../../components/common/AlertHost';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
@@ -45,6 +45,9 @@ const LearningSettingsScreen = ({ navigation, route }: any) => {
   const [selectedNewLang, setSelectedNewLang] = useState('');
   const [selectedNewLevel, setSelectedNewLevel] = useState(currentLevel);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // 갤럭시 내비게이션 바(제스처 24, 3버튼 48)에 저장 버튼이 가리지 않도록 실제 높이를 받아온다.
+  const insets = useSafeAreaInsets();
 
   const getAuthToken = async () => {
     const token = await AsyncStorage.getItem('accessToken');
@@ -118,7 +121,7 @@ const LearningSettingsScreen = ({ navigation, route }: any) => {
       />
 
       {/* 🌟 ScrollView 제거 및 View 로 대체 */}
-      <View style={[styles.scroll, styles.content]}>
+      <View style={[styles.scroll, styles.content, { paddingBottom: Math.max(insets.bottom + 8, 20) }]}>
         
         {/* 🌟 카드 영역들이 안드로이드/아이폰 비율에 맞춰 분배되도록 래핑 */}
         <View style={{ flex: 1, justifyContent: 'space-evenly' }}>
@@ -237,7 +240,8 @@ const styles = StyleSheet.create({
   wrapper: { paddingHorizontal: 0, backgroundColor: colors.background },
   scroll: { flex: 1 },
   // 🌟 iOS와 Android의 하단 여백 다르게 처리하여 짤림 방지, 버튼이 맨 아래 고정되도록 space-between 설정
-  content: { flex: 1, padding: 20, paddingBottom: Platform.OS === 'ios' ? 40 : 20, justifyContent: 'space-between' },
+  // 하단 여백은 기기마다 달라서 JSX 에서 insets 로 직접 넣는다.
+  content: { flex: 1, padding: 20, justifyContent: 'space-between' },
   card: {
     backgroundColor: '#FFFFFF',
     borderRadius: 24,

@@ -8,6 +8,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { theme } from '../../constants/theme';
 import { ScreenWrapper } from '../../components/layout/ScreenWrapper';
 import { Header } from '../../components/layout/Header';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 const { colors, fonts } = theme;
 
@@ -34,6 +35,9 @@ const ICON_CREDITS: { name: string; author: string; files: string }[] = [
 ];
 
 const AppInfoScreen = () => {
+  // 갤럭시 내비게이션 바(제스처 24, 3버튼 48)에 출처 링크가 가리지 않도록 실제 높이를 받아온다.
+  const insets = useSafeAreaInsets();
+
   const openFlaticon = () => {
     Linking.openURL(FLATICON_URL).catch(() => {});
   };
@@ -43,7 +47,7 @@ const AppInfoScreen = () => {
       <Header title="앱 정보" leftType="back" rightType="none" />
 
       {/* 🌟 ScrollView를 View로 변경하고 flex: 1을 주어 한 화면에 고정 */}
-      <View style={[styles.scroll, styles.content]}>
+      <View style={[styles.scroll, styles.content, { paddingBottom: Math.max(insets.bottom + 8, 20) }]}>
         {/* 앱 기본 정보 */}
         <View style={styles.card}>
           <View style={styles.headerTitleWrap}>
@@ -95,8 +99,8 @@ const AppInfoScreen = () => {
 const styles = StyleSheet.create({
   wrapper: { paddingHorizontal: 0, backgroundColor: colors.background },
   scroll: { flex: 1 },
-  // 🌟 하단 여백을 살짝 줄여 한 화면 핏 조정
-  content: { padding: 20, paddingBottom: 40 },
+  // 하단 여백은 기기마다 달라서 JSX 에서 insets 로 직접 넣는다.
+  content: { padding: 20 },
   card: {
     backgroundColor: '#FFFFFF',
     borderRadius: 24,
