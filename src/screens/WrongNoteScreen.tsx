@@ -1,12 +1,12 @@
 import React, { useState, useCallback } from 'react';
 import {
   View,
-  Text,
   ScrollView,
   TouchableOpacity,
   StyleSheet,
   ActivityIndicator,
 } from 'react-native';
+import { Text } from '../components/common/Text';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Ionicons } from '@expo/vector-icons';
@@ -97,7 +97,7 @@ const WrongNoteScreen = () => {
               <View style={styles.episodeInfo}>
                 <Text style={styles.episodeTitle}>{ep.storyName}</Text>
               </View>
-              <Ionicons name="chevron-forward" size={20} color="#bbb" />
+              <Ionicons name="chevron-forward" size={20} color={theme.colors.textDisabled} />
             </TouchableOpacity>
           ))
         )}
@@ -117,11 +117,11 @@ const styles = StyleSheet.create({
   errorText: {
     fontSize: 15,
     fontWeight: '700',
-    color: '#dc3545',
+    color: theme.colors.danger,
   },
   subtitle: {
     fontSize: 14,
-    color: '#888',
+    color: theme.colors.textMuted,
     marginBottom: 20,
   },
   emptyWrap: {
@@ -132,7 +132,7 @@ const styles = StyleSheet.create({
   },
   emptyText: {
     fontSize: 15,
-    color: '#999',
+    color: theme.colors.textHint,
   },
   episodeCard: {
     backgroundColor: theme.colors.white,
@@ -143,7 +143,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    shadowColor: '#000',
+    shadowColor: theme.colors.shadow,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.05,
     shadowRadius: 8,
@@ -155,7 +155,7 @@ const styles = StyleSheet.create({
   episodeTitle: {
     fontSize: 16,
     fontWeight: '700',
-    color: '#1a1a1a',
+    color: theme.colors.textStrong,
   },
 });
 

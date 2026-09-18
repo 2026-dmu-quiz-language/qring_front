@@ -1,7 +1,8 @@
 // screens/auth/EmailVerifyScreen.tsx
 
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, StyleSheet, TouchableOpacity } from 'react-native';
+import { Text } from '../../components/common/Text';
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { ScreenWrapper } from '../../components/layout/ScreenWrapper';
@@ -9,6 +10,7 @@ import { Header } from '../../components/layout/Header';
 import { CustomInput } from '../../components/common/Input';
 import { CustomButton } from '../../components/common/Button';
 import { showAlert } from '../../components/common/AlertHost';
+import { theme } from '../../constants/theme';
 
 const API_BASE_URL = 'https://q-ring.app/api/v1/auth';
 
@@ -105,12 +107,12 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 24,
     fontWeight: '800',
-    color: '#333',
+    color: theme.colors.text,
     marginBottom: 10,
   },
   subtitle: {
     fontSize: 15,
-    color: '#666',
+    color: theme.colors.textSub,
     lineHeight: 22,
     marginBottom: 40,
   },
@@ -123,7 +125,7 @@ const styles = StyleSheet.create({
   },
   resendText: {
     fontSize: 14,
-    color: '#888',
+    color: theme.colors.textMuted,
     textDecorationLine: 'underline',
   },
 });

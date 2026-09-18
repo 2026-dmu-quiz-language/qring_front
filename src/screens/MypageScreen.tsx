@@ -3,12 +3,12 @@
 import React, { useState, useEffect } from 'react';
 import {
   View,
-  Text,
   TouchableOpacity,
   StyleSheet,
   ActivityIndicator,
   Image,
 } from 'react-native';
+import { Text } from '../components/common/Text';
 import { Ionicons } from '@expo/vector-icons';
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -106,7 +106,7 @@ export default function MyPageScreen({ navigation }: any) {
       <ScreenWrapper style={styles.container}>
         <Header title="마이페이지" leftType="back" rightType="none" />
         <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color="#5D7341" />
+          <ActivityIndicator size="large" color={theme.colors.primary} />
           <Text style={styles.loadingText}>정보를 불러오는 중...</Text>
         </View>
       </ScreenWrapper>
@@ -137,7 +137,7 @@ export default function MyPageScreen({ navigation }: any) {
               resizeMode="cover" 
             />
             <TouchableOpacity style={styles.editButton} activeOpacity={0.8}>
-              <Ionicons name="pencil" size={14} color="#FFF" />
+              <Ionicons name="pencil" size={14} color={theme.colors.surface} />
             </TouchableOpacity>
           </View>
           <Text style={styles.profileName}>{nickname}</Text>
@@ -170,15 +170,15 @@ export default function MyPageScreen({ navigation }: any) {
             }}
           >
             <View style={styles.menuIconWrap}>
-              <Ionicons name="person-outline" size={20} color="#5D7341" />
+              <Ionicons name="person-outline" size={20} color={theme.colors.primary} />
             </View>
             <Text style={styles.menuText}>계정 관리</Text>
-            <Ionicons name="chevron-forward" size={18} color="#CCC" />
+            <Ionicons name="chevron-forward" size={18} color={theme.colors.textDisabled} />
           </TouchableOpacity>
 
           <View style={styles.menuItem}>
             <View style={styles.menuIconWrap}>
-              <Ionicons name="volume-medium-outline" size={20} color="#5D7341" />
+              <Ionicons name="volume-medium-outline" size={20} color={theme.colors.primary} />
             </View>
             <Text style={styles.menuText}>소리 설정</Text>
             {/* 🌟 React Native의 기본 Switch 대신 원래 쓰시던 커스텀 Toggle 컴포넌트로 교체 */}
@@ -197,10 +197,10 @@ export default function MyPageScreen({ navigation }: any) {
             }}
           >
             <View style={styles.menuIconWrap}>
-              <Ionicons name="options-outline" size={20} color="#5D7341" />
+              <Ionicons name="options-outline" size={20} color={theme.colors.primary} />
             </View>
             <Text style={styles.menuText}>레벨 / 언어 변경</Text>
-            <Ionicons name="chevron-forward" size={18} color="#CCC" />
+            <Ionicons name="chevron-forward" size={18} color={theme.colors.textDisabled} />
           </TouchableOpacity>
 
           <TouchableOpacity 
@@ -212,10 +212,10 @@ export default function MyPageScreen({ navigation }: any) {
             }}
           >
             <View style={styles.menuIconWrap}>
-              <Ionicons name="information-circle-outline" size={20} color="#5D7341" />
+              <Ionicons name="information-circle-outline" size={20} color={theme.colors.primary} />
             </View>
             <Text style={styles.menuText}>앱 정보</Text>
-            <Ionicons name="chevron-forward" size={18} color="#CCC" />
+            <Ionicons name="chevron-forward" size={18} color={theme.colors.textDisabled} />
           </TouchableOpacity>
 
           <TouchableOpacity 
@@ -236,10 +236,10 @@ export default function MyPageScreen({ navigation }: any) {
               }
             }}
           >
-            <View style={[styles.menuIconWrap, { backgroundColor: '#FBE8E8' }]}>
-              <Ionicons name="log-out-outline" size={20} color="#E57373" />
+            <View style={[styles.menuIconWrap, { backgroundColor: theme.colors.dangerSurface }]}>
+              <Ionicons name="log-out-outline" size={20} color={theme.colors.dangerSoft} />
             </View>
-            <Text style={[styles.menuText, { color: '#E57373' }]}>로그아웃</Text>
+            <Text style={[styles.menuText, { color: theme.colors.dangerSoft }]}>로그아웃</Text>
           </TouchableOpacity>
 
         </View>
@@ -251,7 +251,7 @@ export default function MyPageScreen({ navigation }: any) {
 const styles = StyleSheet.create({
   container: { 
     flex: 1, 
-    backgroundColor: '#E9E9DB',
+    backgroundColor: theme.colors.background,
     paddingHorizontal: 0,
   },
   loadingContainer: {
@@ -261,7 +261,7 @@ const styles = StyleSheet.create({
   },
   loadingText: {
     marginTop: 12,
-    color: '#888',
+    color: theme.colors.textMuted,
     fontSize: 14,
     fontWeight: '500',
   },
@@ -284,10 +284,10 @@ const styles = StyleSheet.create({
     width: 90, // 화면 핏을 위해 소폭 축소
     height: 90, 
     borderRadius: 45, 
-    backgroundColor: '#FFFFFF', 
+    backgroundColor: theme.colors.surface, 
     position: 'relative',
     marginBottom: 10,
-    shadowColor: '#000',
+    shadowColor: theme.colors.shadow,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.05,
     shadowRadius: 5,
@@ -302,29 +302,29 @@ const styles = StyleSheet.create({
     position: 'absolute',
     right: 0,
     bottom: 0,
-    backgroundColor: '#5D7341',
+    backgroundColor: theme.colors.primary,
     width: 26,
     height: 26,
     borderRadius: 13,
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 2,
-    borderColor: '#E9E9DB',
+    borderColor: theme.colors.background,
   },
   profileName: { 
     fontSize: 22, 
     fontWeight: '800', 
-    color: '#333', 
+    color: theme.colors.text, 
     marginBottom: 8 
   },
   levelBadge: { 
-    backgroundColor: '#5D7341', 
+    backgroundColor: theme.colors.primary, 
     paddingHorizontal: 12, 
     paddingVertical: 5, 
     borderRadius: 16 
   },
   levelText: { 
-    color: '#FFF', 
+    color: theme.colors.surface, 
     fontSize: 12, 
     fontWeight: '600' 
   },
@@ -337,12 +337,12 @@ const styles = StyleSheet.create({
   },
   statCard: { 
     flex: 1, 
-    backgroundColor: '#F5F4E6', 
+    backgroundColor: theme.colors.lightGreen, 
     borderRadius: 20, 
     paddingVertical: 18, // 세로 공간 확보를 위해 소폭 축소
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: '#000',
+    shadowColor: theme.colors.shadow,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.05,
     shadowRadius: 15,
@@ -351,19 +351,19 @@ const styles = StyleSheet.create({
   statValue: { 
     fontSize: 24, 
     fontWeight: '800', 
-    color: '#3C6933', 
+    color: theme.colors.darkGreen, 
     marginBottom: 4 
   },
   statValueRight: { 
     fontSize: 24, 
     fontWeight: '800', 
-    color: '#E5534B', 
+    color: theme.colors.danger, 
     marginBottom: 4 
   },
   statLabel: { 
     fontSize: 12, 
     fontWeight: '600', 
-    color: '#888' 
+    color: theme.colors.textMuted 
   },
 
   // --- 메뉴 리스트 스타일 ---
@@ -374,12 +374,12 @@ const styles = StyleSheet.create({
   menuItem: { 
     flexDirection: 'row', 
     alignItems: 'center', 
-    backgroundColor: '#FFFFFF', 
+    backgroundColor: theme.colors.surface, 
     paddingVertical: 12, // 한 화면 핏을 위한 패딩 조절
     paddingHorizontal: 16, 
     borderRadius: 18, 
     marginBottom: 10,
-    shadowColor: '#000',
+    shadowColor: theme.colors.shadow,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.03,
     shadowRadius: 8,
@@ -389,7 +389,7 @@ const styles = StyleSheet.create({
     width: 36,
     height: 36,
     borderRadius: 18,
-    backgroundColor: '#edf7e6', 
+    backgroundColor: theme.colors.greenTint, 
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 12,
@@ -398,6 +398,6 @@ const styles = StyleSheet.create({
     flex: 1, 
     fontSize: 15, 
     fontWeight: '700', 
-    color: '#333' 
+    color: theme.colors.text 
   },
 });

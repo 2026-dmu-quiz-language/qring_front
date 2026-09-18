@@ -1,5 +1,6 @@
 import React from 'react';
-import { TouchableOpacity, Text, StyleSheet, TouchableOpacityProps } from 'react-native';
+import { TouchableOpacity, StyleSheet, TouchableOpacityProps } from 'react-native';
+import { Text } from './Text';
 import { theme } from '../../constants/theme';
 
 interface ButtonProps extends TouchableOpacityProps {
@@ -24,5 +25,5 @@ const styles = StyleSheet.create({
     width: '100%',
     marginTop: 10,
   },
-  buttonText: { color: '#FFF', fontSize: 18, fontWeight: 'bold' },
+  buttonText: { color: theme.colors.surface, fontSize: 18, fontWeight: 'bold' },
 });

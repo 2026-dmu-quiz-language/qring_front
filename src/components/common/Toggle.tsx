@@ -17,7 +17,7 @@ const THUMB_SIZE = 24;
 const PADDING = (TRACK_HEIGHT - THUMB_SIZE) / 2;
 const TRAVEL = TRACK_WIDTH - THUMB_SIZE - PADDING * 2;
 
-const OFF_COLOR = '#DCE2D6';
+const OFF_COLOR = theme.colors.greenChip;
 
 export const Toggle = ({ value, onChange, disabled = false }: ToggleProps) => {
   const progress = useRef(new Animated.Value(value ? 1 : 0)).current;
@@ -69,8 +69,8 @@ const styles = StyleSheet.create({
     width: THUMB_SIZE,
     height: THUMB_SIZE,
     borderRadius: THUMB_SIZE / 2,
-    backgroundColor: '#FFFFFF',
-    shadowColor: '#000',
+    backgroundColor: theme.colors.surface,
+    shadowColor: theme.colors.shadow,
     shadowOpacity: 0.15,
     shadowOffset: { width: 0, height: 2 },
     shadowRadius: 3,

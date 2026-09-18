@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator } from 'react-native';
+import { View, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator } from 'react-native';
+import { Text } from '../components/common/Text';
 import { useFocusEffect } from '@react-navigation/native';
 import { fetchStoryLibrary, StoryArchive, resumeStory, StoryResumeResponse } from '../api/story';
 import { ScreenWrapper } from '../components/layout/ScreenWrapper';
+import { theme } from '../constants/theme';
 
 export default function StoryMainScreen({ navigation }: any) {
   const [archives, setArchives] = useState<StoryArchive[]>([]);
@@ -78,7 +80,7 @@ export default function StoryMainScreen({ navigation }: any) {
           <Text style={styles.newStoryText}>새로운 스토리 만들기</Text>
         </TouchableOpacity>
 
-        {loading ? <ActivityIndicator size="large" color="#6B8E23" style={{ marginTop: 50 }} /> : (
+        {loading ? <ActivityIndicator size="large" color={theme.colors.primary} style={{ marginTop: 50 }} /> : (
           <View style={styles.listContainer}>
             {archives.map((item) => (
               <TouchableOpacity key={item.session_id} style={styles.card} onPress={() => navigation.navigate('StoryRecord', { sessionId: item.session_id })}>
@@ -112,22 +114,22 @@ const styles = StyleSheet.create({
   headerContainer: { width: '100%', backgroundColor: 'transparent', paddingBottom: 10, paddingTop: 10 },
   topBar: { minHeight: 56, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16 },
   leftSection: { width: 40 }, centerSection: { flex: 1, alignItems: 'center' }, rightSection: { width: 40 },
-  title: { fontSize: 16, fontWeight: 'bold', color: '#333' },
+  title: { fontSize: 16, fontWeight: 'bold', color: theme.colors.text },
   scrollContent: { padding: 24, paddingBottom: 100 },
-  titleSection: { marginBottom: 30 }, mainTitle: { fontSize: 28, fontWeight: 'bold', color: '#222', marginBottom: 12 }, subTitle: { fontSize: 14, color: '#555', lineHeight: 20 },
-  resumeCard: { backgroundColor: '#5D7341', borderRadius: 20, padding: 20, marginBottom: 16, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.15, shadowRadius: 8, elevation: 4 },
-  resumeTitle: { color: '#FFF', fontSize: 15, fontWeight: 'bold' }, resumeSub: { color: '#D5DFCA', fontSize: 13, marginTop: 4 }, resumeLinkText: { color: '#E0E8D5', fontSize: 14, fontWeight: 'bold', marginLeft: 10 },
-  newStoryButton: { height: 140, borderWidth: 2, borderColor: '#C5D0B5', borderStyle: 'dashed', borderRadius: 24, justifyContent: 'center', alignItems: 'center', backgroundColor: 'rgba(255, 255, 255, 0.4)', marginBottom: 24 },
-  plusIconCircle: { width: 40, height: 40, borderRadius: 20, backgroundColor: '#E0E8D5', justifyContent: 'center', alignItems: 'center', marginBottom: 12 }, plusIconText: { fontSize: 24, color: '#6B8E23', fontWeight: '300' }, newStoryText: { fontSize: 16, color: '#6B8E23', fontWeight: '600' },
-  listContainer: { gap: 16 }, card: { backgroundColor: '#FFFFFF', borderRadius: 20, padding: 20, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.05, shadowRadius: 8, elevation: 2 },
-  cardHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }, cardTitle: { fontSize: 16, fontWeight: 'bold', color: '#222' }, cardDate: { fontSize: 13, color: '#999' },
+  titleSection: { marginBottom: 30 }, mainTitle: { fontSize: 28, fontWeight: 'bold', color: theme.colors.textStrong, marginBottom: 12 }, subTitle: { fontSize: 14, color: theme.colors.textSub, lineHeight: 20 },
+  resumeCard: { backgroundColor: theme.colors.primary, borderRadius: 20, padding: 20, marginBottom: 16, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', shadowColor: theme.colors.shadow, shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.15, shadowRadius: 8, elevation: 4 },
+  resumeTitle: { color: theme.colors.surface, fontSize: 15, fontWeight: 'bold' }, resumeSub: { color: theme.colors.greenChip, fontSize: 13, marginTop: 4 }, resumeLinkText: { color: theme.colors.greenChip, fontSize: 14, fontWeight: 'bold', marginLeft: 10 },
+  newStoryButton: { height: 140, borderWidth: 2, borderColor: theme.colors.greenBorder, borderStyle: 'dashed', borderRadius: 24, justifyContent: 'center', alignItems: 'center', backgroundColor: 'rgba(255, 255, 255, 0.4)', marginBottom: 24 },
+  plusIconCircle: { width: 40, height: 40, borderRadius: 20, backgroundColor: theme.colors.greenChip, justifyContent: 'center', alignItems: 'center', marginBottom: 12 }, plusIconText: { fontSize: 24, color: theme.colors.primary, fontWeight: '300' }, newStoryText: { fontSize: 16, color: theme.colors.primary, fontWeight: '600' },
+  listContainer: { gap: 16 }, card: { backgroundColor: theme.colors.surface, borderRadius: 20, padding: 20, shadowColor: theme.colors.shadow, shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.05, shadowRadius: 8, elevation: 2 },
+  cardHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }, cardTitle: { fontSize: 16, fontWeight: 'bold', color: theme.colors.textStrong }, cardDate: { fontSize: 13, color: theme.colors.textHint },
   tagContainer: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 20 }, 
-  tag: { backgroundColor: '#E0E8D5', paddingVertical: 6, paddingHorizontal: 12, borderRadius: 12 }, tagText: { color: '#7A9958', fontSize: 12, fontWeight: '600' },
-  cardFooter: { alignItems: 'flex-end' }, recordLinkText: { fontSize: 14, color: '#888' },
+  tag: { backgroundColor: theme.colors.greenChip, paddingVertical: 6, paddingHorizontal: 12, borderRadius: 12 }, tagText: { color: theme.colors.primary, fontSize: 12, fontWeight: '600' },
+  cardFooter: { alignItems: 'flex-end' }, recordLinkText: { fontSize: 14, color: theme.colors.textMuted },
   tierBadge: { paddingHorizontal: 8, paddingVertical: 4, borderRadius: 8 },
-  tierBadgeStandard: { backgroundColor: '#EBEBE0' },
-  tierBadgePremium: { backgroundColor: '#FFD700' }, 
+  tierBadgeStandard: { backgroundColor: theme.colors.background },
+  tierBadgePremium: { backgroundColor: theme.colors.gold }, 
   tierBadgeText: { fontSize: 10, fontWeight: 'bold' },
-  tierBadgeTextStandard: { color: '#666' },
-  tierBadgeTextPremium: { color: '#8B6508' }
+  tierBadgeTextStandard: { color: theme.colors.textSub },
+  tierBadgeTextPremium: { color: theme.colors.goldDark }
 });

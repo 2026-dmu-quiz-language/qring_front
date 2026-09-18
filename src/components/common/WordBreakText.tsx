@@ -1,5 +1,6 @@
 import React from "react";
-import { StyleSheet, Text, TextStyle, View } from "react-native";
+import { StyleSheet, TextStyle, View } from "react-native";
+import { Text } from './Text';
 
 const WordBreakText = ({
   text,
