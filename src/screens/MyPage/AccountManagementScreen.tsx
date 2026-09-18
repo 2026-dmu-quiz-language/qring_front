@@ -21,6 +21,7 @@ const { colors, fonts } = theme;
 import { ScreenWrapper } from '../../components/layout/ScreenWrapper';
 import { Header } from '../../components/layout/Header';
 import { showAlert, showConfirm } from '../../components/common/AlertHost';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 const BASE_URL = 'https://q-ring.app/api/v1';
 
@@ -37,6 +38,8 @@ const AccountManagementScreen = ({ navigation, route }: any) => {
 
   const [isNicknameChecked, setIsNicknameChecked] = useState(false);
   const [isPasswordSectionOpen, setIsPasswordSectionOpen] = useState(false);
+
+  const insets = useSafeAreaInsets();
 
   const getAuthToken = async () => {
     const token = await AsyncStorage.getItem('accessToken');
@@ -191,13 +194,13 @@ const AccountManagementScreen = ({ navigation, route }: any) => {
       ) : (
         <KeyboardAvoidingView 
           style={{ flex: 1 }} 
-          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         >
           <ScrollView 
             style={styles.scroll} 
             contentContainerStyle={[
               styles.content, 
-              { paddingBottom: Platform.OS === 'ios' ? 40 : 24 }
+              { paddingBottom: Math.max(insets.bottom + 8, 20) }
             ]}
             scrollEnabled={isPasswordSectionOpen} // 🌟 비밀번호 버튼을 누르면 스크롤 활성화
             showsVerticalScrollIndicator={isPasswordSectionOpen}
