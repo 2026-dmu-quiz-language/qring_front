@@ -25,7 +25,12 @@
       },
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false,
-      "package": "com.qring.app"
+      "package": "com.qring.app",
+      "permissions": [
+        "android.permission.MODIFY_AUDIO_SETTINGS",
+        "android.permission.FOREGROUND_SERVICE",
+        "android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK"
+      ]
     },
     "web": {
       "favicon": "./assets/favicon.png"
@@ -44,8 +49,9 @@
     ],
     "extra": {
       "eas": {
-        "projectId": "b188473b-4b29-477d-ace9-7bfd772411b0"
+        "projectId": "3bf4e92b-281b-4e5e-a5dd-6f510ba91ecf"
       }
-    }
+    },
+    "owner": "parksoohyeon"
   }
 }
