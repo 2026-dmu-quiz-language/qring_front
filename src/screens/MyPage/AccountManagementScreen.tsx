@@ -176,8 +176,14 @@ const AccountManagementScreen = ({ navigation, route }: any) => {
       await axios.delete(`${BASE_URL}/api/users/withdraw`, {
         headers: { Authorization: `Bearer ${token}` }
       });
+
+      await AsyncStorage.clear();
+
       await showAlert({ title: '안내', message: '탈퇴 처리가 완료되었습니다.' });
-      navigation.navigate('Login');
+      navigation.reset({
+      index: 0,
+      routes: [{ name: 'Login' }],
+    });
     } catch (e) {
       await showAlert({ title: '오류', message: '탈퇴 처리 중 문제가 발생했습니다.' });
     }
