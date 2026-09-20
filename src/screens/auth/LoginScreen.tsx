@@ -29,13 +29,11 @@ import { theme } from '../../constants/theme';
 
 WebBrowser.maybeCompleteAuthSession();
 
-// 백엔드 기본 주소
 const API_BASE_URL = 'https://q-ring.app/api/v1/auth'; 
-const BASE_URL = 'https://q-ring.app/api/v1'; // auth가 안 붙은 기본 주소
+const BASE_URL = 'https://q-ring.app/api/v1';
 
 type SocialProvider = 'google' | 'kakao' | 'line';
 
-// 각 제공자의 인가(authorize) 엔드포인트
 const AUTH_ENDPOINTS: Record<SocialProvider, string> = {
   google: 'https://accounts.google.com/o/oauth2/v2/auth',
   kakao: 'https://kauth.kakao.com/oauth/authorize',
@@ -59,11 +57,9 @@ const LoginScreen = ({ navigation }: any) => {
   const [password, setPassword] = useState('');
   const [socialLoading, setSocialLoading] = useState(false);
 
-  // ==========================================
-  // [비밀번호 재설정 모달 상태 관리]
-  // ==========================================
+  // 비밀번호 재설정 모달 상태
   const [isForgotModalVisible, setIsForgotModalVisible] = useState(false);
-  const [forgotStep, setForgotStep] = useState<1 | 2 | 3>(1); // 1: 이메일 입력, 2: 코드 인증, 3: 새 비밀번호 입력
+  const [forgotStep, setForgotStep] = useState<1 | 2 | 3>(1);
   const [forgotEmail, setForgotEmail] = useState('');
   const [forgotCode, setForgotCode] = useState('');
   const [forgotNewPassword, setForgotNewPassword] = useState('');
@@ -72,7 +68,6 @@ const LoginScreen = ({ navigation }: any) => {
   const [forgotLoading, setForgotLoading] = useState(false);
   const [cooldownTimer, setCooldownTimer] = useState(0);
 
-  // 인증 코드 재발송 쿨다운 타이머
   useEffect(() => {
     let timer: ReturnType<typeof setTimeout>;
     if (cooldownTimer > 0) {
@@ -96,11 +91,11 @@ const LoginScreen = ({ navigation }: any) => {
     ? AuthSession.makeRedirectUri()
     : AuthSession.makeRedirectUri({ path: 'oauthredirect' });
 
-  // ==========================================
-  // 1. 일반 (로컬) 로그인
-  // ==========================================
+  // 🌟 1. 일반 (로컬) 로그인 - 상세 에러 핸들링 보완
   const handleLogin = async () => {
-    if (!id.trim() || !password) return showAlert({ title: '알림', message: '아이디와 비밀번호를 입력해 주세요.' });
+    if (!id.trim() || !password) {
+      return showAlert({ title: '알림', message: '아이디(이메일)와 비밀번호를 모두 입력해 주세요.' });
+    }
 
     try {
       const response = await axios.post(`${API_BASE_URL}/login`, {
@@ -117,13 +112,37 @@ const LoginScreen = ({ navigation }: any) => {
         navigation.navigate('MainTab');
       }
     } catch (error: any) {
-      const errorMessage = error.response?.data?.message || '아이디나 비밀번호를 확인해 주세요.';
-      showAlert({ title: '로그인 실패', message: errorMessage });
+      // 서버에서 전달하는 error code 또는 status 기반 세부 안내
+      const errorCode = error.response?.data?.code;
+      const status = error.response?.status;
+      const serverMessage = error.response?.data?.message;
+
+      let title = '로그인 실패';
+      let message = '아이디 또는 비밀번호가 일치하지 않습니다.';
+
+      if (errorCode === 'USER_NOT_FOUND' || errorCode === 'INVALID_CREDENTIALS') {
+        message = '등록되지 않은 이메일이거나 \n 비밀번호가 올바르지 않습니다.';
+      } else if (errorCode === 'SOCIAL_LOGIN_ACCOUNT') {
+        message = '소셜 로그인(구글/카카오/라인)으로 가입된 계정입니다. 해당 소셜 버튼으로 로그인해 주세요.';
+      } else if (errorCode === 'EMAIL_NOT_VERIFIED' || status === 403) {
+        title = '이메일 미인증';
+        message = '이메일 인증이 완료되지 않은 계정입니다. 메일함에서 인증을 완료해 주세요.';
+      } else if (status >= 500) {
+        title = '서버 오류';
+        message = '서버 처리 중 오류가 발생했습니다. 잠시 후 다시 시도해 주세요.';
+      } else if (serverMessage) {
+        message = serverMessage;
+      } else if (!error.response) {
+        title = '네트워크 오류';
+        message = '인터넷 연결 상태를 확인한 후 다시 시도해 주세요.';
+      }
+
+      showAlert({ title, message });
     }
   };
 
   // ==========================================
-  // 2. 소셜 로그인 
+  // 2. 소셜 로그인
   // ==========================================
   const sendSocialTokenToBackend = async (provider: SocialProvider, tokenVal: string, redirectUri: string) => {
     if (processedTokens.has(tokenVal)) return;
@@ -167,8 +186,8 @@ const LoginScreen = ({ navigation }: any) => {
     setSocialLoading(true);
     sendSocialTokenToBackend(provider, tokenVal, config.REDIRECT_URI)
       .catch((error: any) => {
-        const errorMessage = error.response?.data?.message || '소셜 로그인 중 오류가 발생했습니다.';
-        showAlert({ title: '로그인 실패', message: errorMessage });
+        const errorMessage = error.response?.data?.message || '소셜 인증 처리 중 오류가 발생했습니다.';
+        showAlert({ title: '소셜 로그인 실패', message: errorMessage });
       })
       .finally(() => setSocialLoading(false));
   }, []);
@@ -193,8 +212,8 @@ const LoginScreen = ({ navigation }: any) => {
       setSocialLoading(true);
       sendSocialTokenToBackend(provider, tokenVal, config.REDIRECT_URI)
         .catch((error: any) => {
-          const errorMessage = error.response?.data?.message || '소셜 로그인 중 오류가 발생했습니다.';
-          showAlert({ title: '로그인 실패', message: errorMessage });
+          const errorMessage = error.response?.data?.message || '소셜 인증 처리 중 오류가 발생했습니다.';
+          showAlert({ title: '소셜 로그인 실패', message: errorMessage });
         })
         .finally(() => setSocialLoading(false));
     };
@@ -213,7 +232,7 @@ const LoginScreen = ({ navigation }: any) => {
         provider === 'kakao' ? OAUTH_CONFIG.KAKAO : OAUTH_CONFIG.LINE;
 
       if (!config.CLIENT_ID) {
-        showAlert({ title: '설정 오류', message: `.env에 ${provider} 클라이언트 ID가 없습니다.` });
+        showAlert({ title: '설정 오류', message: `.env 환경 변수에 ${provider.toUpperCase()} 클라이언트 ID가 설정되어 있지 않습니다.` });
         return;
       }
 
@@ -248,14 +267,14 @@ const LoginScreen = ({ navigation }: any) => {
         : getUrlParam(result.url, 'code');
 
       if (!tokenVal) {
-        showAlert({ title: '로그인 실패', message: '인증 정보를 받아오지 못했습니다. 다시 시도해 주세요.' });
+        showAlert({ title: '로그인 실패', message: '소셜 로그인 토큰 정보를 받아오지 못했습니다. 다시 시도해 주세요.' });
         return;
       }
 
       await sendSocialTokenToBackend(provider, tokenVal, config.REDIRECT_URI);
     } catch (error: any) {
-      const errorMessage = error.response?.data?.message || '소셜 로그인 중 오류가 발생했습니다.';
-      showAlert({ title: '로그인 실패', message: errorMessage });
+      const errorMessage = error.response?.data?.message || '소셜 로그인 도중 오류가 발생했습니다.';
+      showAlert({ title: '소셜 로그인 실패', message: errorMessage });
     } finally {
       setSocialLoading(false);
     }
@@ -268,29 +287,41 @@ const LoginScreen = ({ navigation }: any) => {
   // Step 1: 인증 코드 발송
   const handleRequestResetCode = async () => {
     const email = forgotEmail.trim(); 
-    if (!email) return showAlert({ title: '알림', message: '이메일을 입력해 주세요.' });
+    if (!email) return showAlert({ title: '알림', message: '가입 시 등록한 이메일을 입력해 주세요.' });
     
     setForgotLoading(true);
     Keyboard.dismiss(); 
 
     try {
       await axios.post(`${API_BASE_URL}/forgot-password`, { email: email });
-      // 🌟 모달에 가려지지 않도록 기본 Alert로 교체
-      showAlert({ title: '발송 완료', message: '인증 코드가 발송되었습니다. 10분 안에 입력해 주세요.' });
+      showAlert({ title: '발송 완료', message: '인증 코드가 이메일로 발송되었습니다. 10분 안에 입력해 주세요.' });
       setForgotStep(2);
       setCooldownTimer(60); 
     } catch (error: any) {
       const code = error.response?.data?.code;
-      const msg = error.response?.data?.message || '메일 발송에 실패했습니다. (네트워크 확인)';
+      const msg = error.response?.data?.message || '인증 메일 발송에 실패했습니다. 이메일을 다시 확인해 주세요.';
 
       switch(code) {
-        case 'USER_NOT_FOUND': showAlert({ title: '알림', message: '가입된 이메일이 아닙니다.' }); break;
-        case 'SOCIAL_LOGIN_ACCOUNT': showAlert({ title: '알림', message: '소셜 로그인으로 가입한 계정입니다.' }); break;
-        case 'EMAIL_NOT_VERIFIED': showAlert({ title: '알림', message: '가입 인증을 먼저 완료해 주세요.' }); break;
-        case 'CODE_RESEND_COOLDOWN': showAlert({ title: '알림', message: '잠시 후 다시 시도해 주세요.' }); break;
-        case 'EMAIL_SEND_FAILED': showAlert({ title: '오류', message: '잠시 후 다시 시도해 주세요.' }); break;
-        case 'VALIDATION_ERROR': showAlert({ title: '오류', message: '이메일 형식을 확인해 주세요.' }); break;
-        default: showAlert({ title: '오류', message: msg });
+        case 'USER_NOT_FOUND': 
+          showAlert({ title: '계정 없음', message: '가입되지 않은 이메일 주소입니다.' }); 
+          break;
+        case 'SOCIAL_LOGIN_ACCOUNT': 
+          showAlert({ title: '소셜 계정', message: '소셜 로그인(구글/카카오/라인)으로 가입된 계정은 비밀번호를 재설정할 수 없습니다.' }); 
+          break;
+        case 'EMAIL_NOT_VERIFIED': 
+          showAlert({ title: '미인증 계정', message: '회원가입 인증이 아직 완료되지 않은 이메일입니다.' }); 
+          break;
+        case 'CODE_RESEND_COOLDOWN': 
+          showAlert({ title: '재발송 제한', message: '인증 코드가 이미 발송되었습니다. 잠시 후 다시 시도해 주세요.' }); 
+          break;
+        case 'EMAIL_SEND_FAILED': 
+          showAlert({ title: '발송 오류', message: '메일 서버 연결 장애로 발송에 실패했습니다. 잠시 후 다시 시도해 주세요.' }); 
+          break;
+        case 'VALIDATION_ERROR': 
+          showAlert({ title: '형식 오류', message: '올바른 이메일 형식이 아닙니다.' }); 
+          break;
+        default: 
+          showAlert({ title: '오류', message: msg });
       }
     } finally {
       setForgotLoading(false);
@@ -301,7 +332,7 @@ const LoginScreen = ({ navigation }: any) => {
   const handleVerifyResetCode = async () => {
     const codeStr = forgotCode.trim();
     const emailStr = forgotEmail.trim();
-    if (!codeStr) return showAlert({ title: '알림', message: '인증 코드를 입력해 주세요.' });
+    if (!codeStr) return showAlert({ title: '알림', message: '6자리 인증 코드를 입력해 주세요.' });
     
     setForgotLoading(true);
     Keyboard.dismiss();
@@ -315,23 +346,27 @@ const LoginScreen = ({ navigation }: any) => {
       setForgotStep(3); 
     } catch (error: any) {
       const code = error.response?.data?.code;
-      const msg = error.response?.data?.message || '코드 인증에 실패했습니다.';
+      const msg = error.response?.data?.message || '인증 코드 검증에 실패했습니다.';
 
       switch(code) {
-        case 'CODE_MISMATCH': showAlert({ title: '알림', message: '코드가 틀렸습니다.' }); break;
+        case 'CODE_MISMATCH': 
+          showAlert({ title: '인증 실패', message: '인증 코드가 일치하지 않습니다. 다시 확인해 주세요.' }); 
+          break;
         case 'TOO_MANY_ATTEMPTS': 
-          showAlert({ title: '알림', message: '오류가 누적되어 코드가 만료되었습니다. 다시 코드를 요청해 주세요.' }); 
+          showAlert({ title: '시도 횟수 초과', message: '인증 시도 횟수를 초과하여 코드가 만료되었습니다. 인증 코드를 다시 요청해 주세요.' }); 
           setForgotStep(1); 
           break;
         case 'CODE_EXPIRED':
         case 'CODE_NOT_FOUND_OR_EXPIRED': 
-          showAlert({ title: '알림', message: '코드가 만료되었습니다. 다시 요청해 주세요.' }); 
+          showAlert({ title: '코드 만료', message: '인증 번호 유효 시간이 만료되었습니다. 코드를 다시 요청해 주세요.' }); 
           setForgotStep(1);
           break;
-        case 'USER_NOT_FOUND': showAlert({ title: '알림', message: '가입된 이메일이 아닙니다.' }); setForgotStep(1); break;
-        case 'SOCIAL_LOGIN_ACCOUNT': showAlert({ title: '알림', message: '소셜 로그인으로 가입한 계정입니다.' }); setForgotStep(1); break;
-        case 'EMAIL_NOT_VERIFIED': showAlert({ title: '알림', message: '가입 인증을 먼저 완료해 주세요.' }); setForgotStep(1); break;
-        default: showAlert({ title: '오류', message: msg });
+        case 'USER_NOT_FOUND': 
+          showAlert({ title: '오류', message: '존재하지 않는 계정입니다.' }); 
+          setForgotStep(1); 
+          break;
+        default: 
+          showAlert({ title: '오류', message: msg });
       }
     } finally {
       setForgotLoading(false);
@@ -341,8 +376,8 @@ const LoginScreen = ({ navigation }: any) => {
   // Step 3: 새 비밀번호 저장
   const handleResetPassword = async () => {
     if (!forgotNewPassword) return showAlert({ title: '알림', message: '새 비밀번호를 입력해 주세요.' });
-    if (!forgotConfirmPassword) return showAlert({ title: '알림', message: '새 비밀번호 확인을 입력해 주세요.' });
-    if (forgotNewPassword !== forgotConfirmPassword) return showAlert({ title: '알림', message: '비밀번호가 일치하지 않습니다.' });
+    if (!forgotConfirmPassword) return showAlert({ title: '알림', message: '비밀번호 확인 칸을 입력해 주세요.' });
+    if (forgotNewPassword !== forgotConfirmPassword) return showAlert({ title: '알림', message: '새 비밀번호가 서로 일치하지 않습니다.' });
     
     setForgotLoading(true);
     Keyboard.dismiss();
@@ -352,10 +387,9 @@ const LoginScreen = ({ navigation }: any) => {
         resetToken: resetToken, 
         newPassword: forgotNewPassword 
       });
-      // 🌟 기본 Alert로 변경하고 확인을 누르면 모달이 닫히도록 적용
       showAlert({
-        title: '성공',
-        message: '비밀번호가 재설정되었습니다. 새 비밀번호로 로그인해 주세요.',
+        title: '변경 완료',
+        message: '비밀번호가 성공적으로 변경되었습니다. 새 비밀번호로 로그인해 주세요.',
       }).then(closeForgotModal);
     } catch (error: any) {
       const code = error.response?.data?.code;
@@ -364,14 +398,14 @@ const LoginScreen = ({ navigation }: any) => {
       switch(code) {
         case 'RESET_TOKEN_EXPIRED':
         case 'INVALID_RESET_TOKEN':
-        case 'SOCIAL_LOGIN_ACCOUNT':
-          showAlert({ title: '알림', message: '인증이 만료되었습니다. 처음부터 다시 진행해 주세요.' }); 
+          showAlert({ title: '인증 만료', message: '비밀번호 재설정 세션이 만료되었습니다. 처음부터 다시 시도해 주세요.' }); 
           setForgotStep(1);
           break;
         case 'VALIDATION_ERROR': 
-          showAlert({ title: '규칙 안내', message: msg }); 
+          showAlert({ title: '비밀번호 규칙 오류', message: msg || '영문, 숫자, 특수문자 조합 규칙을 확인해 주세요.' }); 
           break;
-        default: showAlert({ title: '오류', message: msg });
+        default: 
+          showAlert({ title: '오류', message: msg });
       }
     } finally {
       setForgotLoading(false);
@@ -380,7 +414,6 @@ const LoginScreen = ({ navigation }: any) => {
 
   return (
     <ScreenWrapper>
-      {/* 화면 바깥 터치 시 키보드 내림 */}
       <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
         <View style={styles.container}>
           <Image source={require('../../../assets/quring_logo.png')} style={styles.logo} resizeMode="contain" />
@@ -426,14 +459,9 @@ const LoginScreen = ({ navigation }: any) => {
         </View>
       </TouchableWithoutFeedback>
 
-      {/* ========================================== */}
       {/* 비밀번호 재설정 모달 */}
-      {/* ========================================== */}
       <Modal visible={isForgotModalVisible} transparent={true} animationType="fade" onRequestClose={closeForgotModal}>
-        {/* 모달 바깥 영역 터치 시 키보드 내림 */}
         <TouchableOpacity style={styles.modalOverlay} activeOpacity={1} onPress={Keyboard.dismiss}>
-          
-          {/* 모달 내부 터치 시 배경 터치 이벤트 무시 */}
           <TouchableWithoutFeedback onPress={() => {}}>
             <View style={styles.modalContent}>
               
@@ -532,7 +560,6 @@ const styles = StyleSheet.create({
   signUpLink: { marginTop: 10 },
   signUpText: { color: theme.colors.textSub },
 
-  // 모달 스타일
   modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center', alignItems: 'center' },
   modalContent: { width: '85%', backgroundColor: theme.colors.surface, borderRadius: 20, padding: 25, elevation: 5, shadowColor: theme.colors.shadow, shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.25, shadowRadius: 3.84 },
   modalTitle: { fontSize: 20, fontWeight: 'bold', color: theme.colors.text, marginBottom: 10 },

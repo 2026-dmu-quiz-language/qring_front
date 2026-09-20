@@ -18,13 +18,11 @@ import { TERMS_OF_SERVICE, PRIVACY_POLICY } from '../../constants/legal';
 const API_BASE_URL = 'https://q-ring.app/api/v1/auth';
 
 const SignUpScreen = ({ navigation }: any) => {
-  // 🌟 명세서에 맞게 id 대신 email로 상태명 변경
   const [email, setEmail] = useState('');
-  const [isEmailAvailable, setIsEmailAvailable] = useState(false); // 이메일 중복확인 완료 여부
+  const [isEmailAvailable, setIsEmailAvailable] = useState(false);
 
-  // 🌟 닉네임 상태 추가
   const [nickname, setNickname] = useState('');
-  const [isNicknameAvailable, setIsNicknameAvailable] = useState(false); // 닉네임 중복확인 완료 여부
+  const [isNicknameAvailable, setIsNicknameAvailable] = useState(false);
 
   const [password, setPassword] = useState('');
   const [passwordConfirm, setPasswordConfirm] = useState('');
@@ -35,7 +33,6 @@ const SignUpScreen = ({ navigation }: any) => {
   const [agreedTerms, setAgreedTerms] = useState(false);
   const [agreedPrivacy, setAgreedPrivacy] = useState(false);
 
-  // 약관 '보기'로 띄운 문서. null 이면 팝업이 닫힌 상태다.
   const [openDocument, setOpenDocument] = useState<'terms' | 'privacy' | null>(null);
 
   const toggleAllAgreements = () => {
@@ -44,9 +41,40 @@ const SignUpScreen = ({ navigation }: any) => {
     setAgreedPrivacy(!isAllAgreed);
   };
 
+  // 🌟 이메일 형식 및 도메인 유효성 검사 함수
+  const validateEmailFormat = (inputEmail: string) => {
+    // 1. 기본 이메일 형태 및 TLD(최상위 도메인: .com, .net, .co.kr 등 2자 이상 알파벳) 검증 정규식
+    const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+    if (!emailRegex.test(inputEmail)) {
+      return { valid: false, message: '올바른 이메일 형식이 아닙니다.' };
+    }
+
+    const domain = inputEmail.split('@')[1]?.toLowerCase();
+
+    // 2. 서비스 불가/예약/테스트용 차단 도메인 목록
+    const blockedDomains = [
+      'example.com', 'example.org', 'example.net',
+      'test.com', 'test.net', 'localhost', 'invalid',
+      'temp.com', 'mailinator.com', 'trashmail.com'
+    ];
+
+    if (blockedDomains.includes(domain)) {
+      return { valid: false, message: '사용할 수 없는 테스트 또는 임시 도메인입니다.' };
+    }
+
+    return { valid: true, message: '' };
+  };
+
   // 🌟 1. 이메일 중복 확인 API (GET)
   const handleCheckEmail = async () => {
     if (!email) return showAlert({ title: '알림', message: '이메일을 입력해 주세요.' });
+
+    // 도메인 및 형식 실시간 검증
+    const emailValidation = validateEmailFormat(email);
+    if (!emailValidation.valid) {
+      return showAlert({ title: '알림', message: emailValidation.message });
+    }
+
     try {
       const response = await axios.get(`${API_BASE_URL}/check-email`, { params: { email } });
       if (response.data.available) {
@@ -54,7 +82,7 @@ const SignUpScreen = ({ navigation }: any) => {
         showAlert({ title: '확인', message: '사용 가능한 이메일입니다.' });
       } else {
         setIsEmailAvailable(false);
-        showAlert({ title: '불가', message: '이미 사용 중인 이메일입니다.' });
+        showAlert({ title: '불가', message: '사용 불가능한 이메일입니다.\n(중복 또는 사용 불가 도메인)' });
       }
     } catch (error) {
       showAlert({ title: '에러', message: '중복 확인에 실패했습니다.' });
@@ -86,7 +114,6 @@ const SignUpScreen = ({ navigation }: any) => {
       '중국어': 'ZH'
     };
 
-    // (옵션) 유저가 언어를 선택 안 하고 넘어가려 할 때 방어하기
     if (!selectedLang) {
       showAlert({ title: '알림', message: '학습할 언어를 선택해주세요!' });
       return;
@@ -95,16 +122,21 @@ const SignUpScreen = ({ navigation }: any) => {
     if (!email || !password || !nickname) {
       return showAlert({ title: '알림', message: '모든 정보를 입력해 주세요.' });
     }
+
+    const emailValidation = validateEmailFormat(email);
+    if (!emailValidation.valid) {
+      return showAlert({ title: '알림', message: emailValidation.message });
+    }
+
     if (!isEmailAvailable) return showAlert({ title: '알림', message: '이메일 중복 확인을 해주세요.' });
     if (!isNicknameAvailable) return showAlert({ title: '알림', message: '닉네임 중복 확인을 해주세요.' });
     if (password !== passwordConfirm) return showAlert({ title: '알림', message: '비밀번호가 일치하지 않습니다.' });
     if (!agreedTerms || !agreedPrivacy) return showAlert({ title: '알림', message: '필수 약관에 모두 동의해 주세요.' });
 
-    // 레벨 코드를 int로 변환 ('Lv.1' -> 1)
     const levelCode = parseInt(selectedLevel.replace('Lv.', ''), 10);
 
     try {
-      const response = await axios.post(`${API_BASE_URL}/signup`, {
+      await axios.post(`${API_BASE_URL}/signup`, {
         email: email,
         password: password,
         nickname: nickname,
@@ -112,12 +144,10 @@ const SignUpScreen = ({ navigation }: any) => {
         levelCode: levelCode,
       });
 
-      // 🌟 조건문(if)을 아예 없앴습니다! 에러가 안 났다면 무조건 성공한 것입니다.
       showAlert({ title: '메일 발송 완료', message: '인증 코드를 이메일로 전송했습니다.' });
       navigation.navigate('EmailVerify', { email: email });
         
     } catch (error: any) {
-      // 실패하면 알아서 이쪽으로 빠집니다.
       const errorMessage = error.response?.data?.message || '회원가입에 실패했습니다.';
       showAlert({ title: '회원가입 실패', message: errorMessage });
       console.log('🚫 회원가입 실패 상세 사유:', error.response?.data);
@@ -143,6 +173,7 @@ const SignUpScreen = ({ navigation }: any) => {
                 value={email}
                 onChangeText={(text) => { setEmail(text); setIsEmailAvailable(false); }}
                 autoCapitalize="none"
+                keyboardType="email-address"
               />
             </View>
             <TouchableOpacity 
@@ -153,7 +184,7 @@ const SignUpScreen = ({ navigation }: any) => {
             </TouchableOpacity>
           </View>
 
-          {/* 🌟 닉네임 영역 추가 */}
+          {/* 닉네임 영역 */}
           <Text style={[styles.label, { marginTop: 10 }]}>닉네임</Text>
           <View style={styles.idInputRow}>
             <View style={styles.idInputWrap}>
@@ -211,7 +242,7 @@ const SignUpScreen = ({ navigation }: any) => {
           </View>
         </View>
 
-        {/* --- 학습 설정 및 약관 동의 (기존 코드와 동일) --- */}
+        {/* --- 학습 설정 및 약관 동의 --- */}
         <View style={styles.settingBox}>
           <Text style={styles.settingTitle}>⚙️ 나만의 맞춤 학습 설정</Text>
           <Text style={styles.subLabel}>언어 설정</Text>
@@ -267,7 +298,6 @@ const SignUpScreen = ({ navigation }: any) => {
         document={openDocument === 'terms' ? TERMS_OF_SERVICE : PRIVACY_POLICY}
         onClose={() => setOpenDocument(null)}
         onAgree={() => {
-          // 읽고 바로 동의할 수 있게 해당 항목을 켜준다.
           if (openDocument === 'terms') setAgreedTerms(true);
           else setAgreedPrivacy(true);
           setOpenDocument(null);
