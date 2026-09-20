@@ -73,8 +73,8 @@ const BotCompetitionScreen = () => {
   // 하단 정답 확인 버튼이 아이폰 홈 인디케이터와 갤럭시 하단 바에 가리지 않도록 그 높이만큼 올린다.
   const insets = useSafeAreaInsets();
   const bottomBarPadding = Math.max(28, insets.bottom + 12);
-  const { questions = [] } = (route.params ?? {}) as {
-    matchId?: number;
+  const { matchId, questions = [] } = (route.params ?? {}) as {
+    matchId: number;
     questions?: BotQuestion[];
     remainingPoints?: number;
     botLevel?: string;
@@ -176,6 +176,7 @@ const BotCompetitionScreen = () => {
     try {
       console.log('📤 [봇컴피티션] 결과 제출: POST /bot/result, answers:', answersRef.current.length);
       const res = await submitBotMatchResult({
+        matchId,
         answers: answersRef.current,
       });
       console.log('✅ [봇컴피티션] 결과 제출 성공:', JSON.stringify(res));
@@ -292,7 +293,7 @@ const BotCompetitionScreen = () => {
     pausedRef.current = true;
     setPaused(true);
     stopSfx('timer');
-    pauseBotMatch(true)
+    pauseBotMatch(matchId, true)
       .then((res) => console.log('✅ [봇컴피티션] 일시정지:', JSON.stringify(res)))
       .catch((err) => console.error('❌ [봇컴피티션] 일시정지 실패:', err.message));
   };
@@ -301,7 +302,7 @@ const BotCompetitionScreen = () => {
     pausedRef.current = false;
     setPaused(false);
     if (!resolvedRef.current) playLoopSfx('timer');
-    pauseBotMatch(false)
+    pauseBotMatch(matchId, false)
       .then((res) => console.log('✅ [봇컴피티션] 재개:', JSON.stringify(res)))
       .catch((err) => console.error('❌ [봇컴피티션] 재개 실패:', err.message));
   };
