@@ -53,8 +53,10 @@ const AchievementGauge = ({ percent }: { percent: number }) => {
   const angle = (safePercent / 100) * Math.PI;
   const endX = cx - radius * Math.cos(angle);
   const endY = cy - radius * Math.sin(angle);
-  const largeArc = safePercent > 50 ? 1 : 0;
-  const progressPath = `M ${cx - radius} ${cy} A ${radius} ${radius} 0 ${largeArc} 1 ${endX} ${endY}`;
+  // 이 게이지는 반원이라 호가 180도를 넘을 일이 없다.
+  // large-arc-flag 를 1로 주면 SVG 가 반대쪽(아래로 도는) 호를 골라서
+  // 50%가 넘는 순간부터 게이지가 깨지므로 항상 0으로 둔다.
+  const progressPath = `M ${cx - radius} ${cy} A ${radius} ${radius} 0 0 1 ${endX} ${endY}`;
 
   return (
     <View style={styles.gaugeWrap}>
