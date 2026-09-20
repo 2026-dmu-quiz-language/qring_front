@@ -59,10 +59,11 @@ const ChatBubble = ({ text }: { text: string }) => (
 // 아이폰은 기존 값을 유지한다.
 // 갤럭시는 하단 시스템 바에 힌트보기 버튼이 가리지 않도록 그 높이만큼 더한다.
 // 단, 키보드가 떠 있으면 키보드가 하단 바를 덮으므로 더하지 않는다. 더하면 키보드와 문제창 사이가 벌어진다.
+// 키보드가 올라오면 키보드가 하단 안전영역을 덮으므로 인셋을 더하지 않는다.
+// 더하면 카드가 쓸 수 있는 높이만 줄어든다.
 const useQuizCardBottomPadding = () => {
   const insets = useSafeAreaInsets();
   const keyboardVisible = useKeyboardVisible();
-  if (Platform.OS === 'ios') return 40;
   return 20 + (keyboardVisible ? 0 : insets.bottom);
 };
 
@@ -116,6 +117,12 @@ const ChoiceQuiz = ({ quiz, hint, onComplete }: { quiz: Quiz; hint: string; onCo
   return (
     <View style={[styles.quizCard, { paddingBottom: cardBottomPadding }]}>
       <View style={styles.dragHandle} />
+      <ScrollView
+        style={styles.quizScroll}
+        contentContainerStyle={styles.quizScrollContent}
+        showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
+      >
       <Text style={styles.quizLabel}>
         {quiz.quizType === 'fill_in_blank' ? '빈칸 채우기' : '객관식'}
       </Text>
@@ -158,6 +165,7 @@ const ChoiceQuiz = ({ quiz, hint, onComplete }: { quiz: Quiz; hint: string; onCo
           <Text style={styles.hintText}>힌트보기</Text>
         </TouchableOpacity>
       )}
+      </ScrollView>
       <Modal transparent visible={isModalVisible} animationType="fade">
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
@@ -221,6 +229,12 @@ const SubjectiveQuiz = ({ quiz, hint, onComplete }: { quiz: Quiz; hint: string; 
   return (
     <View style={[styles.quizCard, { paddingBottom: cardBottomPadding }]}>
       <View style={styles.dragHandle} />
+      <ScrollView
+        style={styles.quizScroll}
+        contentContainerStyle={styles.quizScrollContent}
+        showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
+      >
       <Text style={styles.quizLabel}>주관식</Text>
       <Text style={styles.quizQuestion}>{quiz.question}</Text>
 
@@ -253,6 +267,7 @@ const SubjectiveQuiz = ({ quiz, hint, onComplete }: { quiz: Quiz; hint: string; 
           <Text style={styles.hintText}>힌트보기</Text>
         </TouchableOpacity>
       )}
+      </ScrollView>
       <Modal transparent visible={isModalVisible} animationType="fade">
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
@@ -455,9 +470,9 @@ const ChatLearnScreen = () => {
         style={{ flex: 1 }}
         // 안드로이드는 엣지 투 엣지라 운영체제가 화면을 줄여주지 않으므로 직접 밀어 올린다.
         behavior="padding"
-        // 헤더가 이 영역 바깥 위쪽에 있어서, 화면 맨 위에서 떨어진 만큼 보정한다.
-        // 아이폰은 기존 값을 유지하고, 안드로이드는 상태바 높이만큼 보정한다.
-        keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : insets.top}
+        // KeyboardAvoidingView 는 자기 위치를 부모 기준으로 재기 때문에
+        // 화면 맨 위에서 떨어진 만큼(상단 안전영역) 직접 보정해줘야 한다.
+        keyboardVerticalOffset={insets.top}
       >
         <Pressable style={{ flex: 1 }} onPress={handleTap}>
           <ScrollView
@@ -535,6 +550,8 @@ const styles = StyleSheet.create({
   bubbleText: { fontSize: 15, color: theme.colors.text, lineHeight: 22 },
 
   quizCard: {
+    // 공간이 모자라면 카드가 줄어들고, 줄어든 만큼 안쪽 ScrollView 가 스크롤된다.
+    flexShrink: 1,
     left: 0, 
     right: 0, 
     backgroundColor: theme.colors.surface,
@@ -549,6 +566,8 @@ const styles = StyleSheet.create({
     shadowRadius: 15, 
     elevation: 20,
   },
+  quizScroll: { flexShrink: 1 },
+  quizScrollContent: { paddingBottom: 4 },
   dragHandle: { width: 40, height: 5, borderRadius: 3, backgroundColor: theme.colors.border, alignSelf: 'center', marginBottom: 20 },
   quizLabel: { fontSize: 13, fontWeight: '600', color: theme.colors.primary, marginBottom: 6 },
   quizQuestion: { fontSize: 15, color: theme.colors.textSub, lineHeight: 22, marginBottom: 24 },
