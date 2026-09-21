@@ -8,7 +8,8 @@ import { theme } from '../constants/theme';
 
 export default function StoryMainScreen({ navigation }: any) {
   const [archives, setArchives] = useState<StoryArchive[]>([]);
-  const [resume, setResume] = useState<StoryResumeResponse | null>(null);
+  // 1. 단일 객체에서 배열 타입으로 변경
+  const [resumeList, setResumeList] = useState<StoryResumeResponse[]>([]);
   const [loading, setLoading] = useState(true);
 
   useFocusEffect(React.useCallback(() => { loadData(); }, []));
@@ -20,11 +21,26 @@ export default function StoryMainScreen({ navigation }: any) {
       setArchives(libData.archives);
       try {
         const resumeData = await resumeStory();
-        setResume(resumeData);
-      } catch (err) { setResume(null); }
+        // 2. API 응답 데이터 형태에 맞춰 배열 데이터 저장
+        // resumeData가 배열 형태로 넘어오거나, { sessions: [...] } 구조일 경우를 고려해 처리
+        if (Array.isArray(resumeData)) {
+          setResumeList(resumeData.filter((item) => item.has_session));
+        } else if (resumeData && Array.isArray((resumeData as any).sessions)) {
+          setResumeList((resumeData as any).sessions.filter((item: StoryResumeResponse) => item.has_session));
+        } else if (resumeData?.has_session) {
+          // 기존처럼 단일 객체로 올 경우 호환성 유지
+          setResumeList([resumeData]);
+        } else {
+          setResumeList([]);
+        }
+      } catch (err) { 
+        setResumeList([]); 
+      }
     } catch (error) {
       console.error('데이터를 불러오는데 실패했습니다:', error);
-    } finally { setLoading(false); }
+    } finally { 
+      setLoading(false); 
+    }
   };
 
   const formatDate = (dateString: string) => {
@@ -60,8 +76,13 @@ export default function StoryMainScreen({ navigation }: any) {
           <Text style={styles.subTitle}>직접 완성한 대화 기록을 다시 확인하고 복습해{'\n'}보세요.</Text>
         </View>
 
-        {resume?.has_session ? (
-          <TouchableOpacity style={styles.resumeCard} onPress={() => navigation.navigate('StoryChat', { resumeData: resume })}>
+        {/* 3. 배열을 순회(.map)하여 진행 중인 모든 스토리 카드 출력 */}
+        {resumeList.map((resume, index) => (
+          <TouchableOpacity 
+            key={resume.session_id || index} 
+            style={styles.resumeCard} 
+            onPress={() => navigation.navigate('StoryChat', { resumeData: resume })}
+          >
             <View style={{ flex: 1 }}>
               <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 6 }}>
                 {renderTierBadge(resume.model_tier)}
@@ -73,7 +94,7 @@ export default function StoryMainScreen({ navigation }: any) {
             </View>
             <Text style={styles.resumeLinkText}>이어하기 {'>'}</Text>
           </TouchableOpacity>
-        ) : null}
+        ))}
 
         <TouchableOpacity style={styles.newStoryButton} onPress={() => navigation.navigate('StoryCreateScreen')}>
           <View style={styles.plusIconCircle}><Text style={styles.plusIconText}>+</Text></View>
@@ -87,7 +108,6 @@ export default function StoryMainScreen({ navigation }: any) {
                 <View style={styles.cardHeader}>
                   <View style={{ flex: 1, flexDirection: 'row', alignItems: 'center', marginRight: 10 }}>
                     {renderTierBadge(item.model_tier)}
-                    {/* 🌟 'OO과의' 부분을 제거하고 situation(스토리 상황/제목)만 출력하도록 수정 */}
                     <Text style={[styles.cardTitle, { marginLeft: 8, flex: 1 }]} numberOfLines={1}>
                       {item.situation}
                     </Text>
