@@ -19,9 +19,23 @@ import {
   getIncorrectRetry,
   submitIncorrectResult,
   type IncorrectQuiz,
+  type IncorrectResultItem,
+  type IncorrectSourceType,
 } from '../api/incorrect';
 import { playSfx } from '../utils/sfx';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+
+/** 서버가 JSON 문자열로도, 배열로도, null 로도 보내와서 전부 받아낸다. */
+const parseWords = (value: string | string[] | null | undefined): string[] => {
+  if (Array.isArray(value)) return value.map(String);
+  if (typeof value !== 'string' || !value) return [];
+  try {
+    const parsed = JSON.parse(value);
+    return Array.isArray(parsed) ? parsed.map(String) : [];
+  } catch {
+    return [];
+  }
+};
 
 const WrongNoteQuizScreen = () => {
   const navigation = useNavigation<any>();
@@ -31,7 +45,10 @@ const WrongNoteQuizScreen = () => {
   // 인셋이 작은 기기에서는 기존 여백 32를 유지한다.
   const insets = useSafeAreaInsets();
   const bottomBarPadding = Math.max(32, insets.bottom + 12);
-  const { episodeId } = route.params as {
+  const { sourceType, episodeId } = route.params as {
+    /** 묶음 종류. STORY 면 스토리 한 편, COMPETITION 이면 레벨 하나 */
+    sourceType: IncorrectSourceType;
+    /** STORY 면 콘텐츠 id, COMPETITION 이면 레벨 번호 */
     episodeId: number;
     episodeTitle: string;
   };
@@ -43,15 +60,17 @@ const WrongNoteQuizScreen = () => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [selected, setSelected] = useState<number | null>(null);
   const [answer, setAnswer] = useState('');
+  // 단어 배열 문제에서 고른 단어들의 순서. options 의 인덱스를 담는다.
+  const [placed, setPlaced] = useState<number[]>([]);
   const [submitted, setSubmitted] = useState(false);
-  const [results, setResults] = useState<{ quizContentId: number; correct: boolean }[]>([]);
+  const [results, setResults] = useState<IncorrectResultItem[]>([]);
   const [completed, setCompleted] = useState<number | null>(null);
 
   useEffect(() => {
     const fetchData = async () => {
-      console.log('📤 [오답풀이] API 호출 시작: POST /incorrect/retry, contentId:', episodeId);
+      console.log('📤 [오답풀이] API 호출 시작: POST /incorrect/retry,', sourceType, episodeId);
       try {
-        const data = await getIncorrectRetry(episodeId);
+        const data = await getIncorrectRetry(sourceType, episodeId);
         console.log('✅ [오답풀이] API 응답 성공:', JSON.stringify(data));
         setQuizzes(data);
       } catch (err: any) {
@@ -66,7 +85,7 @@ const WrongNoteQuizScreen = () => {
       }
     };
     fetchData();
-  }, [episodeId]);
+  }, [sourceType, episodeId]);
 
   if (loading) {
     return (
@@ -116,19 +135,41 @@ const WrongNoteQuizScreen = () => {
 
   const quiz = quizzes[currentIndex];
 
-  const rawOptions = Array.isArray(quiz.options)
-    ? quiz.options
-    : typeof quiz.options === 'string' && quiz.options
-      ? JSON.parse(quiz.options)
-      : [];
-  const parsedOptions: string[] = rawOptions;
+  const parsedOptions: string[] = parseWords(quiz.options);
   const isSubjective = quiz.quizType === 'subjective';
+  // 봇 컴피티션에서 넘어온 단어 배열 문제
+  const isWordArrange = quiz.quizType === 'word_arrange';
 
-  const isCorrect = isSubjective
-    ? answer.trim().toLowerCase() === quiz.correctAnswer.toLowerCase()
-    : selected !== null && parsedOptions[selected] === quiz.correctAnswer;
+  // 화면에 뿌릴 단어들. 서버가 이미 섞어서 tiles 로 준다.
+  const answerTiles = parseWords(quiz.answerTiles);
+  const tiles = parseWords(quiz.tiles);
+  const wordBank = tiles.length > 0
+    ? tiles
+    : [...answerTiles, ...parseWords(quiz.distractorTiles)];
 
-  const canSubmit = isSubjective ? answer.trim().length > 0 : selected !== null;
+  // 단어 배열 문제는 안내문 대신 한국어 문장을 보여준다.
+  const questionText = isWordArrange && quiz.korean ? quiz.korean : quiz.question;
+
+  // 고른 단어를 순서대로 이어 붙인 답
+  const arranged = placed.map((i) => wordBank[i]);
+
+  const normalize = (v: string) => v.trim().toLowerCase();
+
+  const isCorrect = isWordArrange
+    ? answerTiles.length > 0
+      // 정답 순서가 오면 그 순서와 정확히 같은지 본다.
+      ? arranged.length === answerTiles.length &&
+        arranged.every((word, i) => word === answerTiles[i])
+      : normalize(arranged.join(' ')) === normalize(quiz.correctAnswer)
+    : isSubjective
+      ? normalize(answer) === normalize(quiz.correctAnswer)
+      : selected !== null && parsedOptions[selected] === quiz.correctAnswer;
+
+  const canSubmit = isWordArrange
+    ? placed.length > 0
+    : isSubjective
+      ? answer.trim().length > 0
+      : selected !== null;
 
   const handleSubmit = () => {
     if (!canSubmit) return;
@@ -140,7 +181,12 @@ const WrongNoteQuizScreen = () => {
     }
     setResults((prev) => [
       ...prev,
-      { quizContentId: quiz.quizContentId, correct: isCorrect },
+      {
+        quizContentId: quiz.quizContentId,
+        correct: isCorrect,
+        // 이 문제가 원래 어디 것이었는지. 서버가 지울 오답 기록을 찾는 데 쓴다.
+        originSourceType: quiz.sourceType,
+      },
     ]);
   };
 
@@ -150,12 +196,14 @@ const WrongNoteQuizScreen = () => {
       setCurrentIndex((prev) => prev + 1);
       setSelected(null);
       setAnswer('');
+      setPlaced([]);
       setSubmitted(false);
     } else {
       try {
         console.log('📤 [오답결과] API 호출 시작: POST /incorrect/result');
-        console.log('📤 [오답결과] 전송 데이터:', JSON.stringify({ contentId: episodeId, results }));
+        console.log('📤 [오답결과] 전송 데이터:', JSON.stringify({ sourceType, contentId: episodeId, results }));
         const res = await submitIncorrectResult({
+          sourceType,
           contentId: episodeId,
           results,
         });
@@ -200,17 +248,81 @@ const WrongNoteQuizScreen = () => {
             <Text style={styles.incorrectText}>Incorrect</Text>
           </View>
 
-          <Text style={styles.question}>{quiz.question}</Text>
+          <Text style={styles.question}>{questionText}</Text>
 
-          <View style={styles.hintBox}>
-            <View style={styles.hintHeader}>
-              <Ionicons name="bulb-outline" size={16} color={theme.colors.primary} />
-              <Text style={styles.hintLabel}>힌트</Text>
+          {/* 컴피티션 전용 문제는 힌트가 없다. 빈 상자만 남지 않게 통째로 숨긴다. */}
+          {quiz.hint ? (
+            <View style={styles.hintBox}>
+              <View style={styles.hintHeader}>
+                <Ionicons name="bulb-outline" size={16} color={theme.colors.primary} />
+                <Text style={styles.hintLabel}>힌트</Text>
+              </View>
+              <Text style={styles.hintContent}>{quiz.hint}</Text>
             </View>
-            <Text style={styles.hintContent}>{quiz.hint}</Text>
-          </View>
+          ) : null}
 
-          {isSubjective ? (
+          {isWordArrange ? (
+            <>
+              {/* 고른 단어가 순서대로 쌓이는 곳. 누르면 다시 빼낼 수 있다. */}
+              <View
+                style={[
+                  styles.answerArea,
+                  submitted && isCorrect && styles.answerAreaCorrect,
+                  submitted && !isCorrect && styles.answerAreaWrong,
+                ]}
+              >
+                {placed.length === 0 ? (
+                  <Text style={styles.answerAreaHint}>
+                    아래 단어를 눌러 순서대로 배열하세요
+                  </Text>
+                ) : (
+                  placed.map((wordIndex, orderIndex) => (
+                    <TouchableOpacity
+                      key={`placed-${wordIndex}-${orderIndex}`}
+                      style={styles.placedChip}
+                      onPress={() =>
+                        !submitted &&
+                        setPlaced((prev) => prev.filter((_, i) => i !== orderIndex))
+                      }
+                      disabled={submitted}
+                      activeOpacity={0.8}
+                    >
+                      <Text style={styles.placedChipText}>{wordBank[wordIndex]}</Text>
+                    </TouchableOpacity>
+                  ))
+                )}
+              </View>
+
+              {/* 아직 안 쓴 단어들 */}
+              <View style={styles.wordBank}>
+                {wordBank.map((word, index) => {
+                  const used = placed.includes(index);
+                  return (
+                    <TouchableOpacity
+                      key={`bank-${index}`}
+                      style={[styles.bankChip, used && styles.bankChipUsed]}
+                      onPress={() =>
+                        !submitted && !used && setPlaced((prev) => [...prev, index])
+                      }
+                      disabled={submitted || used}
+                      activeOpacity={0.7}
+                    >
+                      <Text style={[styles.bankChipText, used && styles.bankChipTextUsed]}>
+                        {word}
+                      </Text>
+                    </TouchableOpacity>
+                  );
+                })}
+              </View>
+
+              {submitted && !isCorrect && (
+                <View style={styles.correctAnswerBox}>
+                  <Text style={styles.correctAnswerLabel}>정답</Text>
+                  <Text style={styles.correctAnswerText}>{quiz.correctAnswer}</Text>
+                </View>
+              )}
+            </>
+          ) : isSubjective ? (
             <>
               <TextInput
                 style={[
@@ -414,6 +526,48 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: theme.colors.textStrong,
   },
+
+  // ─ 단어 배열 ─
+  answerArea: {
+    minHeight: 64,
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    alignItems: 'center',
+    gap: 8,
+    borderWidth: 1.5,
+    borderStyle: 'dashed',
+    borderColor: theme.colors.greenBorder,
+    borderRadius: 16,
+    padding: 12,
+    marginBottom: 16,
+  },
+  answerAreaCorrect: { borderColor: theme.colors.primary, borderStyle: 'solid' },
+  answerAreaWrong: { borderColor: theme.colors.danger, borderStyle: 'solid' },
+  answerAreaHint: { fontSize: 13, color: theme.colors.textHint },
+  placedChip: {
+    backgroundColor: theme.colors.primary,
+    borderRadius: 18,
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+  },
+  placedChipText: { fontSize: 14, fontWeight: '700', color: theme.colors.surface },
+  wordBank: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 10,
+    marginBottom: 20,
+  },
+  bankChip: {
+    backgroundColor: theme.colors.surface,
+    borderWidth: 1,
+    borderColor: theme.colors.greenBorder,
+    borderRadius: 18,
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+  },
+  bankChipUsed: { backgroundColor: theme.colors.greenChip, borderColor: theme.colors.greenChip },
+  bankChipText: { fontSize: 14, fontWeight: '700', color: theme.colors.text },
+  bankChipTextUsed: { color: theme.colors.greenMutedLight },
 
   optionsWrap: { gap: 12, marginBottom: 20 },
   optionRow: {
