@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useCallback } from 'react';
 import {
   View,
   ScrollView,
@@ -13,7 +13,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { theme } from '../constants/theme';
 import { ScreenWrapper } from '../components/layout/ScreenWrapper';
 import { Header } from '../components/layout/Header';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { getDashboard, type DashboardResponse } from '../api/dashboard';
 import { getErrorMessage } from '../utils/errorMessage';
 import { playSfx } from '../utils/sfx';
@@ -76,18 +76,25 @@ const DashboardScreen = () => {
   const [data, setData] = useState<DashboardResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const res = await getDashboard();
-        setData(res);
-      } catch(err: any){
-        console.log('대시보드 로딩 실패 : ', err);
-        setError(getErrorMessage(err));
-      }
-    };
-    fetchData();
-  }, []);
+  // 포인트, 오답 수, 연속 학습일은 다른 화면에서 바뀐다.
+  // 탭 화면이라 언마운트되지 않으므로 돌아올 때마다 다시 불러온다.
+  useFocusEffect(
+    useCallback(() => {
+      const fetchData = async () => {
+        try {
+          const res = await getDashboard();
+          setData(res);
+          // 이전에 실패했더라도 이번에 성공하면 에러 화면을 푼다.
+          setError(null);
+        } catch(err: any){
+          console.log('대시보드 로딩 실패 : ', err);
+          setError(getErrorMessage(err));
+        }
+      };
+      // 갱신 중에도 기존 값을 그대로 두어 탭을 누를 때 화면이 깜빡이지 않게 한다.
+      fetchData();
+    }, []),
+  );
 
   if(error){
     return(

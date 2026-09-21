@@ -30,10 +30,8 @@ const SOURCES = {
   combine: require('../../assets/sounds/combine.mp3'),
   /** 봇 대전 라운드 타이머 (반복 재생) */
   timer: require('../../assets/sounds/time_goes_on.mp3'),
-
-  // 오답음 파일이 준비되면 아래 줄의 주석을 풀면 된다.
-  // 재생 지점은 이미 각 화면에 표시해 두었다.
-  // incorrect: require('../../assets/sounds/incorrect_1.mp3'),
+  /** 오답 */
+  incorrect: require('../../assets/sounds/incorrect_1.mp3'),
 } as const;
 
 export type SfxName = keyof typeof SOURCES;
