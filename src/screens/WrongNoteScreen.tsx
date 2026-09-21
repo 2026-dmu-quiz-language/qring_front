@@ -13,11 +13,11 @@ import { Ionicons } from '@expo/vector-icons';
 import { theme } from '../constants/theme';
 import { ScreenWrapper } from '../components/layout/ScreenWrapper';
 import { Header } from '../components/layout/Header';
-import { getIncorrectList, type IncorrectEpisode } from '../api/incorrect';
+import { getIncorrectList, type IncorrectEntry } from '../api/incorrect';
 
 const WrongNoteScreen = () => {
   const navigation = useNavigation<NativeStackNavigationProp<any>>();
-  const [episodes, setEpisodes] = useState<IncorrectEpisode[]>([]);
+  const [episodes, setEpisodes] = useState<IncorrectEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -84,18 +84,20 @@ const WrongNoteScreen = () => {
         ) : (
           episodes.map((ep) => (
             <TouchableOpacity
-              key={ep.contentId}
+              // 스토리와 컴피티션은 contentId 가 겹칠 수 있어 출처까지 묶어야 고유해진다.
+              key={`${ep.sourceType}-${ep.contentId}`}
               style={styles.episodeCard}
               activeOpacity={0.8}
               onPress={() =>
                 navigation.navigate('WrongNoteQuiz', {
+                  sourceType: ep.sourceType,
                   episodeId: ep.contentId,
-                  episodeTitle: ep.storyName,
+                  episodeTitle: ep.label,
                 })
               }
             >
               <View style={styles.episodeInfo}>
-                <Text style={styles.episodeTitle}>{ep.storyName}</Text>
+                <Text style={styles.episodeTitle}>{ep.label}</Text>
               </View>
               <Ionicons name="chevron-forward" size={20} color={theme.colors.textDisabled} />
             </TouchableOpacity>
