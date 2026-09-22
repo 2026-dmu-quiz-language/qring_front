@@ -434,6 +434,7 @@ export default function StoryChatScreen({ route, navigation }: any) {
             onSend={() => handleSend()}
             editable={!isCompletedRef.current}
             sending={isSending}
+            maxLength={200}
           />
         </View>
       </View>

@@ -35,6 +35,9 @@ const AccountManagementScreen = ({ navigation, route }: any) => {
   const [isPushEnabled, setIsPushEnabled] = useState(true);
   const [isLoading, setIsLoading] = useState(true);
 
+  // 🌟 소셜 로그인 여부를 판단하기 위한 상태 추가
+  const [isLocalUser, setIsLocalUser] = useState(false);
+
   const [isNicknameChecked, setIsNicknameChecked] = useState(false);
   const [isPasswordSectionOpen, setIsPasswordSectionOpen] = useState(false);
 
@@ -66,6 +69,9 @@ const AccountManagementScreen = ({ navigation, route }: any) => {
           setOriginalNickname(serverNick);
         }
         setIsPushEnabled(Boolean(response.data.pushEnabled || response.data.isPushEnabled));
+        
+        // 🌟 응답에서 isLocalUser 값 저장 (없을 경우 false 처리)
+        setIsLocalUser(Boolean(response.data.isLocalUser));
       }
     } catch (error) {
       console.error('사용자 설정 조회 에러:', error);
@@ -207,7 +213,7 @@ const AccountManagementScreen = ({ navigation, route }: any) => {
               styles.content, 
               { paddingBottom: Math.max(insets.bottom + 8, 20) }
             ]}
-            scrollEnabled={isPasswordSectionOpen} // 🌟 비밀번호 버튼을 누르면 스크롤 활성화
+            scrollEnabled={isPasswordSectionOpen} 
             showsVerticalScrollIndicator={isPasswordSectionOpen}
           >
             
@@ -239,34 +245,39 @@ const AccountManagementScreen = ({ navigation, route }: any) => {
                 </TouchableOpacity>
               </View>
               
-              <View style={styles.divider} />
-              
-              <TouchableOpacity 
-                style={styles.dropdownHeader} 
-                onPress={() => {
-                  if (isPasswordSectionOpen) {
-                    setCurrentPassword('');
-                    setNewPassword('');
-                    setConfirmPassword('');
-                  }
-                  setIsPasswordSectionOpen(!isPasswordSectionOpen);
-                }}
-                activeOpacity={0.7}
-              >
-                <Text style={[styles.label, { marginTop: 0, marginBottom: 0 }]}>비밀번호 변경</Text>
-                <Ionicons 
-                  name={isPasswordSectionOpen ? "chevron-up" : "chevron-down"} 
-                  size={20} 
-                  color={colors.primary} 
-                />
-              </TouchableOpacity>
+              {/* 🌟 isLocalUser가 true일 때만 비밀번호 변경 섹션 렌더링 */}
+              {isLocalUser && (
+                <>
+                  <View style={styles.divider} />
+                  
+                  <TouchableOpacity 
+                    style={styles.dropdownHeader} 
+                    onPress={() => {
+                      if (isPasswordSectionOpen) {
+                        setCurrentPassword('');
+                        setNewPassword('');
+                        setConfirmPassword('');
+                      }
+                      setIsPasswordSectionOpen(!isPasswordSectionOpen);
+                    }}
+                    activeOpacity={0.7}
+                  >
+                    <Text style={[styles.label, { marginTop: 0, marginBottom: 0 }]}>비밀번호 변경</Text>
+                    <Ionicons 
+                      name={isPasswordSectionOpen ? "chevron-up" : "chevron-down"} 
+                      size={20} 
+                      color={colors.primary} 
+                    />
+                  </TouchableOpacity>
 
-              {isPasswordSectionOpen && (
-                <View style={styles.dropdownContent}>
-                  <TextInput style={styles.input} value={currentPassword} onChangeText={setCurrentPassword} placeholder="현재 비밀번호" placeholderTextColor={colors.greenMutedLight} secureTextEntry />
-                  <TextInput style={[styles.input, styles.marginTop]} value={newPassword} onChangeText={setNewPassword} placeholder="새 비밀번호" placeholderTextColor={colors.greenMutedLight} secureTextEntry />
-                  <TextInput style={[styles.input, styles.marginTop]} value={confirmPassword} onChangeText={setConfirmPassword} placeholder="비밀번호 확인" placeholderTextColor={colors.greenMutedLight} secureTextEntry />
-                </View>
+                  {isPasswordSectionOpen && (
+                    <View style={styles.dropdownContent}>
+                      <TextInput style={styles.input} value={currentPassword} onChangeText={setCurrentPassword} placeholder="현재 비밀번호" placeholderTextColor={colors.greenMutedLight} secureTextEntry />
+                      <TextInput style={[styles.input, styles.marginTop]} value={newPassword} onChangeText={setNewPassword} placeholder="새 비밀번호" placeholderTextColor={colors.greenMutedLight} secureTextEntry />
+                      <TextInput style={[styles.input, styles.marginTop]} value={confirmPassword} onChangeText={setConfirmPassword} placeholder="비밀번호 확인" placeholderTextColor={colors.greenMutedLight} secureTextEntry />
+                    </View>
+                  )}
+                </>
               )}
 
               <TouchableOpacity style={styles.fullButton} onPress={handleUpdateAccount}>
