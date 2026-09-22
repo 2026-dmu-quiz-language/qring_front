@@ -157,17 +157,39 @@ export interface TimelineEvent {
   charged_points?: number; // 🌟 추가됨: 연장 이벤트용
 }
 
-export interface StoryResumeResponse {
-  has_session: boolean;
-  session_id?: string;
-  character_name?: string;
-  situation?: string;
+// 개별 세션 단일 객체 타입
+export interface StorySessionItem {
+  session_id: string;
+  character_name: string;
+  situation: string;
   tone?: string;
   target_language?: string;
   current_quiz_count?: number;
+  quiz_limit?: number;
+  can_extend?: boolean;
   is_completed?: boolean;
+  model_tier?: string;
+  turn_in_progress?: boolean;
+  updated_at?: string;
   timeline?: TimelineEvent[];
-  model_tier?: string; // 🌟 추가됨: 이어보기 화면 배지용
+}
+
+// /api/v1/story/resume 전체 응답 타입
+export interface StoryResumeResponse {
+  has_session: boolean;
+  situation?: string;
+  tone?: string;
+  sessions?: StorySessionItem[]; // 백엔드 sessions 배열
+  timeline?: TimelineEvent[];
+  session_id?: string;
+  character_name?: string;
+  target_language?: string;
+  current_quiz_count?: number;
+  quiz_limit?: number;
+  can_extend?: boolean;
+  is_completed?: boolean;
+  model_tier?: string;
+  turn_in_progress?: boolean;
 }
 
 export const resumeStory = async (): Promise<StoryResumeResponse> => {

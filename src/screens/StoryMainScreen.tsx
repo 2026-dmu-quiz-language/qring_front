@@ -2,14 +2,14 @@ import React, { useState } from 'react';
 import { View, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { Text } from '../components/common/Text';
 import { useFocusEffect } from '@react-navigation/native';
-import { fetchStoryLibrary, StoryArchive, resumeStory, StoryResumeResponse } from '../api/story';
+import { fetchStoryLibrary, StoryArchive, resumeStory, StorySessionItem } from '../api/story';
 import { ScreenWrapper } from '../components/layout/ScreenWrapper';
 import { theme } from '../constants/theme';
 
 export default function StoryMainScreen({ navigation }: any) {
   const [archives, setArchives] = useState<StoryArchive[]>([]);
-  // 1. 단일 객체에서 배열 타입으로 변경
-  const [resumeList, setResumeList] = useState<StoryResumeResponse[]>([]);
+  // 🌟 resumeList 타입을 StorySessionItem[] 배열로 관리
+  const [resumeList, setResumeList] = useState<StorySessionItem[]>([]);
   const [loading, setLoading] = useState(true);
 
   useFocusEffect(React.useCallback(() => { loadData(); }, []));
@@ -18,18 +18,17 @@ export default function StoryMainScreen({ navigation }: any) {
     try {
       setLoading(true);
       const libData = await fetchStoryLibrary();
-      setArchives(libData.archives);
+      setArchives(libData.archives ?? []);
+
       try {
         const resumeData = await resumeStory();
-        // 2. API 응답 데이터 형태에 맞춰 배열 데이터 저장
-        // resumeData가 배열 형태로 넘어오거나, { sessions: [...] } 구조일 경우를 고려해 처리
-        if (Array.isArray(resumeData)) {
-          setResumeList(resumeData.filter((item) => item.has_session));
-        } else if (resumeData && Array.isArray((resumeData as any).sessions)) {
-          setResumeList((resumeData as any).sessions.filter((item: StoryResumeResponse) => item.has_session));
-        } else if (resumeData?.has_session) {
-          // 기존처럼 단일 객체로 올 경우 호환성 유지
-          setResumeList([resumeData]);
+        
+        // 🌟 백엔드 리스폰스 구조 ({ has_session: true, sessions: [...] }) 처리
+        if (resumeData?.has_session && Array.isArray(resumeData.sessions) && resumeData.sessions.length > 0) {
+          setResumeList(resumeData.sessions);
+        } else if (resumeData?.has_session && resumeData.session_id) {
+          // 기존 단일 session_id 반환 구조와의 하위 호환성 유지
+          setResumeList([resumeData as unknown as StorySessionItem]);
         } else {
           setResumeList([]);
         }
@@ -76,21 +75,23 @@ export default function StoryMainScreen({ navigation }: any) {
           <Text style={styles.subTitle}>직접 완성한 대화 기록을 다시 확인하고 복습해{'\n'}보세요.</Text>
         </View>
 
-        {/* 3. 배열을 순회(.map)하여 진행 중인 모든 스토리 카드 출력 */}
-        {resumeList.map((resume, index) => (
+        {/* 🌟 sessions 배열 항목들을 순회하며 카드 출력 */}
+        {resumeList.map((session, index) => (
           <TouchableOpacity 
-            key={resume.session_id || index} 
+            key={session.session_id || index} 
             style={styles.resumeCard} 
-            onPress={() => navigation.navigate('StoryChat', { resumeData: resume })}
+            onPress={() => navigation.navigate('StoryChat', { resumeData: session })}
           >
             <View style={{ flex: 1 }}>
               <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 6 }}>
-                {renderTierBadge(resume.model_tier)}
+                {renderTierBadge(session.model_tier)}
                 <Text style={[styles.resumeTitle, { marginBottom: 0, marginLeft: 8, flexShrink: 1 }]} numberOfLines={1}>
-                  {resume.is_completed ? '저장 안 한 스토리가 있어요' : '진행 중인 대화가 있어요'}
+                  {session.is_completed ? '저장 안 한 스토리가 있어요' : '진행 중인 대화가 있어요'}
                 </Text>
               </View>
-              <Text style={styles.resumeSub} numberOfLines={1}>{resume.character_name} · {resume.situation}</Text>
+              <Text style={styles.resumeSub} numberOfLines={1}>
+                {session.character_name} · {session.situation}
+              </Text>
             </View>
             <Text style={styles.resumeLinkText}>이어하기 {'>'}</Text>
           </TouchableOpacity>

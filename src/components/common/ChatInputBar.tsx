@@ -38,6 +38,7 @@ interface ChatInputBarProps {
   editable?: boolean;
   /** 전송 중이면 전송 버튼에 로딩 표시를 한다. */
   sending?: boolean;
+  maxLength?: number;
 }
 
 export const ChatInputBar = ({
@@ -47,6 +48,7 @@ export const ChatInputBar = ({
   onSend,
   editable = true,
   sending = false,
+  maxLength = 300,
 }: ChatInputBarProps) => {
   const insets = useSafeAreaInsets();
   const keyboardVisible = useKeyboardVisible();
@@ -79,6 +81,7 @@ export const ChatInputBar = ({
             onSubmitEditing={() => canSend && onSend?.()}
             editable={editable && !sending}
             returnKeyType="send"
+            maxLength={maxLength}
           />
         )}
 

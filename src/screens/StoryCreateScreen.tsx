@@ -72,12 +72,28 @@ export default function StoryCreateScreen({ navigation }: any) {
             
             <View style={styles.inputSection}>
               <Text style={styles.label}>상대방의 이름은 무엇인가요?</Text>
-              <TextInput style={styles.textInput} placeholder="예: 지민, John" placeholderTextColor={theme.colors.textHint} value={characterName} onChangeText={setCharacterName} />
+              <TextInput 
+                style={styles.textInput} 
+                placeholder="예: 지민, John" 
+                placeholderTextColor={theme.colors.textHint} 
+                value={characterName} 
+                onChangeText={setCharacterName}
+                maxLength={30} 
+              />
             </View>
 
             <View style={styles.inputSection}>
               <Text style={styles.label}>어떤 상황을 원하시나요?</Text>
-              <TextInput style={[styles.textInput, styles.textArea]} placeholder="예: 뉴욕 카페에서 수다 떠는 상황" placeholderTextColor={theme.colors.textHint} value={situationDescription} onChangeText={setSituationDescription} multiline textAlignVertical="top" />
+              <TextInput 
+                style={[styles.textInput, styles.textArea]} 
+                placeholder="예: 뉴욕 카페에서 수다 떠는 상황" 
+                placeholderTextColor={theme.colors.textHint} 
+                value={situationDescription} 
+                onChangeText={setSituationDescription} 
+                multiline 
+                textAlignVertical="top" 
+                maxLength={300} 
+              />
             </View>
 
             <View style={styles.inputSection}>
