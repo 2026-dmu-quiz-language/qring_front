@@ -37,6 +37,29 @@ const parseWords = (value: string | string[] | null | undefined): string[] => {
   }
 };
 
+type QuizKind = 'choice' | 'subjective' | 'wordArrange';
+
+/**
+ * 화면에 무엇을 그릴지 정한다.
+ * quizType 을 먼저 믿되, 그 유형에 필요한 데이터가 없으면 데이터를 보고 고른다.
+ * 서버에 multiple_choice 인데 보기가 비어 있는 문제가 섞여 있어서,
+ * 유형만 믿으면 고를 것이 하나도 없어 제출 버튼이 안 켜지고 그 문제에서 막힌다.
+ */
+const resolveQuizKind = (
+  quizType: string,
+  options: string[],
+  words: string[],
+): QuizKind => {
+  if (quizType === 'word_arrange' && words.length > 0) return 'wordArrange';
+  if (quizType === 'multiple_choice' && options.length > 0) return 'choice';
+  if (quizType === 'subjective') return 'subjective';
+
+  // 유형과 데이터가 어긋나는 경우. 실제로 있는 데이터를 따른다.
+  if (words.length > 0) return 'wordArrange';
+  if (options.length > 0) return 'choice';
+  return 'subjective';
+};
+
 const WrongNoteQuizScreen = () => {
   const navigation = useNavigation<any>();
   const route = useRoute<RouteProp<any>>();
@@ -65,6 +88,8 @@ const WrongNoteQuizScreen = () => {
   const [submitted, setSubmitted] = useState(false);
   const [results, setResults] = useState<IncorrectResultItem[]>([]);
   const [completed, setCompleted] = useState<number | null>(null);
+  // 결과 제출 중인지. 버튼을 두 번 눌러 포인트가 두 번 들어가는 것을 막는다.
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -136,9 +161,6 @@ const WrongNoteQuizScreen = () => {
   const quiz = quizzes[currentIndex];
 
   const parsedOptions: string[] = parseWords(quiz.options);
-  const isSubjective = quiz.quizType === 'subjective';
-  // 봇 컴피티션에서 넘어온 단어 배열 문제
-  const isWordArrange = quiz.quizType === 'word_arrange';
 
   // 화면에 뿌릴 단어들. 서버가 이미 섞어서 tiles 로 준다.
   const answerTiles = parseWords(quiz.answerTiles);
@@ -146,6 +168,10 @@ const WrongNoteQuizScreen = () => {
   const wordBank = tiles.length > 0
     ? tiles
     : [...answerTiles, ...parseWords(quiz.distractorTiles)];
+
+  const quizKind = resolveQuizKind(quiz.quizType, parsedOptions, wordBank);
+  const isSubjective = quizKind === 'subjective';
+  const isWordArrange = quizKind === 'wordArrange';
 
   // 단어 배열 문제는 안내문 대신 한국어 문장을 보여준다.
   const questionText = isWordArrange && quiz.korean ? quiz.korean : quiz.question;
@@ -191,6 +217,7 @@ const WrongNoteQuizScreen = () => {
   };
 
   const handleNext = async () => {
+    if (isSubmitting) return;
     console.log('🔥 [handleNext] 호출됨, currentIndex:', currentIndex, 'quizzes.length:', quizzes.length);
     if (currentIndex < quizzes.length - 1) {
       setCurrentIndex((prev) => prev + 1);
@@ -199,6 +226,7 @@ const WrongNoteQuizScreen = () => {
       setPlaced([]);
       setSubmitted(false);
     } else {
+      setIsSubmitting(true);
       try {
         console.log('📤 [오답결과] API 호출 시작: POST /incorrect/result');
         console.log('📤 [오답결과] 전송 데이터:', JSON.stringify({ sourceType, contentId: episodeId, results }));
@@ -215,6 +243,8 @@ const WrongNoteQuizScreen = () => {
           console.error('❌ [오답결과] 서버 응답:', err.response.status, JSON.stringify(err.response.data));
         }
         setCompleted(-1);
+      } finally {
+        setIsSubmitting(false);
       }
     }
   };
@@ -400,13 +430,18 @@ const WrongNoteQuizScreen = () => {
           </TouchableOpacity>
         ) : (
           <TouchableOpacity
-            style={styles.submitButton}
+            style={[styles.submitButton, isSubmitting && styles.submitButtonDisabled]}
             onPress={handleNext}
+            disabled={isSubmitting}
             activeOpacity={0.8}
           >
-            <Text style={styles.submitButtonText}>
-              {currentIndex < quizzes.length - 1 ? '다음 문제 →' : '완료'}
-            </Text>
+            {isSubmitting ? (
+              <ActivityIndicator color={theme.colors.surface} />
+            ) : (
+              <Text style={styles.submitButtonText}>
+                {currentIndex < quizzes.length - 1 ? '다음 문제 →' : '완료'}
+              </Text>
+            )}
           </TouchableOpacity>
         )}
       </View>

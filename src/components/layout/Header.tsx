@@ -7,7 +7,7 @@ import { Ionicons } from '@expo/vector-icons';
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { theme } from '../../constants/theme';
-import { switchLanguage, checkLanguage } from '../../api/language';
+import { switchLanguage, fetchLanguageStatus } from '../../api/language';
 import { showAlert } from '../common/AlertHost';
 
 interface HeaderProps {
@@ -59,27 +59,14 @@ export const Header = ({
     fetchAndSaveName();
   }, [userName]);
 
+  // 현재 언어는 서버가 들고 있는 값만 쓴다.
+  // 기기에 저장해두면 계정을 바꾸거나 앱을 새로 깔았을 때 엉뚱한 언어가 활성으로 보인다.
   const fetchLangStatus = async () => {
     try {
-      const saved = await AsyncStorage.getItem('activeLang');
-      if (saved) setActiveLang(saved);
-
-      const checks = await Promise.all(
-        LANGUAGES.map(async (lang) => {
-          try {
-            const res = await checkLanguage(lang.code);
-            return { code: lang.code, enabled: res };
-          } catch (e: any) {
-            return { code: lang.code, enabled: false };
-          }
-        }),
-      );
-      const enabled = checks.filter((c) => c.enabled).map((c) => c.code);
-      setEnabledLangs(enabled);
-
-      if (!saved && enabled.length > 0) {
-        setActiveLang(enabled[0]);
-      }
+      const status = await fetchLanguageStatus();
+      // 온보딩을 마치지 않은 사용자는 current 가 null 이다. 이때는 아무것도 활성이 아니다.
+      setActiveLang(status.current ?? '');
+      setEnabledLangs(status.unlocked ?? []);
     } catch (err: any) {
       console.error('언어 상태 조회 실패:', err.message);
     }
@@ -87,13 +74,26 @@ export const Header = ({
 
   const handleLangSwitch = async (code: string) => {
     try {
-      await switchLanguage(code);
-      setActiveLang(code);
-      await AsyncStorage.setItem('activeLang', code);
+      // 전환 결과를 그대로 받아 쓰면 되므로 다시 조회할 필요가 없다.
+      const status = await switchLanguage(code);
+      setActiveLang(status.current ?? code);
+      setEnabledLangs(status.unlocked ?? []);
       setProfileMenuVisible(false);
       navigation.reset({ index: 0, routes: [{ name: 'MainTab' }] });
     } catch (err: any) {
-      console.error('언어 전환 실패:', err.message);
+      console.error('언어 전환 실패:', err.message, err.response?.data);
+      setProfileMenuVisible(false);
+
+      const code2 = err.response?.data?.code;
+      showAlert({
+        title: '언어를 바꾸지 못했어요',
+        message:
+          code2 === 'LANGUAGE_NOT_UNLOCKED'
+            ? '아직 학습을 시작하지 않은 언어예요.\n마이페이지 > 레벨/언어 변경에서 먼저 추가해 주세요.'
+            : code2 === 'INVALID_LANGUAGE'
+              ? '선택할 수 없는 언어예요.'
+              : '잠시 후 다시 시도해 주세요.',
+      });
     }
   };
 
@@ -119,6 +119,8 @@ export const Header = ({
     } finally {
       await AsyncStorage.removeItem('accessToken');
       await AsyncStorage.removeItem('refreshToken');
+      // 지금은 쓰지 않지만, 이전 버전이 기기에 남겨둔 값을 정리한다.
+      await AsyncStorage.removeItem('activeLang');
       
       setProfileMenuVisible(false);
 
