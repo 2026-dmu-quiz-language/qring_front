@@ -11,6 +11,11 @@ export interface IncorrectEntry {
   contentId: number;
   /** 목록에 보여줄 이름. 컴피티션은 '레벨 N 컴피티션' 형태로 온다. */
   label: string;
+  /**
+   * STORY 면 문제 난이도 레벨, COMPETITION 이면 매치 레벨.
+   * 같은 스토리라도 레벨이 다르면 별도 항목으로 내려오므로 목록 키에 꼭 포함해야 한다.
+   */
+  level: number;
   /** 가장 최근에 틀린 시각. 서버가 이 기준으로 정렬해서 내려준다. */
   latestWrongAt: string;
 }
@@ -35,6 +40,8 @@ export interface IncorrectQuiz {
   distractorTiles: string | null;
   /** 컴피티션 전용 문제는 힌트 데이터가 없어 null 로 온다. */
   hint: string | null;
+  /** 문제 난이도 레벨. 컴피티션 오답은 원본이 스토리 문제여도 매치 레벨로 온다. */
+  level: number;
   /**
    * 이 문제의 '원본' 출처. 묶음이 COMPETITION 이면 안에 STORY 출신 문제가 섞여 올 수 있다.
    * 목록 조회나 재풀이 요청에 쓰는 sourceType(묶음 종류)과는 의미가 다르다.
@@ -66,8 +73,10 @@ export const getIncorrectList = async (): Promise<IncorrectEntry[]> => {
 export const getIncorrectRetry = async (
   sourceType: IncorrectSourceType,
   groupId: number,
+  level?: number,
 ): Promise<IncorrectQuiz[]> => {
-  const res = await client.post('/incorrect/retry', { sourceType, groupId });
+  // level 은 STORY 에서만 의미가 있다. 안 보내면 그 스토리의 전 레벨 오답이 섞여 나온다.
+  const res = await client.post('/incorrect/retry', { sourceType, groupId, level });
   return res.data.quizzes;
 };
 

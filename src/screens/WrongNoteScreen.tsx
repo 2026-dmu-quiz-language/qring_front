@@ -84,8 +84,9 @@ const WrongNoteScreen = () => {
         ) : (
           episodes.map((ep) => (
             <TouchableOpacity
-              // 스토리와 컴피티션은 contentId 가 겹칠 수 있어 출처까지 묶어야 고유해진다.
-              key={`${ep.sourceType}-${ep.contentId}`}
+              // 같은 스토리도 레벨별로 따로 내려오고, 스토리와 컴피티션은 contentId 가 겹칠 수 있다.
+              // 셋을 묶어야 항목이 고유해진다.
+              key={`${ep.sourceType}-${ep.contentId}-${ep.level}`}
               style={styles.episodeCard}
               activeOpacity={0.8}
               onPress={() =>
@@ -93,11 +94,21 @@ const WrongNoteScreen = () => {
                   sourceType: ep.sourceType,
                   episodeId: ep.contentId,
                   episodeTitle: ep.label,
+                  level: ep.level,
                 })
               }
             >
               <View style={styles.episodeInfo}>
-                <Text style={styles.episodeTitle}>{ep.label}</Text>
+                <Text style={styles.episodeTitle} numberOfLines={1}>
+                  {ep.label}
+                </Text>
+                {/* 컴피티션은 label 에 이미 '레벨 N' 이 들어 있어 뱃지를 겹쳐 붙이지 않는다.
+                    레벨 값이 안 오면 '레벨 ' 만 남으므로 아예 그리지 않는다. */}
+                {ep.sourceType === 'STORY' && ep.level != null ? (
+                  <View style={styles.levelBadge}>
+                    <Text style={styles.levelBadgeText}>레벨 {ep.level}</Text>
+                  </View>
+                ) : null}
               </View>
               <Ionicons name="chevron-forward" size={20} color={theme.colors.textDisabled} />
             </TouchableOpacity>
@@ -153,11 +164,29 @@ const styles = StyleSheet.create({
   },
   episodeInfo: {
     flex: 1,
+    // 제목과 레벨 뱃지를 한 줄에 나란히 둔다.
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
   },
   episodeTitle: {
     fontSize: 16,
     fontWeight: '700',
     color: theme.colors.textStrong,
+    // 제목이 길어도 뱃지를 밀어내지 않게 제목 쪽이 줄어든다.
+    flexShrink: 1,
+  },
+  levelBadge: {
+    flexShrink: 0,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 10,
+    backgroundColor: theme.colors.greenTint,
+  },
+  levelBadgeText: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: theme.colors.primary,
   },
 });
 
