@@ -68,12 +68,14 @@ const WrongNoteQuizScreen = () => {
   // 인셋이 작은 기기에서는 기존 여백 32를 유지한다.
   const insets = useSafeAreaInsets();
   const bottomBarPadding = Math.max(32, insets.bottom + 12);
-  const { sourceType, episodeId } = route.params as {
+  const { sourceType, episodeId, level } = route.params as {
     /** 묶음 종류. STORY 면 스토리 한 편, COMPETITION 이면 레벨 하나 */
     sourceType: IncorrectSourceType;
     /** STORY 면 콘텐츠 id, COMPETITION 이면 레벨 번호 */
     episodeId: number;
     episodeTitle: string;
+    /** 어느 레벨의 오답인지. 목록에서 받은 값을 그대로 넘긴다. */
+    level: number;
   };
 
   const [quizzes, setQuizzes] = useState<IncorrectQuiz[]>([]);
@@ -93,9 +95,9 @@ const WrongNoteQuizScreen = () => {
 
   useEffect(() => {
     const fetchData = async () => {
-      console.log('📤 [오답풀이] API 호출 시작: POST /incorrect/retry,', sourceType, episodeId);
+      console.log('📤 [오답풀이] API 호출 시작: POST /incorrect/retry,', sourceType, episodeId, 'level:', level);
       try {
-        const data = await getIncorrectRetry(sourceType, episodeId);
+        const data = await getIncorrectRetry(sourceType, episodeId, level);
         console.log('✅ [오답풀이] API 응답 성공:', JSON.stringify(data));
         setQuizzes(data);
       } catch (err: any) {
@@ -110,7 +112,7 @@ const WrongNoteQuizScreen = () => {
       }
     };
     fetchData();
-  }, [sourceType, episodeId]);
+  }, [sourceType, episodeId, level]);
 
   if (loading) {
     return (
@@ -273,9 +275,15 @@ const WrongNoteQuizScreen = () => {
           contentContainerStyle={styles.bodyContent}
           showsVerticalScrollIndicator={false}
         >
-          <View style={styles.incorrectBadge}>
-            <Ionicons name="close-circle" size={16} color={theme.colors.danger} />
-            <Text style={styles.incorrectText}>Incorrect</Text>
+          <View style={styles.badgeRow}>
+            <View style={styles.incorrectBadge}>
+              <Ionicons name="close-circle" size={16} color={theme.colors.danger} />
+              <Text style={styles.incorrectText}>Incorrect</Text>
+            </View>
+            {/* 응답에 레벨이 없을 수도 있으니 진입할 때 받은 값을 대신 쓴다. */}
+            <View style={styles.levelBadge}>
+              <Text style={styles.levelBadgeText}>레벨 {quiz.level ?? level}</Text>
+            </View>
           </View>
 
           <Text style={styles.question}>{questionText}</Text>
@@ -475,16 +483,33 @@ const styles = StyleSheet.create({
     marginTop: 8,
   },
 
+  badgeRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginBottom: 16,
+  },
+  levelBadge: {
+    justifyContent: 'center',
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 12,
+    backgroundColor: theme.colors.greenTint,
+  },
+  levelBadgeText: {
+    // Incorrect 쪽 글자와 크기를 맞춰야 두 뱃지 높이가 같아진다.
+    fontSize: 13,
+    fontWeight: '700',
+    color: theme.colors.primary,
+  },
   incorrectBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    alignSelf: 'flex-start',
     gap: 4,
     backgroundColor: theme.colors.dangerSurface,
     borderRadius: 12,
     paddingHorizontal: 10,
     paddingVertical: 5,
-    marginBottom: 16,
   },
   incorrectText: {
     fontSize: 13,
