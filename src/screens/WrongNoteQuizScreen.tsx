@@ -37,6 +37,29 @@ const parseWords = (value: string | string[] | null | undefined): string[] => {
   }
 };
 
+type QuizKind = 'choice' | 'subjective' | 'wordArrange';
+
+/**
+ * 화면에 무엇을 그릴지 정한다.
+ * quizType 을 먼저 믿되, 그 유형에 필요한 데이터가 없으면 데이터를 보고 고른다.
+ * 서버에 multiple_choice 인데 보기가 비어 있는 문제가 섞여 있어서,
+ * 유형만 믿으면 고를 것이 하나도 없어 제출 버튼이 안 켜지고 그 문제에서 막힌다.
+ */
+const resolveQuizKind = (
+  quizType: string,
+  options: string[],
+  words: string[],
+): QuizKind => {
+  if (quizType === 'word_arrange' && words.length > 0) return 'wordArrange';
+  if (quizType === 'multiple_choice' && options.length > 0) return 'choice';
+  if (quizType === 'subjective') return 'subjective';
+
+  // 유형과 데이터가 어긋나는 경우. 실제로 있는 데이터를 따른다.
+  if (words.length > 0) return 'wordArrange';
+  if (options.length > 0) return 'choice';
+  return 'subjective';
+};
+
 const WrongNoteQuizScreen = () => {
   const navigation = useNavigation<any>();
   const route = useRoute<RouteProp<any>>();
@@ -45,12 +68,14 @@ const WrongNoteQuizScreen = () => {
   // 인셋이 작은 기기에서는 기존 여백 32를 유지한다.
   const insets = useSafeAreaInsets();
   const bottomBarPadding = Math.max(32, insets.bottom + 12);
-  const { sourceType, episodeId } = route.params as {
+  const { sourceType, episodeId, level } = route.params as {
     /** 묶음 종류. STORY 면 스토리 한 편, COMPETITION 이면 레벨 하나 */
     sourceType: IncorrectSourceType;
     /** STORY 면 콘텐츠 id, COMPETITION 이면 레벨 번호 */
     episodeId: number;
     episodeTitle: string;
+    /** 어느 레벨의 오답인지. 목록에서 받은 값을 그대로 넘긴다. */
+    level: number;
   };
 
   const [quizzes, setQuizzes] = useState<IncorrectQuiz[]>([]);
@@ -65,12 +90,14 @@ const WrongNoteQuizScreen = () => {
   const [submitted, setSubmitted] = useState(false);
   const [results, setResults] = useState<IncorrectResultItem[]>([]);
   const [completed, setCompleted] = useState<number | null>(null);
+  // 결과 제출 중인지. 버튼을 두 번 눌러 포인트가 두 번 들어가는 것을 막는다.
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
     const fetchData = async () => {
-      console.log('📤 [오답풀이] API 호출 시작: POST /incorrect/retry,', sourceType, episodeId);
+      console.log('📤 [오답풀이] API 호출 시작: POST /incorrect/retry,', sourceType, episodeId, 'level:', level);
       try {
-        const data = await getIncorrectRetry(sourceType, episodeId);
+        const data = await getIncorrectRetry(sourceType, episodeId, level);
         console.log('✅ [오답풀이] API 응답 성공:', JSON.stringify(data));
         setQuizzes(data);
       } catch (err: any) {
@@ -85,7 +112,7 @@ const WrongNoteQuizScreen = () => {
       }
     };
     fetchData();
-  }, [sourceType, episodeId]);
+  }, [sourceType, episodeId, level]);
 
   if (loading) {
     return (
@@ -136,9 +163,6 @@ const WrongNoteQuizScreen = () => {
   const quiz = quizzes[currentIndex];
 
   const parsedOptions: string[] = parseWords(quiz.options);
-  const isSubjective = quiz.quizType === 'subjective';
-  // 봇 컴피티션에서 넘어온 단어 배열 문제
-  const isWordArrange = quiz.quizType === 'word_arrange';
 
   // 화면에 뿌릴 단어들. 서버가 이미 섞어서 tiles 로 준다.
   const answerTiles = parseWords(quiz.answerTiles);
@@ -146,6 +170,10 @@ const WrongNoteQuizScreen = () => {
   const wordBank = tiles.length > 0
     ? tiles
     : [...answerTiles, ...parseWords(quiz.distractorTiles)];
+
+  const quizKind = resolveQuizKind(quiz.quizType, parsedOptions, wordBank);
+  const isSubjective = quizKind === 'subjective';
+  const isWordArrange = quizKind === 'wordArrange';
 
   // 단어 배열 문제는 안내문 대신 한국어 문장을 보여준다.
   const questionText = isWordArrange && quiz.korean ? quiz.korean : quiz.question;
@@ -191,6 +219,7 @@ const WrongNoteQuizScreen = () => {
   };
 
   const handleNext = async () => {
+    if (isSubmitting) return;
     console.log('🔥 [handleNext] 호출됨, currentIndex:', currentIndex, 'quizzes.length:', quizzes.length);
     if (currentIndex < quizzes.length - 1) {
       setCurrentIndex((prev) => prev + 1);
@@ -199,6 +228,7 @@ const WrongNoteQuizScreen = () => {
       setPlaced([]);
       setSubmitted(false);
     } else {
+      setIsSubmitting(true);
       try {
         console.log('📤 [오답결과] API 호출 시작: POST /incorrect/result');
         console.log('📤 [오답결과] 전송 데이터:', JSON.stringify({ sourceType, contentId: episodeId, results }));
@@ -215,6 +245,8 @@ const WrongNoteQuizScreen = () => {
           console.error('❌ [오답결과] 서버 응답:', err.response.status, JSON.stringify(err.response.data));
         }
         setCompleted(-1);
+      } finally {
+        setIsSubmitting(false);
       }
     }
   };
@@ -243,9 +275,15 @@ const WrongNoteQuizScreen = () => {
           contentContainerStyle={styles.bodyContent}
           showsVerticalScrollIndicator={false}
         >
-          <View style={styles.incorrectBadge}>
-            <Ionicons name="close-circle" size={16} color={theme.colors.danger} />
-            <Text style={styles.incorrectText}>Incorrect</Text>
+          <View style={styles.badgeRow}>
+            <View style={styles.incorrectBadge}>
+              <Ionicons name="close-circle" size={16} color={theme.colors.danger} />
+              <Text style={styles.incorrectText}>Incorrect</Text>
+            </View>
+            {/* 응답에 레벨이 없을 수도 있으니 진입할 때 받은 값을 대신 쓴다. */}
+            <View style={styles.levelBadge}>
+              <Text style={styles.levelBadgeText}>레벨 {quiz.level ?? level}</Text>
+            </View>
           </View>
 
           <Text style={styles.question}>{questionText}</Text>
@@ -400,13 +438,18 @@ const WrongNoteQuizScreen = () => {
           </TouchableOpacity>
         ) : (
           <TouchableOpacity
-            style={styles.submitButton}
+            style={[styles.submitButton, isSubmitting && styles.submitButtonDisabled]}
             onPress={handleNext}
+            disabled={isSubmitting}
             activeOpacity={0.8}
           >
-            <Text style={styles.submitButtonText}>
-              {currentIndex < quizzes.length - 1 ? '다음 문제 →' : '완료'}
-            </Text>
+            {isSubmitting ? (
+              <ActivityIndicator color={theme.colors.surface} />
+            ) : (
+              <Text style={styles.submitButtonText}>
+                {currentIndex < quizzes.length - 1 ? '다음 문제 →' : '완료'}
+              </Text>
+            )}
           </TouchableOpacity>
         )}
       </View>
@@ -440,16 +483,33 @@ const styles = StyleSheet.create({
     marginTop: 8,
   },
 
+  badgeRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginBottom: 16,
+  },
+  levelBadge: {
+    justifyContent: 'center',
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 12,
+    backgroundColor: theme.colors.greenTint,
+  },
+  levelBadgeText: {
+    // Incorrect 쪽 글자와 크기를 맞춰야 두 뱃지 높이가 같아진다.
+    fontSize: 13,
+    fontWeight: '700',
+    color: theme.colors.primary,
+  },
   incorrectBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    alignSelf: 'flex-start',
     gap: 4,
     backgroundColor: theme.colors.dangerSurface,
     borderRadius: 12,
     paddingHorizontal: 10,
     paddingVertical: 5,
-    marginBottom: 16,
   },
   incorrectText: {
     fontSize: 13,
