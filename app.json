@@ -16,7 +16,12 @@
     },
     "ios": {
       "supportsTablet": true,
-      "backgroundColor": "#E9E9DB"
+      "backgroundColor": "#E9E9DB",
+      "bundleIdentifier": "com.qring.app",
+      "googleServicesFile": "./GoogleService-Info.plist",
+      "entitlements": {
+        "aps-environment": "production"
+      }
     },
     "android": {
       "adaptiveIcon": {
@@ -26,6 +31,7 @@
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false,
       "package": "com.qring.app",
+      "googleServicesFile": "./google-services.json",
       "permissions": [
         "android.permission.MODIFY_AUDIO_SETTINGS",
         "android.permission.FOREGROUND_SERVICE",
@@ -45,7 +51,14 @@
         }
       ],
       "expo-status-bar",
-      "expo-font"
+      "expo-font",
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/icon.png",
+          "color": "#E9E9DB"
+        }
+      ]
     ],
     "extra": {
       "eas": {
