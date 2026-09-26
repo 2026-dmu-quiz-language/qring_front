@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "221458070727",
+    "project_id": "qring-6024e",
+    "storage_bucket": "qring-6024e.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:221458070727:android:0d10d3eb2f901a32a6d2e2",
+        "android_client_info": {
+          "package_name": "com.company.qring"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyC9owKz4kegRzEPy2IYkx6j-G_QM7Vb1tU"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

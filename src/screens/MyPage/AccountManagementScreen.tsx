@@ -35,7 +35,7 @@ const AccountManagementScreen = ({ navigation, route }: any) => {
   const [isPushEnabled, setIsPushEnabled] = useState(true);
   const [isLoading, setIsLoading] = useState(true);
 
-  // 🌟 소셜 로그인 여부를 판단하기 위한 상태 추가
+  // 소셜 로그인 여부를 판단하기 위한 상태
   const [isLocalUser, setIsLocalUser] = useState(false);
 
   const [isNicknameChecked, setIsNicknameChecked] = useState(false);
@@ -70,7 +70,6 @@ const AccountManagementScreen = ({ navigation, route }: any) => {
         }
         setIsPushEnabled(Boolean(response.data.pushEnabled || response.data.isPushEnabled));
         
-        // 🌟 응답에서 isLocalUser 값 저장 (없을 경우 false 처리)
         setIsLocalUser(Boolean(response.data.isLocalUser));
       }
     } catch (error) {
@@ -163,10 +162,30 @@ const AccountManagementScreen = ({ navigation, route }: any) => {
     }
   };
 
-  const handleTogglePush = (value: boolean) => {
+  // 🌟 토글 조작 시 즉시 서버 반영 (실패 시 원상복구)
+  const handleTogglePush = async (value: boolean) => {
     setIsPushEnabled(value);
+
+    try {
+      const token = await getAuthToken();
+      await axios.post(
+        `${BASE_URL}/update`,
+        { pushEnabled: value },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
+        }
+      );
+    } catch (error) {
+      console.error('푸시 설정 변경 실패:', error);
+      setIsPushEnabled(!value); // 실패 시 원래 상태로 돌림
+      showAlert({ title: '오류', message: '푸시 알림 설정 변경에 실패했습니다.' });
+    }
   };
 
+  // 🌟 회원 탈퇴 처리 함수 복구
   const handleDeleteAccount = async () => {
     const isConfirmed = await showConfirm({
       title: '회원 탈퇴',
@@ -187,9 +206,9 @@ const AccountManagementScreen = ({ navigation, route }: any) => {
 
       await showAlert({ title: '안내', message: '탈퇴 처리가 완료되었습니다.' });
       navigation.reset({
-      index: 0,
-      routes: [{ name: 'Login' }],
-    });
+        index: 0,
+        routes: [{ name: 'Login' }],
+      });
     } catch (e) {
       await showAlert({ title: '오류', message: '탈퇴 처리 중 문제가 발생했습니다.' });
     }
@@ -245,7 +264,6 @@ const AccountManagementScreen = ({ navigation, route }: any) => {
                 </TouchableOpacity>
               </View>
               
-              {/* 🌟 isLocalUser가 true일 때만 비밀번호 변경 섹션 렌더링 */}
               {isLocalUser && (
                 <>
                   <View style={styles.divider} />

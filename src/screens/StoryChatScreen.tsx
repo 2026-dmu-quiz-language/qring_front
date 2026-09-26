@@ -83,7 +83,6 @@ export default function StoryChatScreen({ route, navigation }: any) {
       }]
   );
 
-  // 🌟 스크롤을 맨 아래로 부드럽게 당겨주는 함수 (살짝 여유를 주어 확실히 스크롤되게 함)
   const scrollToBottom = () => {
     if (messages.length > 0) {
       setTimeout(() => {
@@ -114,14 +113,14 @@ export default function StoryChatScreen({ route, navigation }: any) {
     try {
       await discardStorySession({ session_id: sessionId });
       await showAlert({ title: '알림', message: '대화한 스토리가 삭제됩니다.' });
-    } catch (error) {
+    } catch (error: any) {
       console.error('스토리 삭제 실패:', error);
+      const errorMsg = error?.response?.data?.message || error?.message || '스토리 삭제에 실패했습니다.';
       await showAlert({
         title: '오류',
-        message: '스토리 삭제에 실패했습니다. 메인 화면으로 이동합니다.',
+        message: `${errorMsg}\n메인 화면으로 이동합니다.`,
       });
     }
-    // 성공이든 실패든 알림을 닫으면 스토리 목록으로 나간다.
     navigation.navigate('MainTab', { screen: 'Story' });
   };
 
@@ -133,14 +132,14 @@ export default function StoryChatScreen({ route, navigation }: any) {
         title: '저장 완료',
         message: `스토리가 저장되었습니다.\n남은 포인트: ${response.user_remaining_points}`,
       });
-    } catch (error) {
+    } catch (error: any) {
       console.error('스토리 저장 실패:', error);
+      const errorMsg = error?.response?.data?.message || error?.message || '스토리 저장에 실패했습니다.';
       await showAlert({
         title: '오류',
-        message: '스토리 저장에 실패했습니다. 메인 화면으로 이동합니다.',
+        message: `${errorMsg}\n메인 화면으로 이동합니다.`,
       });
     }
-    // 성공이든 실패든 알림을 닫으면 스토리 목록으로 나간다.
     navigation.navigate('MainTab', { screen: 'Story' });
   };
 
@@ -165,7 +164,6 @@ export default function StoryChatScreen({ route, navigation }: any) {
       const response = await extendStorySession({ session_id: sessionId });
       
       playSfx('usePoints');
-      // 연장된 첫 메시지가 알림 뒤에 바로 쌓이도록 기다리지 않는다.
       showAlert({
         title: '연장 완료',
         message: `스토리가 연장되었습니다!\n남은 포인트: ${response.user_remaining_points}`,
@@ -184,9 +182,10 @@ export default function StoryChatScreen({ route, navigation }: any) {
       playSfx('receiveChat');
       scrollToBottom();
 
-    } catch (error) {
+    } catch (error: any) {
       console.error('스토리 연장 실패:', error);
-      await showAlert({ title: '오류', message: '연장에 실패했습니다. 스토리를 종료합니다.' });
+      const errorMsg = error?.response?.data?.message || error?.message || '연장에 실패했습니다.';
+      await showAlert({ title: '오류', message: `${errorMsg}\n스토리를 종료합니다.` });
       promptSaveStory(); 
     } finally {
       setIsSending(false);
@@ -205,7 +204,7 @@ export default function StoryChatScreen({ route, navigation }: any) {
         message: '대화는 저장되어 있어요. 나중에 이어서 할 수 있습니다.',
         confirmText: '나가기',
         cancelText: '취소',
-        cancelable: true, // 남는 쪽이 안전하므로 뒤로가기로 닫아도 된다
+        cancelable: true,
       });
       if (isConfirmed) {
         navigation.navigate('MainTab', { screen: 'Story' });
@@ -259,6 +258,7 @@ export default function StoryChatScreen({ route, navigation }: any) {
 
       if (response.is_completed) {
         isCompletedRef.current = true;
+        // 🌟 수정 포인트: 마지막 메시지를 유저가 충분히 읽을 수 있도록 2.5초 지연 후 종료 알림창 표시
         setTimeout(async () => {
           if (canExtendStory) {
             const isConfirmed = await showConfirm({
@@ -285,14 +285,17 @@ export default function StoryChatScreen({ route, navigation }: any) {
               await handleDiscard();
             }
           }
-        }, 500);
+        }, 2500);
       }
 
-    } catch (error) {
+    } catch (error: any) {
       console.error('메시지 전송 실패:', error);
       setMessages((prev) => prev.filter((m) => m.id !== newUserMsg.id)); 
       setInputText(userMessage);
-      showAlert({ title: '전송 실패', message: '메시지를 다시 보내주세요.' });
+
+      // 🌟 수정 포인트: 서버 또는 네트워크의 상세 오류 메시지 추출하여 출력
+      const errorMsg = error?.response?.data?.message || error?.message || '네트워크 연결이 불안정하거나 서버 오류가 발생했습니다.';
+      showAlert({ title: '전송 실패', message: `${errorMsg}\n메시지를 다시 보내주세요.` });
     } finally {
       setIsSending(false);
     }
@@ -371,16 +374,12 @@ export default function StoryChatScreen({ route, navigation }: any) {
   };
 
   return (
-    // 🌟 1. 충돌의 원인이던 SafeAreaView 태그를 아예 제거하고 최상단을 KeyboardAvoidingView로 감쌌습니다.
-    // 이렇게 하면 억지로 오프셋 계산할 필요 없이(offset=0) OS가 알아서 키보드 높이만큼 완벽하게 밀어줍니다!
     <KeyboardAvoidingView 
       style={{ flex: 1, backgroundColor: theme.colors.background }} 
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       keyboardVerticalOffset={0}
     >
-      {/* 🌟 2. SafeAreaView 대신 직접 insets.top 만큼 상단 여백을 주어 카메라 노치를 피합니다. */}
       <View style={{ flex: 1, paddingTop: insets.top }}>
-        
         <View style={styles.headerContainer}>
           <View style={styles.topBar}>
             <View style={styles.leftSection}>
@@ -402,7 +401,6 @@ export default function StoryChatScreen({ route, navigation }: any) {
           data={messages}
           keyExtractor={(item) => item.id}
           renderItem={renderMessageItem}
-          // 🌟 3. 마지막 채팅이 답답하게 가려지지 않도록 하단 공백(paddingBottom)을 '40'으로 넉넉하게 주었습니다.
           contentContainerStyle={styles.chatArea}
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
@@ -415,9 +413,6 @@ export default function StoryChatScreen({ route, navigation }: any) {
           }
         />
 
-        {/* 🌟 여기가 핵심 수정 포인트입니다! 🌟 
-            키보드가 열렸을 때는 둘 다 8px로 붙게 하고,
-            닫혀있을 때 아이폰은 홈바(insets.bottom) 높이를 주고 갤럭시는 12px만 고정으로 줍니다! */}
         <View style={[
           styles.inputContainer, 
           { 
@@ -425,7 +420,7 @@ export default function StoryChatScreen({ route, navigation }: any) {
               ? 8 
               : Platform.OS === 'ios' 
                 ? Math.max(insets.bottom, 12) 
-                : 12 // 갤럭시(Android)는 이중 여백을 방지하기 위해 12로 고정
+                : 12
           }
         ]}>
           <ChatInputBar
@@ -451,7 +446,6 @@ const styles = StyleSheet.create({
   title: { fontSize: 16, fontWeight: 'bold', color: theme.colors.text },
   iconButton: { padding: 4, marginLeft: -5 },
   
-  // 🌟 채팅 리스트 안쪽 하단 패딩 확보 (마지막 메시지가 입력창에 가리지 않게 넉넉히 40px 부여)
   chatArea: { paddingHorizontal: 20, paddingTop: 20, paddingBottom: 40 },
   
   timeLabelContainer: { alignItems: 'center', marginBottom: 20 },

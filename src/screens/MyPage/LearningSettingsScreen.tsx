@@ -5,7 +5,7 @@ import {
   View,
   TouchableOpacity,
   StyleSheet,
-  ActivityIndicator
+  ActivityIndicator,
 } from 'react-native';
 import { Text } from '../../components/common/Text';
 import { Ionicons } from '@expo/vector-icons';
@@ -18,7 +18,6 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { showAlert } from '../../components/common/AlertHost';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-// 💡 백엔드 기본 서버 주소 (환경에 맞게 수정해주세요)
 const BASE_URL = 'https://q-ring.app/api/v1';
 
 interface LevelOption {
@@ -33,20 +32,24 @@ const LEVELS: LevelOption[] = [
   { level: 3, label: 'Lv.3', subLabel: '고급' },
 ];
 
-// 🌟 스페인어 제거됨
 const LANGUAGES = ['일본어', '중국어', '영어'];
+
+// UI 모드 타입 정의 (CHANGE: 레벨 변경, ADD: 새 언어 추가)
+type ModeType = 'CHANGE' | 'ADD';
 
 const LearningSettingsScreen = ({ navigation, route }: any) => {
   // ─── 상태 관리 (State) ───
+  const [activeTab, setActiveTab] = useState<ModeType>('CHANGE'); // 현재 선택된 모드 탭
+
   const [currentLang, setCurrentLang] = useState(route?.params?.userLang || '영어');
   const [currentLevel, setCurrentLevel] = useState(route?.params?.userLevel || 2);
 
-  // 🌟 초기값을 빈 문자열로 두어, 사용자가 하단에서 '새 언어'를 직접 선택했는지 구분
+  // 새 언어 추가용 상태
   const [selectedNewLang, setSelectedNewLang] = useState('');
-  const [selectedNewLevel, setSelectedNewLevel] = useState(currentLevel);
+  const [selectedNewLevel, setSelectedNewLevel] = useState(1);
+
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // 갤럭시 내비게이션 바(제스처 24, 3버튼 48)에 저장 버튼이 가리지 않도록 실제 높이를 받아온다.
   const insets = useSafeAreaInsets();
 
   const getAuthToken = async () => {
@@ -54,33 +57,44 @@ const LearningSettingsScreen = ({ navigation, route }: any) => {
     return token || '';
   };
 
-  // ─── 초기 로드 시 파라미터 체크 ───
   useEffect(() => {
     if (route?.params?.userLang) {
       setCurrentLang(route.params.userLang);
     }
     if (route?.params?.userLevel) {
       setCurrentLevel(route.params.userLevel);
-      setSelectedNewLevel(route.params.userLevel);
     }
   }, [route?.params]);
 
-  // ─── 백엔드 언어 이름 -> 코드 변환 맵 ───
+  // 새 언어 기본 선택 처리 (현재 사용 중인 언어를 제외한 첫 번째 언어 자동 선택)
+  useEffect(() => {
+    const availableLangs = LANGUAGES.filter((lang) => lang !== currentLang);
+    if (availableLangs.length > 0 && !selectedNewLang) {
+      setSelectedNewLang(availableLangs[0]);
+    }
+  }, [currentLang]);
+
   const LANGUAGE_CODE_MAP: { [key: string]: string } = {
-    '일본어': 'JA',
-    '중국어': 'ZH',
-    '영어': 'EN',
+    일본어: 'JA',
+    중국어: 'ZH',
+    영어: 'EN',
   };
 
-  // ─── API: 학습 설정 저장 함수 ───
+  // ─── API: 학습 설정 저장 ───
   const handleSaveSettings = async () => {
+    // 탭 모드에 맞춰 저장할 대상 설정
+    const isChangeMode = activeTab === 'CHANGE';
+    const targetLang = isChangeMode ? currentLang : selectedNewLang;
+    const targetLevel = isChangeMode ? currentLevel : selectedNewLevel;
+
+    if (!targetLang) {
+      showAlert({ title: '안내', message: '추가할 언어를 선택해주세요.' });
+      return;
+    }
+
     try {
       setIsSubmitting(true);
       const token = await getAuthToken();
-
-      // 🌟 하단에서 새 언어를 선택했다면 하단 설정 저장, 아니면 상단(현재 언어)의 변경된 레벨 저장
-      const targetLang = selectedNewLang ? selectedNewLang : currentLang;
-      const targetLevel = selectedNewLang ? selectedNewLevel : currentLevel;
 
       const payload = {
         language: LANGUAGE_CODE_MAP[targetLang] || 'EN',
@@ -100,13 +114,14 @@ const LearningSettingsScreen = ({ navigation, route }: any) => {
       if (response.status >= 200 && response.status < 300) {
         setCurrentLang(targetLang);
         setCurrentLevel(targetLevel);
-
-        // 즉시 대시보드(MainTab)로 이동
         navigation.navigate('MainTab');
       }
     } catch (error) {
       console.error('학습 설정 저장 에러:', error);
-      showAlert({ title: '오류', message: '학습 설정 저장 중 문제가 발생했습니다. 다시 시도해주세요.' });
+      showAlert({
+        title: '오류',
+        message: '학습 설정 저장 중 문제가 발생했습니다. 다시 시도해주세요.',
+      });
     } finally {
       setIsSubmitting(false);
     }
@@ -114,123 +129,202 @@ const LearningSettingsScreen = ({ navigation, route }: any) => {
 
   return (
     <ScreenWrapper style={styles.wrapper}>
-      <Header 
-        title="학습 설정" 
-        leftType="back" 
-        rightType="none" 
-      />
+      <Header title="학습 설정" leftType="back" rightType="none" />
 
-      {/* 🌟 ScrollView 제거 및 View 로 대체 */}
-      <View style={[styles.scroll, styles.content, { paddingBottom: Math.max(insets.bottom + 8, 20) }]}>
-        
-        {/* 🌟 카드 영역들이 안드로이드/아이폰 비율에 맞춰 분배되도록 래핑 */}
-        <View style={{ flex: 1, justifyContent: 'space-evenly' }}>
-          {/* 1. 현재 학습 설정 카드 */}
-          <View style={styles.card}>
-            <View style={styles.cardHeaderRow}>
-              <View style={styles.headerTitleWrap}>
-                <View style={styles.iconCircle}>
-                  <Ionicons name="settings-sharp" size={18} color={colors.primary} />
+      <View
+        style={[
+          styles.content,
+          { paddingBottom: Math.max(insets.bottom + 8, 20) },
+        ]}
+      >
+        <View style={{ flex: 1 }}>
+          {/* 🌟 1. 모드 전환 세그먼트 탭 */}
+          <View style={styles.tabContainer}>
+            <TouchableOpacity
+              style={[
+                styles.tabButton,
+                activeTab === 'CHANGE' && styles.tabButtonActive,
+              ]}
+              onPress={() => setActiveTab('CHANGE')}
+              activeOpacity={0.8}
+            >
+              <Text
+                style={[
+                  styles.tabText,
+                  activeTab === 'CHANGE' && styles.tabTextActive,
+                ]}
+              >
+                레벨 변경
+              </Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[
+                styles.tabButton,
+                activeTab === 'ADD' && styles.tabButtonActive,
+              ]}
+              onPress={() => setActiveTab('ADD')}
+              activeOpacity={0.8}
+            >
+              <Text
+                style={[
+                  styles.tabText,
+                  activeTab === 'ADD' && styles.tabTextActive,
+                ]}
+              >
+                새 언어 추가
+              </Text>
+            </TouchableOpacity>
+          </View>
+
+          {/* 🌟 2. 조건부 렌더링 카드 영역 */}
+          {activeTab === 'CHANGE' ? (
+            /* [상황 1] 레벨 변경 모드 */
+            <View style={styles.card}>
+              <View style={styles.cardHeaderRow}>
+                <View style={styles.headerTitleWrap}>
+                  <View style={styles.iconCircle}>
+                    <Ionicons
+                      name="settings-sharp"
+                      size={18}
+                      color={colors.primary}
+                    />
+                  </View>
+                  <Text style={styles.cardTitle}>현재 학습 레벨 변경</Text>
                 </View>
-                <Text style={styles.cardTitle}>현재 학습 설정</Text>
+                <View style={styles.langBadge}>
+                  <Text style={styles.langBadgeText}>{currentLang}</Text>
+                </View>
               </View>
-              <View style={styles.langBadge}>
-                <Text style={styles.langBadgeText}>현재 언어: {currentLang}</Text>
+
+              <Text style={styles.subLabel}>변경할 레벨을 선택하세요</Text>
+              <View style={styles.levelRow}>
+                {LEVELS.map((item) => {
+                  const isSelected = currentLevel === item.level;
+                  return (
+                    <TouchableOpacity
+                      key={`cur-${item.level}`}
+                      style={[
+                        styles.levelCard,
+                        isSelected
+                          ? styles.levelCardSelected
+                          : styles.levelCardDefault,
+                      ]}
+                      onPress={() => setCurrentLevel(item.level)}
+                      activeOpacity={0.8}
+                    >
+                      <Text
+                        style={[
+                          styles.levelText,
+                          isSelected && styles.textWhite,
+                        ]}
+                      >
+                        {item.label}
+                      </Text>
+                      <Text
+                        style={[
+                          styles.levelSubText,
+                          isSelected && styles.textWhiteSub,
+                        ]}
+                      >
+                        {item.subLabel}
+                      </Text>
+                    </TouchableOpacity>
+                  );
+                })}
               </View>
             </View>
-
-            <Text style={styles.subLabel}>현재 학습 레벨</Text>
-            <View style={styles.levelRow}>
-              {LEVELS.map((item) => {
-                const isSelected = currentLevel === item.level;
-                return (
-                  <TouchableOpacity
-                    key={`cur-${item.level}`}
-                    style={[styles.levelCard, isSelected ? styles.levelCardSelected : styles.levelCardDefault]}
-                    onPress={() => {
-                      // 상단 레벨 클릭 시 하단 동기화(setSelectedNewLevel) 제거
-                      setCurrentLevel(item.level);
-                      setSelectedNewLang(''); // 상단을 조작하면 하단 새 언어 선택 상태 해제
-                    }}
-                    activeOpacity={0.8}
-                  >
-                    <Text style={[styles.levelText, isSelected && styles.textWhite]}>{item.label}</Text>
-                    <Text style={[styles.levelSubText, isSelected && styles.textWhiteSub]}>{item.subLabel}</Text>
-                  </TouchableOpacity>
-                );
-              })}
-            </View>
-          </View>
-
-          {/* 2. 새로운 언어 추가 카드 */}
-          <View style={[styles.card, styles.marginTop]}>
-            <View style={styles.headerTitleWrap}>
-              <View style={[styles.iconCircle, styles.plusCircle]}>
-                <Ionicons name="add" size={20} color={colors.primary} />
+          ) : (
+            /* [상황 2] 새 언어 추가 모드 */
+            <View style={styles.card}>
+              <View style={styles.headerTitleWrap}>
+                <View style={[styles.iconCircle, styles.plusCircle]}>
+                  <Ionicons name="add" size={20} color={colors.primary} />
+                </View>
+                <Text style={styles.cardTitle}>새로운 언어 추가</Text>
               </View>
-              <Text style={styles.cardTitle}>새로운 언어 추가 / 변경</Text>
-            </View>
 
-            {/* 언어 칩 리스트 */}
-            <View style={styles.langChipContainer}>
-              {/* 현재 설정된 언어(currentLang)를 필터링하여 목록에서 제외 */}
-              {LANGUAGES.filter(lang => lang !== currentLang).map((lang) => {
-                const isSelected = selectedNewLang === lang;
-                return (
-                  <TouchableOpacity
-                    key={lang}
-                    style={[styles.langChip, isSelected && styles.langChipSelected]}
-                    onPress={() => setSelectedNewLang(lang)}
-                    activeOpacity={0.8}
-                  >
-                    <Text style={[styles.langChipText, isSelected && styles.langChipTextSelected]}>
-                      {lang}
-                    </Text>
-                  </TouchableOpacity>
-                );
-              })}
-            </View>
+              <Text style={styles.subLabel}>학습할 언어 선택</Text>
+              <View style={styles.langChipContainer}>
+                {LANGUAGES.filter((lang) => lang !== currentLang).map((lang) => {
+                  const isSelected = selectedNewLang === lang;
+                  return (
+                    <TouchableOpacity
+                      key={lang}
+                      style={[
+                        styles.langChip,
+                        isSelected && styles.langChipSelected,
+                      ]}
+                      onPress={() => setSelectedNewLang(lang)}
+                      activeOpacity={0.8}
+                    >
+                      <Text
+                        style={[
+                          styles.langChipText,
+                          isSelected && styles.langChipTextSelected,
+                        ]}
+                      >
+                        {lang}
+                      </Text>
+                    </TouchableOpacity>
+                  );
+                })}
+              </View>
 
-            <Text style={styles.subLabel}>시작 레벨 선택</Text>
-            <View style={styles.levelRow}>
-              {LEVELS.map((item) => {
-                const isSelected = selectedNewLevel === item.level;
-                return (
-                  <TouchableOpacity
-                    key={`new-${item.level}`}
-                    style={[styles.levelCard, isSelected ? styles.levelCardSelected : styles.levelCardDefault]}
-                    onPress={() => {
-                      setSelectedNewLevel(item.level);
-                      // 만약 언어 칩을 선택하지 않고 하단 레벨만 눌렀다면, 남아있는 새 언어 중 첫 번째를 자동 지정
-                      if (!selectedNewLang) {
-                        const availableLangs = LANGUAGES.filter(l => l !== currentLang);
-                        if (availableLangs.length > 0) setSelectedNewLang(availableLangs[0]);
-                      }
-                    }}
-                    activeOpacity={0.8}
-                  >
-                    <Text style={[styles.levelText, isSelected && styles.textWhite]}>{item.label}</Text>
-                    <Text style={[styles.levelSubText, isSelected && styles.textWhiteSub]}>{item.subLabel}</Text>
-                  </TouchableOpacity>
-                );
-              })}
+              <Text style={styles.subLabel}>시작 레벨 선택</Text>
+              <View style={styles.levelRow}>
+                {LEVELS.map((item) => {
+                  const isSelected = selectedNewLevel === item.level;
+                  return (
+                    <TouchableOpacity
+                      key={`new-${item.level}`}
+                      style={[
+                        styles.levelCard,
+                        isSelected
+                          ? styles.levelCardSelected
+                          : styles.levelCardDefault,
+                      ]}
+                      onPress={() => setSelectedNewLevel(item.level)}
+                      activeOpacity={0.8}
+                    >
+                      <Text
+                        style={[
+                          styles.levelText,
+                          isSelected && styles.textWhite,
+                        ]}
+                      >
+                        {item.label}
+                      </Text>
+                      <Text
+                        style={[
+                          styles.levelSubText,
+                          isSelected && styles.textWhiteSub,
+                        ]}
+                      >
+                        {item.subLabel}
+                      </Text>
+                    </TouchableOpacity>
+                  );
+                })}
+              </View>
             </View>
-          </View>
+          )}
         </View>
 
-        {/* 설정 저장하기 버튼 */}
-        <TouchableOpacity 
-          style={[styles.saveButton, isSubmitting && styles.saveButtonDisabled]} 
+        {/* 저장하기 버튼 */}
+        <TouchableOpacity
+          style={[styles.saveButton, isSubmitting && styles.saveButtonDisabled]}
           onPress={handleSaveSettings}
           disabled={isSubmitting}
         >
           {isSubmitting ? (
             <ActivityIndicator color={colors.surface} />
           ) : (
-            <Text style={styles.saveButtonText}>설정 저장하기</Text>
+            <Text style={styles.saveButtonText}>
+              {activeTab === 'CHANGE' ? '레벨 변경 저장' : '새 언어로 시작하기'}
+            </Text>
           )}
         </TouchableOpacity>
-
       </View>
     </ScreenWrapper>
   );
@@ -238,10 +332,43 @@ const LearningSettingsScreen = ({ navigation, route }: any) => {
 
 const styles = StyleSheet.create({
   wrapper: { paddingHorizontal: 0, backgroundColor: colors.background },
-  scroll: { flex: 1 },
-  // 🌟 iOS와 Android의 하단 여백 다르게 처리하여 짤림 방지, 버튼이 맨 아래 고정되도록 space-between 설정
-  // 하단 여백은 기기마다 달라서 JSX 에서 insets 로 직접 넣는다.
   content: { flex: 1, padding: 20, justifyContent: 'space-between' },
+
+  // 탭 스타일
+  tabContainer: {
+    flexDirection: 'row',
+    backgroundColor: colors.surfaceAlt,
+    borderRadius: 16,
+    padding: 4,
+    marginBottom: 20,
+  },
+  tabButton: {
+    flex: 1,
+    paddingVertical: 12,
+    alignItems: 'center',
+    borderRadius: 12,
+  },
+  tabButtonActive: {
+    backgroundColor: colors.surface,
+    shadowColor: colors.shadow,
+    shadowOpacity: 0.08,
+    shadowOffset: { width: 0, height: 2 },
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  tabText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: colors.textMuted,
+    fontFamily: fonts.label,
+  },
+  tabTextActive: {
+    color: colors.primary,
+    fontWeight: '700',
+    fontFamily: fonts.headline,
+  },
+
+  // 카드 스타일
   card: {
     backgroundColor: colors.surface,
     borderRadius: 24,
@@ -252,9 +379,18 @@ const styles = StyleSheet.create({
     shadowRadius: 8,
     elevation: 2,
   },
-  marginTop: { marginTop: 16 },
-  cardHeaderRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 },
-  headerTitleWrap: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 12 },
+  cardHeaderRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  headerTitleWrap: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginBottom: 12,
+  },
   iconCircle: {
     width: 32,
     height: 32,
@@ -264,38 +400,106 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   plusCircle: { backgroundColor: colors.headerIconBackground },
-  cardTitle: { fontSize: 16, fontWeight: '700', color: colors.titleGreen, fontFamily: fonts.headline },
-  langBadge: { backgroundColor: colors.primary, paddingHorizontal: 12, paddingVertical: 4, borderRadius: 12 },
-  langBadgeText: { color: colors.surface, fontSize: 12, fontWeight: '600', fontFamily: fonts.label },
-  subLabel: { fontSize: 13, color: colors.greenMuted, fontFamily: fonts.label, fontWeight: '600', marginBottom: 10, marginTop: 8 },
+  cardTitle: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: colors.titleGreen,
+    fontFamily: fonts.headline,
+  },
+  langBadge: {
+    backgroundColor: colors.primary,
+    paddingHorizontal: 12,
+    paddingVertical: 4,
+    borderRadius: 12,
+  },
+  langBadgeText: {
+    color: colors.surface,
+    fontSize: 12,
+    fontWeight: '600',
+    fontFamily: fonts.label,
+  },
+  subLabel: {
+    fontSize: 13,
+    color: colors.greenMuted,
+    fontFamily: fonts.label,
+    fontWeight: '600',
+    marginBottom: 12,
+    marginTop: 8,
+  },
   levelRow: { flexDirection: 'row', gap: 10 },
-  levelCard: { flex: 1, paddingVertical: 18, borderRadius: 20, alignItems: 'center', justifyContent: 'center' },
+  levelCard: {
+    flex: 1,
+    paddingVertical: 18,
+    borderRadius: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   levelCardDefault: { backgroundColor: colors.surfaceAlt },
   levelCardSelected: { backgroundColor: colors.primary },
-  levelText: { fontSize: 16, fontWeight: '800', color: colors.primary, fontFamily: fonts.headline },
-  levelSubText: { fontSize: 12, color: colors.textMuted, fontWeight: '600', marginTop: 4, fontFamily: fonts.label },
+  levelText: {
+    fontSize: 16,
+    fontWeight: '800',
+    color: colors.primary,
+    fontFamily: fonts.headline,
+  },
+  levelSubText: {
+    fontSize: 12,
+    color: colors.textMuted,
+    fontWeight: '600',
+    marginTop: 4,
+    fontFamily: fonts.label,
+  },
   textWhite: { color: colors.surface },
   textWhiteSub: { color: colors.greenChip },
-  langChipContainer: { flexDirection: 'row', flexWrap: 'wrap', gap: 10, marginBottom: 20, marginTop: 4 },
-  langChip: { paddingHorizontal: 18, paddingVertical: 10, borderRadius: 20, borderWidth: 1, borderColor: colors.greenChip, backgroundColor: colors.surface },
-  langChipSelected: { borderColor: colors.primary, backgroundColor: colors.greenTint },
-  langChipText: { fontSize: 14, color: colors.greenMuted, fontFamily: fonts.label, fontWeight: '600' },
-  langChipTextSelected: { color: colors.primary, fontWeight: '700' },
-  saveButton: { 
-    backgroundColor: colors.primary, 
-    height: 54, 
-    borderRadius: 27, 
-    justifyContent: 'center', 
-    alignItems: 'center', 
-    marginTop: 28, 
-    shadowColor: colors.shadow, 
-    shadowOpacity: 0.1, 
-    shadowOffset: { width: 0, height: 4 }, 
-    shadowRadius: 8, 
-    elevation: 4 
+  langChipContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 10,
+    marginBottom: 16,
+    marginTop: 4,
   },
-  saveButtonDisabled: { backgroundColor: colors.greenMutedLight, shadowOpacity: 0 },
-  saveButtonText: { color: colors.surface, fontSize: 16, fontWeight: '700', fontFamily: fonts.headline },
+  langChip: {
+    paddingHorizontal: 18,
+    paddingVertical: 10,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: colors.greenChip,
+    backgroundColor: colors.surface,
+  },
+  langChipSelected: {
+    borderColor: colors.primary,
+    backgroundColor: colors.greenTint,
+  },
+  langChipText: {
+    fontSize: 14,
+    color: colors.greenMuted,
+    fontFamily: fonts.label,
+    fontWeight: '600',
+  },
+  langChipTextSelected: { color: colors.primary, fontWeight: '700' },
+  saveButton: {
+    backgroundColor: colors.primary,
+    height: 54,
+    borderRadius: 27,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginTop: 20,
+    shadowColor: colors.shadow,
+    shadowOpacity: 0.1,
+    shadowOffset: { width: 0, height: 4 },
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  saveButtonDisabled: {
+    backgroundColor: colors.greenMutedLight,
+    shadowOpacity: 0,
+  },
+  saveButtonText: {
+    color: colors.surface,
+    fontSize: 16,
+    fontWeight: '700',
+    fontFamily: fonts.headline,
+  },
 });
 
 export default LearningSettingsScreen;
