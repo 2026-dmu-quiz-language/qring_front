@@ -7,7 +7,6 @@ import {
   ScrollView,
   ActivityIndicator,
   KeyboardAvoidingView,
-  Platform,
 } from 'react-native';
 import { Text, TextInput } from '../components/common/Text';
 import { useNavigation, useRoute } from '@react-navigation/native';
@@ -484,7 +483,7 @@ const BotCompetitionScreen = () => {
         // 안드로이드는 엣지 투 엣지라 운영체제가 화면을 줄여주지 않으므로 직접 밀어 올린다.
         behavior="padding"
         // 이 영역 위에 점수판이 있어서, 화면 틀이 시작되는 상단 인셋만큼 보정한다.
-        keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : insets.top}
+        keyboardVerticalOffset={insets.top}
       >
         <ScrollView
           style={{ flex: 1 }}
