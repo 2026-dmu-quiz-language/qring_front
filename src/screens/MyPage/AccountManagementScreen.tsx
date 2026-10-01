@@ -232,8 +232,6 @@ const AccountManagementScreen = ({ navigation, route }: any) => {
               styles.content, 
               { paddingBottom: Math.max(insets.bottom + 8, 20) }
             ]}
-            scrollEnabled={isPasswordSectionOpen} 
-            showsVerticalScrollIndicator={isPasswordSectionOpen}
           >
             
             <Text style={styles.sectionTitle}>회원 정보 수정</Text>
