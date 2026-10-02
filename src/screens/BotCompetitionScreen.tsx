@@ -10,7 +10,7 @@ import {
   Platform,
 } from 'react-native';
 import { Text, TextInput } from '../components/common/Text';
-import { useNavigation, useRoute } from '@react-navigation/native';
+import { useNavigation, useRoute, usePreventRemove } from '@react-navigation/native';
 import type { RouteProp } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import { theme } from '../constants/theme';
@@ -322,11 +322,23 @@ const BotCompetitionScreen = () => {
 
     if (isConfirmed) {
       pausedRef.current = false;
-      navigation.navigate('MainTab');
+      // 뒤로가기 막기를 먼저 풀고, 반영된 뒤 아래 effect 에서 이동한다
+      setLeaving(true);
     } else {
       setPaused(true); // 계속하기를 골랐으면 일시정지 화면으로 돌아온다
     }
   };
+
+  // 대결 중 갤럭시 뒤로가기나 아이폰 스와이프로 바로 나가면 경고 없이 포인트를 잃는다.
+  // 화면을 닫지 않고 일시정지 창을 띄워서, 그만두기 확인을 거쳐야만 나가게 한다.
+  const [leaving, setLeaving] = useState(false);
+  usePreventRemove(phase === 'playing' && !!quiz && !leaving, () => {
+    if (!pausedRef.current) handlePause();
+  });
+
+  useEffect(() => {
+    if (leaving) navigation.navigate('MainTab');
+  }, [leaving]);
 
   if (!quiz && phase === 'playing') {
     return (
