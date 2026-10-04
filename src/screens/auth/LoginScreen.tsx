@@ -26,6 +26,7 @@ import * as AuthSession from 'expo-auth-session';
 import * as Crypto from 'expo-crypto';
 import { OAUTH_CONFIG } from '../../constants/oauth';
 import { theme } from '../../constants/theme';
+import { registerPushTokenAsync } from '../../services/pushNotificationService'; 
 
 WebBrowser.maybeCompleteAuthSession();
 
@@ -91,7 +92,9 @@ const LoginScreen = ({ navigation }: any) => {
     ? AuthSession.makeRedirectUri()
     : AuthSession.makeRedirectUri({ path: 'oauthredirect' });
 
-  // 🌟 1. 일반 (로컬) 로그인 - 상세 에러 핸들링 보완
+  // ==========================================
+  // 1. 일반 (로컬) 로그인
+  // ==========================================
   const handleLogin = async () => {
     if (!id.trim() || !password) {
       return showAlert({ title: '알림', message: '아이디(이메일)와 비밀번호를 모두 입력해 주세요.' });
@@ -109,10 +112,13 @@ const LoginScreen = ({ navigation }: any) => {
         if (response.data?.refreshToken) {
           await AsyncStorage.setItem('refreshToken', response.data.refreshToken);
         }
+
+        // 🌟 [추가됨] 일반 로그인 성공 직후 푸시 토큰 등록
+        await registerPushTokenAsync();
+
         navigation.navigate('MainTab');
       }
     } catch (error: any) {
-      // 서버에서 전달하는 error code 또는 status 기반 세부 안내
       const errorCode = error.response?.data?.code;
       const status = error.response?.status;
       const serverMessage = error.response?.data?.message;
@@ -160,6 +166,9 @@ const LoginScreen = ({ navigation }: any) => {
     if (response.data?.refreshToken) {
       await AsyncStorage.setItem('refreshToken', response.data.refreshToken);
     }
+
+    // 🌟 [추가됨] 소셜 로그인 성공 직후 푸시 토큰 등록
+    await registerPushTokenAsync();
 
     const isNewUser = response.data?.isNewUser ?? response.data?.newUser ?? false;
     navigation.navigate(isNewUser ? 'SocialSignUp' : 'MainTab');
@@ -283,8 +292,6 @@ const LoginScreen = ({ navigation }: any) => {
   // ==========================================
   // 3. 비밀번호 재설정 (Forgot Password) 로직
   // ==========================================
-  
-  // Step 1: 인증 코드 발송
   const handleRequestResetCode = async () => {
     const email = forgotEmail.trim(); 
     if (!email) return showAlert({ title: '알림', message: '가입 시 등록한 이메일을 입력해 주세요.' });
@@ -328,7 +335,6 @@ const LoginScreen = ({ navigation }: any) => {
     }
   };
 
-  // Step 2: 코드 검증
   const handleVerifyResetCode = async () => {
     const codeStr = forgotCode.trim();
     const emailStr = forgotEmail.trim();
@@ -373,7 +379,6 @@ const LoginScreen = ({ navigation }: any) => {
     }
   };
 
-  // Step 3: 새 비밀번호 저장
   const handleResetPassword = async () => {
     if (!forgotNewPassword) return showAlert({ title: '알림', message: '새 비밀번호를 입력해 주세요.' });
     if (!forgotConfirmPassword) return showAlert({ title: '알림', message: '비밀번호 확인 칸을 입력해 주세요.' });

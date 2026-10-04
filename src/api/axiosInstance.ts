@@ -2,7 +2,7 @@ import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 // 🌟 백엔드 서버 기본 URL 주소를 적어주세요.
-const BASE_URL = 'https://your-api-domain.com'; // 예: 'http://10.0.2.2:8080' (안드로이드 시뮬레이터) 또는 실제 서버 URL
+const BASE_URL = 'https://api.qring.com'; // 예: 'http://10.0.2.2:8080' (안드로이드 시뮬레이터) 또는 실제 서버 URL
 
 const api = axios.create({
   baseURL: BASE_URL,

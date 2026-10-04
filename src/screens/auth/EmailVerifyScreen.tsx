@@ -11,6 +11,7 @@ import { CustomInput } from '../../components/common/Input';
 import { CustomButton } from '../../components/common/Button';
 import { showAlert } from '../../components/common/AlertHost';
 import { theme } from '../../constants/theme';
+import { registerPushTokenAsync } from '../../services/pushNotificationService'; // 푸시 토큰 등록 함수 임포트
 
 const API_BASE_URL = 'https://q-ring.app/api/v1/auth';
 
@@ -35,6 +36,9 @@ const EmailVerifyScreen = ({ route, navigation }: any) => {
         if (response.data.refreshToken) {
           await AsyncStorage.setItem('refreshToken', response.data.refreshToken);
         }
+
+        // 🌟 [추가됨] 일반 회원가입(이메일 인증) 완료 직후 푸시 토큰 등록 API 호출!
+        await registerPushTokenAsync();
 
         await showAlert({
           title: '인증 성공',

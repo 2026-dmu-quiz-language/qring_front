@@ -6,7 +6,8 @@
   "build": {
     "development": {
       "developmentClient": true,
-      "distribution": "internal"
+      "distribution": "internal",
+      "channel": "development"
     },
     "preview": {
       "distribution": "internal",
@@ -17,7 +18,8 @@
         "EXPO_PUBLIC_KAKAO_APP_KEY": "34ef02f3d1f4df166ecdfea02aa21bd1",
         "EXPO_PUBLIC_GOOGLE_CLIENT_ID": "472758554338-hvjco2n0okeqsfe8uv7d8ecm1ih8qlb6.apps.googleusercontent.com",
         "EXPO_PUBLIC_LINE_CHANNEL_ID": "2009845869"
-      }
+      },
+      "channel": "preview"
     },
     "production": {
       "autoIncrement": true,
@@ -25,7 +27,8 @@
         "EXPO_PUBLIC_KAKAO_APP_KEY": "34ef02f3d1f4df166ecdfea02aa21bd1",
         "EXPO_PUBLIC_GOOGLE_CLIENT_ID": "472758554338-hvjco2n0okeqsfe8uv7d8ecm1ih8qlb6.apps.googleusercontent.com",
         "EXPO_PUBLIC_LINE_CHANNEL_ID": "2009845869"
-      }
+      },
+      "channel": "production"
     }
   },
   "submit": {

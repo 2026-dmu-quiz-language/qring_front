@@ -9,11 +9,12 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { ScreenWrapper } from '../../components/layout/ScreenWrapper';
 import { Header } from '../../components/layout/Header';
 import { CustomButton } from '../../components/common/Button';
-import { CustomInput } from '../../components/common/Input'; // 🌟 CustomInput 임포트 추가
+import { CustomInput } from '../../components/common/Input'; 
 import { theme } from '../../constants/theme';
 import { showAlert } from '../../components/common/AlertHost';
 import { DocumentModal } from '../../components/common/DocumentModal';
 import { TERMS_OF_SERVICE, PRIVACY_POLICY } from '../../constants/legal';
+import { registerPushTokenAsync } from '../../services/pushNotificationService'; // 푸시 토큰 등록 함수 임포트
 
 const API_BASE_URL = 'https://q-ring.app/api/v1/auth'; 
 
@@ -103,6 +104,10 @@ const SocialSignUpScreen = ({ navigation }: any) => {
 
       // 응답 명세서의 updated 확인
       if (response.data.updated) {
+        
+        // 🌟 [추가됨] 소셜 로그인 유저의 최종 설정이 완료된 직후 푸시 토큰 등록 API 호출!
+        await registerPushTokenAsync();
+
         await showAlert({
           title: '환영합니다!',
           message: '초기 학습 설정이 완료되었습니다.',
