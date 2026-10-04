@@ -89,7 +89,7 @@ const ChoiceQuiz = ({ quiz, hint, onComplete }: { quiz: Quiz; hint: string; onCo
     if (correct) {
       playSfx('correct');
     } else {
-      // 오답음 파일이 준비되면 여기에 playSfx('incorrect')를 넣으면 된다.
+      playSfx('incorrect');
     }
     setModalVisible(true);
   };
@@ -221,7 +221,7 @@ const SubjectiveQuiz = ({ quiz, hint, onComplete }: { quiz: Quiz; hint: string; 
     if (correct) {
       playSfx('correct');
     } else {
-      // 오답음 파일이 준비되면 여기에 playSfx('incorrect')를 넣으면 된다.
+      playSfx('incorrect');
     }
     setModalVisible(true);
   };
@@ -419,14 +419,14 @@ const ChatLearnScreen = () => {
         episodeId: episodeId,
         result: resultRef.current,
       });
-      navigation.navigate('LearningResult', {
+      navigation.replace('LearningResult', {
         score: response.totalScore ?? 0,
         correctCount: response.correctCount ?? resultRef.current.length,
         totalQuestions: totalQuizCount,
       });
     } catch (e) {
       console.log('결과 제출 실패:', e);
-      navigation.navigate('LearningResult', {
+      navigation.replace('LearningResult', {
         score: 0,
         correctCount: resultRef.current.length,
         totalQuestions: totalQuizCount,

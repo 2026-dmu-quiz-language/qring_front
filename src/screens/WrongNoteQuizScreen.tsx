@@ -150,7 +150,8 @@ const WrongNoteQuizScreen = () => {
         <View style={[styles.bottomBar, { paddingBottom: bottomBarPadding }]}>
           <TouchableOpacity
             style={styles.submitButton}
-            onPress={() => navigation.navigate('MainTab')}
+            // navigate 는 메인을 새로 쌓아서 뒤로가기 시 이 화면이 다시 나온다. popTo 로 닫으면서 돌아간다.
+            onPress={() => navigation.popTo('MainTab')}
             activeOpacity={0.8}
           >
             <Text style={styles.submitButtonText}>돌아가기</Text>
@@ -205,7 +206,7 @@ const WrongNoteQuizScreen = () => {
     if (isCorrect) {
       playSfx('correct');
     } else {
-      // 오답음 파일이 준비되면 여기에 playSfx('incorrect')를 넣으면 된다.
+      playSfx('incorrect');
     }
     setResults((prev) => [
       ...prev,

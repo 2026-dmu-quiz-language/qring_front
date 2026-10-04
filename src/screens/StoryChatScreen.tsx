@@ -63,6 +63,13 @@ export default function StoryChatScreen({ route, navigation }: any) {
   const characterName = storyData?.character_name ?? resumeData?.character_name ?? '';
   const situation = storyData?.situation ?? resumeData?.situation ?? '';
 
+  // React Navigation 7 의 navigate 는 메인을 새로 위에 쌓아서 뒤로가기를 누르면 이 대화 화면이 다시 나온다.
+  // popTo 로 쌓여 있는 메인까지 이 화면을 닫은 뒤 스토리 탭을 연다.
+  const goStoryTab = () => {
+    navigation.popTo('MainTab');
+    navigation.navigate('MainTab', { screen: 'Story' });
+  };
+
   const insets = useSafeAreaInsets();
   const flatListRef = useRef<FlatList>(null);
   const isCompletedRef = useRef(resumeData?.is_completed ?? false);
@@ -121,7 +128,7 @@ export default function StoryChatScreen({ route, navigation }: any) {
         message: `${errorMsg}\n메인 화면으로 이동합니다.`,
       });
     }
-    navigation.navigate('MainTab', { screen: 'Story' });
+    goStoryTab();
   };
 
   const handleArchive = async () => {
@@ -140,7 +147,7 @@ export default function StoryChatScreen({ route, navigation }: any) {
         message: `${errorMsg}\n메인 화면으로 이동합니다.`,
       });
     }
-    navigation.navigate('MainTab', { screen: 'Story' });
+    goStoryTab();
   };
 
   const promptSaveStory = async () => {
@@ -207,7 +214,7 @@ export default function StoryChatScreen({ route, navigation }: any) {
         cancelable: true,
       });
       if (isConfirmed) {
-        navigation.navigate('MainTab', { screen: 'Story' });
+        goStoryTab();
       }
     })();
   };

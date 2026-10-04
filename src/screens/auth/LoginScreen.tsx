@@ -171,7 +171,8 @@ const LoginScreen = ({ navigation }: any) => {
     await registerPushTokenAsync();
 
     const isNewUser = response.data?.isNewUser ?? response.data?.newUser ?? false;
-    navigation.navigate(isNewUser ? 'SocialSignUp' : 'MainTab');
+    if (isNewUser) navigation.navigate('SocialSignUp');
+    else navigation.reset({ index: 0, routes: [{ name: 'MainTab' }] });
   };
 
   useEffect(() => {

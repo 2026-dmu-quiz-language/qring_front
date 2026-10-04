@@ -2,8 +2,22 @@
 // 앱 전체에서 쓰는 효과음 모듈.
 // 소리마다 플레이어를 한 번만 만들어 두고 계속 재사용한다.
 // 화면 안에서 만들면 화면이 새로 그려질 때마다 파일을 다시 읽어 첫 소리가 늦게 난다.
-import { createAudioPlayer, setAudioModeAsync, type AudioPlayer } from 'expo-audio';
+import {
+  createAudioPlayer,
+  setAudioModeAsync,
+  type AudioPlayer,
+  type AudioStatus,
+} from 'expo-audio';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+
+// expo-modules-core 가 expo 패키지 안쪽에 설치돼 있어 TS 가 플레이어의 addListener 타입을 못 찾는다.
+// 실행에는 문제없으므로 필요한 모양만 적어 둔다.
+type PlayerWithEvents = {
+  addListener: (
+    event: 'playbackStatusUpdate',
+    listener: (status: AudioStatus) => void,
+  ) => { remove: () => void };
+};
 
 // 효과음 켜기, 끄기 설정을 저장하는 키.
 // 나중에 배경음악 스위치가 생기면 별도 키를 쓴다.
@@ -62,6 +76,14 @@ const getPlayer = (name: SfxName): AudioPlayer | null => {
 
   try {
     const player = createAudioPlayer(SOURCES[name]);
+    // 안드로이드는 끝까지 재생된 소리를 다시 틀면 데이터를 새로 준비하느라 0.1~2.5초씩 들쭉날쭉 늦는다.
+    // 끝나는 즉시 멈춤 상태로 바꾸고 처음으로 되감아, 다음 재생 전에 준비를 끝내 둔다.
+    // 멈춤 없이 되감기만 하면 '재생 중' 상태가 남아 저절로 다시 재생되며 무한 반복되므로 순서가 중요하다.
+    (player as unknown as PlayerWithEvents).addListener('playbackStatusUpdate', (status) => {
+      if (!status.didJustFinish || player.loop) return;
+      player.pause();
+      player.seekTo(0).catch(() => {});
+    });
     players[name] = player;
     return player;
   } catch (err) {
@@ -104,8 +126,8 @@ export const playSfx = (name: SfxName) => {
   const player = getPlayer(name);
   if (!player) return;
 
-  // 재생이 끝난 플레이어는 위치가 끝에 멈춰 있다.
-  // 처음으로 되돌리지 않고 play()만 하면 두 번째부터 소리가 나지 않는다.
+  // 보통은 끝날 때 이미 처음으로 되감겨 있지만(getPlayer 참고),
+  // 아직 울리는 중에 다시 부르는 경우도 있으니 처음으로 되돌린 뒤 재생한다.
   player.loop = false;
   player
     .seekTo(0)
@@ -113,6 +135,25 @@ export const playSfx = (name: SfxName) => {
     .catch((err) => {
       console.log('[sfx] 재생 실패:', name, err);
     });
+};
+
+let duckTimer: ReturnType<typeof setTimeout> | null = null;
+
+/**
+ * 반복 재생 중인 소리를 잠깐 작게 줄였다가 되돌린다.
+ * 봇 대전에서 오답음이 타이머 소리에 묻히지 않게 할 때 쓴다.
+ */
+export const duckSfx = (name: SfxName, volume: number, durationMs: number) => {
+  const player = players[name];
+  if (!player) return;
+
+  player.volume = volume;
+  // 연달아 틀리면 마지막 오답 기준으로 다시 잰다
+  if (duckTimer) clearTimeout(duckTimer);
+  duckTimer = setTimeout(() => {
+    player.volume = 1;
+    duckTimer = null;
+  }, durationMs);
 };
 
 /** 멈출 때까지 반복되는 효과음. 봇 대전 타이머처럼 구간 내내 이어지는 소리에 쓴다. */
@@ -125,6 +166,7 @@ export const playLoopSfx = (name: SfxName) => {
   if (!player) return;
 
   player.loop = true;
+  player.volume = 1; // 줄여 둔 채로 다음 라운드가 시작되지 않게 되돌린다
   player
     .seekTo(0)
     .then(() => player.play())

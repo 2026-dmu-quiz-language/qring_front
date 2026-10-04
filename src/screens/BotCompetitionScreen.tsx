@@ -23,7 +23,7 @@ import {
   type BotMatchAnswer,
   type BotMatchResultResponse,
 } from '../api/competition';
-import { playSfx, playLoopSfx, stopSfx } from '../utils/sfx';
+import { playSfx, playLoopSfx, stopSfx, duckSfx } from '../utils/sfx';
 import { AppModal } from '../components/common/AppModal';
 import { showConfirm } from '../components/common/AlertHost';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -142,6 +142,7 @@ const BotCompetitionScreen = () => {
     if (winner === 'user') {
       playSfx('correct');
     } else {
+      playSfx('incorrect');
     }
 
     const userIsCorrect = winner === 'user';
@@ -285,6 +286,9 @@ const BotCompetitionScreen = () => {
       return;
     }
     setBotProgress(Math.min(1 - roundRemainRef.current / roundTotalRef.current, 1));
+    playSfx('incorrect');
+    // 라운드가 계속되므로 타이머 소리는 끄지 않고, 오답음이 묻히지 않게 잠깐 작게 줄인다
+    duckSfx('timer', 0.25, 1500);
     setWrongFlash(true);
     setTimeout(() => setWrongFlash(false), 1500);
   };
@@ -321,7 +325,8 @@ const BotCompetitionScreen = () => {
     });
 
     if (isConfirmed) {
-      pausedRef.current = false;
+      // 나가는 동안 타이머가 다시 돌지 않도록 일시정지 상태(pausedRef)는 풀지 않고, 소리도 바로 끈다.
+      stopSfx('timer');
       // 뒤로가기 막기를 먼저 풀고, 반영된 뒤 아래 effect 에서 이동한다
       setLeaving(true);
     } else {
@@ -336,8 +341,11 @@ const BotCompetitionScreen = () => {
     if (!pausedRef.current) handlePause();
   });
 
+  // React Navigation 7 의 navigate 는 메인을 새로 위에 쌓아서 이 화면이 뒤에 살아 남는다
+  // (타이머와 소리가 계속 돌고, 뒤로가기를 누르면 대결 화면이 다시 나온다).
+  // popTo 로 쌓여 있는 메인까지 이 화면을 닫으면서 돌아간다.
   useEffect(() => {
-    if (leaving) navigation.navigate('MainTab');
+    if (leaving) navigation.popTo('MainTab');
   }, [leaving]);
 
   if (!quiz && phase === 'playing') {
@@ -413,7 +421,7 @@ const BotCompetitionScreen = () => {
 
               <TouchableOpacity
                 style={[styles.submitButton, { marginTop: 24, paddingHorizontal: 60 }]}
-                onPress={() => navigation.navigate('MainTab')}
+                onPress={() => navigation.popTo('MainTab')}
               >
                 <Text style={styles.submitButtonText}>돌아가기</Text>
               </TouchableOpacity>
