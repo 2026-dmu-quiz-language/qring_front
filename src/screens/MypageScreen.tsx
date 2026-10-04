@@ -232,7 +232,7 @@ export default function MyPageScreen({ navigation }: any) {
               });
               if (isConfirmed) {
                 await AsyncStorage.clear();
-                navigation.navigate('Login');
+                navigation.reset({ index: 0, routes: [{ name: 'Login' }] });
               }
             }}
           >

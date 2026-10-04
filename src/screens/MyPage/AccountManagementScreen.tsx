@@ -154,7 +154,7 @@ const AccountManagementScreen = ({ navigation, route }: any) => {
       setCurrentPassword('');
       setNewPassword('');
       setConfirmPassword('');
-      navigation.navigate('MainTab');
+      navigation.popTo('MainTab');
       
     } catch (error) {
       console.error('계정 정보 업데이트 에러:', error);

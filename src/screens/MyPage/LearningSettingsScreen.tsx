@@ -114,7 +114,7 @@ const LearningSettingsScreen = ({ navigation, route }: any) => {
       if (response.status >= 200 && response.status < 300) {
         setCurrentLang(targetLang);
         setCurrentLevel(targetLevel);
-        navigation.navigate('MainTab');
+        navigation.popTo('MainTab');
       }
     } catch (error) {
       console.error('학습 설정 저장 에러:', error);

@@ -109,7 +109,7 @@ const LoginScreen = ({ navigation }: any) => {
         if (response.data?.refreshToken) {
           await AsyncStorage.setItem('refreshToken', response.data.refreshToken);
         }
-        navigation.navigate('MainTab');
+        navigation.reset({ index: 0, routes: [{ name: 'MainTab' }] });
       }
     } catch (error: any) {
       // 서버에서 전달하는 error code 또는 status 기반 세부 안내
@@ -162,7 +162,8 @@ const LoginScreen = ({ navigation }: any) => {
     }
 
     const isNewUser = response.data?.isNewUser ?? response.data?.newUser ?? false;
-    navigation.navigate(isNewUser ? 'SocialSignUp' : 'MainTab');
+    if (isNewUser) navigation.navigate('SocialSignUp');
+    else navigation.reset({ index: 0, routes: [{ name: 'MainTab' }] });
   };
 
   useEffect(() => {

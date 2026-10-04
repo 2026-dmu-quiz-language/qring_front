@@ -27,6 +27,14 @@ const LearningResultScreen = () => {
     playSfx('result');
   }, []);
 
+  // React Navigation 7 의 navigate 는 메인을 새로 위에 쌓아서 뒤로가기를 누르면 결과 화면이 다시 나온다.
+  // popTo 로 쌓여 있는 메인까지 이 화면을 닫으면서 돌아간다.
+  const goHome = () => navigation.popTo('MainTab');
+  const goWrongNote = () => {
+    navigation.popTo('MainTab');
+    navigation.navigate('MainTab', { screen: 'WrongNote' });
+  };
+
   return (
     <ScreenWrapper style={{ paddingHorizontal: 0 }}>
 
@@ -34,7 +42,7 @@ const LearningResultScreen = () => {
         title="에피소드 클리어" 
         leftType="close" 
         rightType="none" 
-        onLeftPress={() => navigation.navigate('MainTab')} 
+        onLeftPress={goHome}
       />
 
       <ScrollView
@@ -95,7 +103,7 @@ const LearningResultScreen = () => {
 
         <TouchableOpacity
           style={styles.homeButton}
-          onPress={() => navigation.navigate('MainTab')}
+          onPress={goHome}
           activeOpacity={0.8}
         >
           <Text style={styles.homeButtonText}>학습 홈으로 돌아가기 ➔</Text>
@@ -104,7 +112,7 @@ const LearningResultScreen = () => {
         {/* 🌟 수정됨: MainTab이라는 탭 네비게이터를 거쳐서 그 안의 WrongNote 스크린으로 이동하게끔 경로 명시 */}
         <TouchableOpacity 
           style={styles.reviewButton} 
-          onPress={() => navigation.navigate('MainTab', { screen: 'WrongNote' })}
+          onPress={goWrongNote}
         >
           <View style={styles.reviewInner}>
             <Ionicons name="document-text-outline" size={18} color={theme.colors.textSub} />

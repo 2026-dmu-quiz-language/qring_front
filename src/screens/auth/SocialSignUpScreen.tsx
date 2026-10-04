@@ -108,7 +108,7 @@ const SocialSignUpScreen = ({ navigation }: any) => {
           message: '초기 학습 설정이 완료되었습니다.',
           confirmText: '시작하기',
         });
-        navigation.navigate('MainTab');
+        navigation.reset({ index: 0, routes: [{ name: 'MainTab' }] });
       } else {
         showAlert({ title: '오류', message: '설정 업데이트에 실패했습니다.' });
       }

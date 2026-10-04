@@ -41,7 +41,7 @@ const EmailVerifyScreen = ({ route, navigation }: any) => {
           message: '회원가입이 완벽하게 끝났습니다!',
           confirmText: '학습 시작하기',
         });
-        navigation.navigate('MainTab');
+        navigation.reset({ index: 0, routes: [{ name: 'MainTab' }] });
       } else {
         showAlert({ title: '인증 실패', message: '잘못된 코드입니다. 다시 확인해 주세요.' });
       }
