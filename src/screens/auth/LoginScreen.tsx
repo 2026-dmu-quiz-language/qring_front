@@ -129,10 +129,10 @@ const LoginScreen = ({ navigation }: any) => {
       if (errorCode === 'USER_NOT_FOUND' || errorCode === 'INVALID_CREDENTIALS') {
         message = '등록되지 않은 이메일이거나 \n 비밀번호가 올바르지 않습니다.';
       } else if (errorCode === 'SOCIAL_LOGIN_ACCOUNT') {
-        message = '소셜 로그인(구글/카카오/라인)으로 가입된 계정입니다. 해당 소셜 버튼으로 로그인해 주세요.';
+        message = '소셜 로그인(구글/카카오/라인)으로 가입된 계정입니다. \n 해당 소셜 버튼으로 로그인해 주세요.';
       } else if (errorCode === 'EMAIL_NOT_VERIFIED' || status === 403) {
         title = '이메일 미인증';
-        message = '이메일 인증이 완료되지 않은 계정입니다. 메일함에서 인증을 완료해 주세요.';
+        message = '이메일 인증이 완료되지 않은 계정입니다.\n 메일함에서 인증을 완료해 주세요.';
       } else if (status >= 500) {
         title = '서버 오류';
         message = '서버 처리 중 오류가 발생했습니다. \n 잠시 후 다시 시도해 주세요.';
