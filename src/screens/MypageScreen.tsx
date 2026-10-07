@@ -18,6 +18,7 @@ import { Header } from '../components/layout/Header';
 import { playSfx, isSfxEnabled, setSfxEnabled } from '../utils/sfx';
 import { showAlert, showConfirm } from '../components/common/AlertHost';
 import { Toggle } from '../components/common/Toggle'; // 🌟 기존에 사용하시던 Toggle 컴포넌트 복구
+import { unregisterPushTokenAsync } from '../services/pushNotificationService'; // 🌟 푸시 토큰 해제 함수 임포트
 
 // 💡 백엔드 기본 서버 주소
 const API_BASE_URL = 'https://q-ring.app/api/v1';
@@ -231,6 +232,13 @@ export default function MyPageScreen({ navigation }: any) {
                 destructive: true,
               });
               if (isConfirmed) {
+                try {
+                  // 🌟 [추가됨] 액세스 토큰을 지우기 '전'에 푸시 토큰 해제 서버 요청 먼저 실행
+                  await unregisterPushTokenAsync();
+                } catch (e) {
+                  console.error('푸시 토큰 해제 중 오류:', e);
+                }
+
                 await AsyncStorage.clear();
                 navigation.reset({ index: 0, routes: [{ name: 'Login' }] });
               }
@@ -265,23 +273,19 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '500',
   },
-  
-  // 🌟 View로 감싸고 flex: 1 할당하여 화면에 핏되게 함
   content: { 
     flex: 1,
     paddingHorizontal: 20, 
     paddingTop: 10, 
-    paddingBottom: 24, // 하단 네비게이션 바를 고려한 여백
-    justifyContent: 'space-between', // 상/중/하단 요소가 균형있게 퍼지도록
+    paddingBottom: 24,
+    justifyContent: 'space-between',
   },
-  
-  // --- 프로필 스타일 ---
   profileSection: { 
     alignItems: 'center', 
     marginBottom: 16, 
   },
   profileImageWrapper: { 
-    width: 90, // 화면 핏을 위해 소폭 축소
+    width: 90,
     height: 90, 
     borderRadius: 45, 
     backgroundColor: theme.colors.surface, 
@@ -328,8 +332,6 @@ const styles = StyleSheet.create({
     fontSize: 12, 
     fontWeight: '600' 
   },
-
-  // --- 스탯 (포인트, 학습일) 스타일 ---
   statsRow: { 
     flexDirection: 'row', 
     gap: 12, 
@@ -339,7 +341,7 @@ const styles = StyleSheet.create({
     flex: 1, 
     backgroundColor: theme.colors.lightGreen, 
     borderRadius: 20, 
-    paddingVertical: 18, // 세로 공간 확보를 위해 소폭 축소
+    paddingVertical: 18,
     alignItems: 'center',
     justifyContent: 'center',
     shadowColor: theme.colors.shadow,
@@ -365,8 +367,6 @@ const styles = StyleSheet.create({
     fontWeight: '600', 
     color: theme.colors.textMuted 
   },
-
-  // --- 메뉴 리스트 스타일 ---
   menuContainer: { 
     flex: 1, 
     justifyContent: 'flex-start',
@@ -375,7 +375,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row', 
     alignItems: 'center', 
     backgroundColor: theme.colors.surface, 
-    paddingVertical: 12, // 한 화면 핏을 위한 패딩 조절
+    paddingVertical: 12,
     paddingHorizontal: 16, 
     borderRadius: 18, 
     marginBottom: 10,

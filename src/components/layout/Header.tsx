@@ -1,4 +1,5 @@
 // src/components/layout/Header.tsx
+
 import React, { useState } from 'react';
 import { View, TouchableOpacity, StyleSheet, Image, Modal } from 'react-native';
 import { Text } from '../common/Text';
@@ -9,12 +10,13 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { theme } from '../../constants/theme';
 import { switchLanguage, fetchLanguageStatus } from '../../api/language';
 import { showAlert } from '../common/AlertHost';
+import { unregisterPushTokenAsync } from '../../services/pushNotificationService'; // 푸시 토큰 해제 함수 임포트
 
 interface HeaderProps {
   title?: string;
   leftType?: 'back' | 'close' | 'none';
   rightType?: 'sprout' | 'menu' | 'profile' | 'none';
-  onLeftPress?: () => void; // 🌟 왼쪽 버튼 클릭 시 동작을 커스텀할 수 있도록 추가
+  onLeftPress?: () => void;
   onRightPress?: () => void;
   showLogo?: boolean;
   userName?: string;
@@ -59,12 +61,9 @@ export const Header = ({
     fetchAndSaveName();
   }, [userName]);
 
-  // 현재 언어는 서버가 들고 있는 값만 쓴다.
-  // 기기에 저장해두면 계정을 바꾸거나 앱을 새로 깔았을 때 엉뚱한 언어가 활성으로 보인다.
   const fetchLangStatus = async () => {
     try {
       const status = await fetchLanguageStatus();
-      // 온보딩을 마치지 않은 사용자는 current 가 null 이다. 이때는 아무것도 활성이 아니다.
       setActiveLang(status.current ?? '');
       setEnabledLangs(status.unlocked ?? []);
     } catch (err: any) {
@@ -74,7 +73,6 @@ export const Header = ({
 
   const handleLangSwitch = async (code: string) => {
     try {
-      // 전환 결과를 그대로 받아 쓰면 되므로 다시 조회할 필요가 없다.
       const status = await switchLanguage(code);
       setActiveLang(status.current ?? code);
       setEnabledLangs(status.unlocked ?? []);
@@ -108,6 +106,13 @@ export const Header = ({
 
   const handleLogout = async () => {
     try {
+      // 🌟 1. 액세스 토큰을 지우기 '전'에 푸시 토큰 해제 함수를 먼저 호출하여 인증 헤더가 유효할 때 서버로 요청을 보냄
+      try {
+        await unregisterPushTokenAsync();
+      } catch (pushErr) {
+        console.error('푸시 토큰 해제 실패:', pushErr);
+      }
+
       const token = await AsyncStorage.getItem('accessToken');
       if (token) {
         await axios.post(`${API_BASE_URL}/logout`, {}, {
@@ -119,7 +124,6 @@ export const Header = ({
     } finally {
       await AsyncStorage.removeItem('accessToken');
       await AsyncStorage.removeItem('refreshToken');
-      // 지금은 쓰지 않지만, 이전 버전이 기기에 남겨둔 값을 정리한다.
       await AsyncStorage.removeItem('activeLang');
       
       setProfileMenuVisible(false);
@@ -133,7 +137,7 @@ export const Header = ({
     <View style={styles.headerContainer}>
       <View style={styles.topBar}>
         
-        {/* 왼쪽 섹션 (뒤로가기 등) */}
+        {/* 왼쪽 섹션 */}
         <View style={styles.leftSection}>
           {leftType === 'back' && (
             <TouchableOpacity 
@@ -153,7 +157,7 @@ export const Header = ({
           )}
         </View>
 
-        {/* 중앙 섹션 (로고 또는 타이틀) */}
+        {/* 중앙 섹션 */}
         <View style={styles.centerSection}>
           {showLogo ? (
             <Image 

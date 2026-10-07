@@ -57,11 +57,13 @@ const SplashScreen = ({ navigation }: any) => {
         const elapsedTime = Date.now() - startTime;
         const remainingTime = Math.max(0, 2000 - elapsedTime);
 
-        setTimeout(() => {
+        setTimeout(async () => {
           if (isAuthSuccess) {
-            navigation.replace('MainTab'); // 토큰이 유효하면 메인으로
+            const pending = await AsyncStorage.getItem('pendingPushScreen');
+            await AsyncStorage.removeItem('pendingPushScreen');
+            navigation.replace('MainTab', pending ? { screen: pending } : undefined);
           } else {
-            navigation.replace('Login');   // 토큰이 없거나 만료면 로그인으로
+            navigation.replace('Login');
           }
         }, remainingTime);
       }

@@ -10,6 +10,7 @@ import { RootNavigator } from './src/navigation/RootNavigator';
 import { theme } from './src/constants/theme';
 import { AlertHost } from './src/components/common/AlertHost';
 import { registerPushTokenAsync } from './src/services/pushNotificationService';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 // NavigationContainer 외부에서 라우팅을 컨트롤하기 위한 NavigationRef 생성
 export const navigationRef = createNavigationContainerRef<any>();
@@ -39,10 +40,7 @@ export default function App() {
     // 백엔드 FCM 페이로드 규격: type "WRONG_ANSWER_REMINDER", screen "incorrect"
     if (data.screen === 'incorrect' || data.type === 'WRONG_ANSWER_REMINDER') {
       if (navigationRef.isReady()) {
-        navigationRef.navigate('IncorrectNote', {
-          createdDate: data.createdDate,
-          wrongCount: data.wrongCount,
-        });
+        navigationRef.navigate('MainTab', { screen: 'WrongNote' });
       }
     }
   };
@@ -65,11 +63,9 @@ export default function App() {
 
     // 4. 앱 완전히 종료된 상태에서 알림을 눌러 앱을 켰을 때 처리
     Notifications.getLastNotificationResponseAsync().then((response) => {
-      if (response) {
-        const data = response.notification.request.content.data;
-        setTimeout(() => {
-          handleFcmNavigation(data);
-        }, 500); // Navigation 내비게이터 준비 완료 후 이동
+      const data = response?.notification.request.content.data;
+      if (data?.screen === 'incorrect' || data?.type === 'WRONG_ANSWER_REMINDER') {
+        AsyncStorage.setItem('pendingPushScreen', 'WrongNote');
       }
     });
 
