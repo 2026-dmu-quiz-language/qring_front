@@ -135,7 +135,7 @@ const LoginScreen = ({ navigation }: any) => {
         message = '이메일 인증이 완료되지 않은 계정입니다. 메일함에서 인증을 완료해 주세요.';
       } else if (status >= 500) {
         title = '서버 오류';
-        message = '서버 처리 중 오류가 발생했습니다. 잠시 후 다시 시도해 주세요.';
+        message = '서버 처리 중 오류가 발생했습니다. \n 잠시 후 다시 시도해 주세요.';
       } else if (serverMessage) {
         message = serverMessage;
       } else if (!error.response) {
