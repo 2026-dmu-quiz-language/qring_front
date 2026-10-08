@@ -38,9 +38,6 @@
       "permissions": [
         "android.permission.MODIFY_AUDIO_SETTINGS",
         "android.permission.FOREGROUND_SERVICE",
-        "android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK",
-        "android.permission.MODIFY_AUDIO_SETTINGS",
-        "android.permission.FOREGROUND_SERVICE",
         "android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK"
       ]
     },
@@ -76,7 +73,9 @@
       "policy": "appVersion"
     },
     "updates": {
-      "url": "https://u.expo.dev/3bf4e92b-281b-4e5e-a5dd-6f510ba91ecf"
+      "url": "https://u.expo.dev/3bf4e92b-281b-4e5e-a5dd-6f510ba91ecf",
+      "checkAutomatically": "ON_LOAD",
+      "fallbackToCacheTimeout": 3000
     }
   }
 }
