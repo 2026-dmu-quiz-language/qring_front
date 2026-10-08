@@ -3,7 +3,7 @@
     "name": "qring_front",
     "slug": "qring_front",
     "scheme": "qring",
-    "version": "1.0.0",
+    "version": "1.0.1",
     "backgroundColor": "#E9E9DB",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
