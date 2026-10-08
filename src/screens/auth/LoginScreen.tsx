@@ -423,7 +423,7 @@ const LoginScreen = ({ navigation }: any) => {
       <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
         <View style={styles.container}>
           <Image source={require('../../../assets/quring_logo.png')} style={styles.logo} resizeMode="contain" />
-          <Text style={styles.title}>환영합니다!</Text>
+          <Text style={styles.title}>환영안합니다!</Text>
           <Text style={styles.subTitle}>오늘의 학습을 시작할 준비가 되셨나요?</Text>
 
           <View style={styles.inputSection}>
